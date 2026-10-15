@@ -1,0 +1,12 @@
+========= COMPUTE-SANITIZER
+PASS representative CPU/GPU gate
+PROFILE forward 1,1,33,33,dense,optimized,8,256
+PROFILE forward 1,1,33,33,dense,optimized,16,256
+PROFILE forward 1,1,33,33,dense,optimized,32,256
+PROFILE forward 1,1,33,33,dense,optimized,16,128
+PROFILE forward 1,1,33,33,causal,optimized,8,256
+PROFILE forward 1,1,33,33,causal,optimized,16,256
+PROFILE forward 1,1,33,33,causal,optimized,32,256
+PROFILE forward 1,1,33,33,causal,optimized,16,128
+PASS benchmark; results=results/gpu-benchmarks/2026-10-14T154318Z-review/sanitizer-synccheck
+========= ERROR SUMMARY: 0 errors

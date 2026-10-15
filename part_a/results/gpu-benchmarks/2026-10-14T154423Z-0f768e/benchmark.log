@@ -1,0 +1,10 @@
+PASS representative CPU/GPU gate
+1,1,33,32,dense,naive,16,256 median_ms=0.032224 IQR_ms=0.005568
+1,1,33,32,dense,optimized,16,256 median_ms=0.028608 IQR_ms=0.002088
+1,1,33,32,causal,naive,16,256 median_ms=0.035072 IQR_ms=0.004712
+1,1,33,32,causal,optimized,16,256 median_ms=0.028736 IQR_ms=0.002712
+4,8,256,64,dense,naive,16,256 median_ms=1.72024 IQR_ms=0.01108
+4,8,256,64,dense,optimized,16,256 median_ms=0.359776 IQR_ms=0.001368
+4,8,256,64,causal,naive,16,256 median_ms=0.980816 IQR_ms=0.00352801
+4,8,256,64,causal,optimized,16,256 median_ms=0.30552 IQR_ms=0.001304
+PASS benchmark; results=D:\Code_Python\CEG5206-part-a\repo\results\gpu-benchmarks\2026-10-14T154423Z-0f768e\benchmark

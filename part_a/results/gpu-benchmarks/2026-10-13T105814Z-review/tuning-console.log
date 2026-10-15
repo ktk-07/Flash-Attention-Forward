@@ -1,0 +1,962 @@
+[English transcription; unrelated process names omitted; original SHA-256 recorded in results/log_sources.csv]
+**********************************************************************
+** Visual Studio 2022 Developer Command Prompt v17.14.41
+** Copyright (c) 2025 Microsoft Corporation
+**********************************************************************
+[vcvarsall.bat] Environment initialized for: 'x64'
+0e688f9ccc47949a5dccebdbe50f14c54ce76d1e
+?? results/gpu-benchmarks/
+Tue Oct 13 18:58:51 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 610.88                 KMD Version: 610.88        CUDA UMD Version: 13.3     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                  Driver-Model | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 5060 Ti   WDDM  |   00000000:01:00.0  On |                  N/A |
+|  0%   35C    P3             20W /  180W |     729MiB /   8151MiB |      1%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A            4568    C+G   ...em32\ApplicationFrameHost.exe      N/A      |
+|    0   N/A  N/A            6544    C+G   ...8bbwe\PhoneExperienceHost.exe      N/A      |
+|    0   N/A  N/A            7004    C+G   [background-process]      N/A      |
+|    0   N/A  N/A            7576    C+G   ...iles\Riot Vanguard\vgtray.exe      N/A      |
+|    0   N/A  N/A            8608    C+G   ...2p2nqsd0c76g0\app\ChatGPT.exe      N/A      |
+|    0   N/A  N/A            9104    C+G   C:\Windows\explorer.exe               N/A      |
+|    0   N/A  N/A            9152    C+G   ...indows\System32\ShellHost.exe      N/A      |
+|    0   N/A  N/A            9508    C+G   ...2txyewy\CrossDeviceResume.exe      N/A      |
+|    0   N/A  N/A            9924    C+G   ...IA App\CEF\NVIDIA Overlay.exe      N/A      |
+|    0   N/A  N/A           10740    C+G   ...IA App\CEF\NVIDIA Overlay.exe      N/A      |
+|    0   N/A  N/A           11320    C+G   ..._cw5n1h2txyewy\SearchHost.exe      N/A      |
+|    0   N/A  N/A           11352    C+G   ...y\StartMenuExperienceHost.exe      N/A      |
+|    0   N/A  N/A           11716    C+G   ...cw5n1h2txyewy\WidgetBoard.exe      N/A      |
+|    0   N/A  N/A           13780    C+G   ...xyewy\ShellExperienceHost.exe      N/A      |
+|    0   N/A  N/A           14400    C+G   ....0.4258.62\msedgewebview2.exe      N/A      |
+|    0   N/A  N/A           15636    C+G   ...2p2nqsd0c76g0\app\ChatGPT.exe      N/A      |
+|    0   N/A  N/A           16468    C+G   ...Chrome\Application\chrome.exe      N/A      |
+|    0   N/A  N/A           17324    C+G   ...5n1h2txyewy\TextInputHost.exe      N/A      |
+|    0   N/A  N/A           18276    C+G   ...t\Edge\Application\msedge.exe      N/A      |
+|    0   N/A  N/A           18944    C+G   ...ntrolPanel\SystemSettings.exe      N/A      |
+|    0   N/A  N/A           20048    C+G   ...Chrome\Application\chrome.exe      N/A      |
++-----------------------------------------------------------------------------------------+
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2026 NVIDIA Corporation
+Built on Sun_Aug_03_13:24:32_Pacific_Standard_Time_2026
+Cuda compilation tools, release 13.4, V13.4.59
+Build cuda_13.4.r13.4/compiler.38657139_0
+cmake version 4.4.4
+
+CMake suite maintained and supported by Kitware (kitware.com/cmake).
+-- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.26200.
+-- Configuring done (0.1s)
+-- Generating done (0.2s)
+-- Build files have been written to: D:/Code_Python/CEG5206-part-a/repo/build-gpu
+MSBuild version 17.14.60+43b635718 for .NET Framework
+
+  attention_gpu_baseline.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\attention_gpu_baseline.lib
+  attention_reference.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu\cpu_reference\Release\attention_reference.lib
+  attention_benchmark.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu\benchmarks\Release\attention_benchmark.exe
+  attention_demo.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu\cpu_reference\Release\attention_demo.exe
+  benchmark_harness_tests.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu\benchmarks\Release\benchmark_harness_tests.exe
+  compare_tests.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu\validation\Release\compare_tests.exe
+  gpu_baseline_tests.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe
+  reference_tests.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu\cpu_reference\Release\reference_tests.exe
+UpdateCTestConfiguration  from :D:/Code_Python/CEG5206-part-a/repo/build-gpu/DartConfiguration.tcl
+Test project D:/Code_Python/CEG5206-part-a/repo/build-gpu
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+      Start  1: tiny
+
+1: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\cpu_reference\Release\reference_tests.exe "tiny"
+1: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/cpu_reference
+1: Test timeout computed to be: 10000000
+1: PASS tiny
+ 1/46 Test  #1: tiny .............................   Passed    0.01 sec
+test 2
+      Start  2: singleton
+
+2: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\cpu_reference\Release\reference_tests.exe "singleton"
+2: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/cpu_reference
+2: Test timeout computed to be: 10000000
+2: PASS singleton
+ 2/46 Test  #2: singleton ........................   Passed    0.01 sec
+test 3
+      Start  3: uniform
+
+3: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\cpu_reference\Release\reference_tests.exe "uniform"
+3: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/cpu_reference
+3: Test timeout computed to be: 10000000
+3: PASS uniform
+ 3/46 Test  #3: uniform ..........................   Passed    0.01 sec
+test 4
+      Start  4: stability
+
+4: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\cpu_reference\Release\reference_tests.exe "stability"
+4: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/cpu_reference
+4: Test timeout computed to be: 10000000
+4: PASS stability
+ 4/46 Test  #4: stability ........................   Passed    0.01 sec
+test 5
+      Start  5: isolation
+
+5: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\cpu_reference\Release\reference_tests.exe "isolation"
+5: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/cpu_reference
+5: Test timeout computed to be: 10000000
+5: PASS isolation
+ 5/46 Test  #5: isolation ........................   Passed    0.01 sec
+test 6
+      Start  6: causal_prefix
+
+6: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\cpu_reference\Release\reference_tests.exe "causal_prefix"
+6: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/cpu_reference
+6: Test timeout computed to be: 10000000
+6: PASS causal_prefix
+ 6/46 Test  #6: causal_prefix ....................   Passed    0.01 sec
+test 7
+      Start  7: irregular
+
+7: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\cpu_reference\Release\reference_tests.exe "irregular"
+7: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/cpu_reference
+7: Test timeout computed to be: 10000000
+7: PASS irregular
+ 7/46 Test  #7: irregular ........................   Passed    0.02 sec
+test 8
+      Start  8: validation
+
+8: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\cpu_reference\Release\reference_tests.exe "validation"
+8: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/cpu_reference
+8: Test timeout computed to be: 10000000
+8: PASS validation
+ 8/46 Test  #8: validation .......................   Passed    0.01 sec
+test 9
+      Start  9: compare_tolerance
+
+9: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\validation\Release\compare_tests.exe "tolerance"
+9: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/validation
+9: Test timeout computed to be: 10000000
+9: PASS comparator tolerance
+ 9/46 Test  #9: compare_tolerance ................   Passed    0.01 sec
+test 10
+      Start 10: compare_nonfinite
+
+10: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\validation\Release\compare_tests.exe "nonfinite"
+10: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/validation
+10: Test timeout computed to be: 10000000
+10: PASS comparator nonfinite
+10/46 Test #10: compare_nonfinite ................   Passed    0.01 sec
+test 11
+      Start 11: compare_metrics
+
+11: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\validation\Release\compare_tests.exe "metrics"
+11: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/validation
+11: Test timeout computed to be: 10000000
+11: PASS comparator metrics
+11/46 Test #11: compare_metrics ..................   Passed    0.01 sec
+test 12
+      Start 12: compare_validation
+
+12: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\validation\Release\compare_tests.exe "validation"
+12: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/validation
+12: Test timeout computed to be: 10000000
+12: PASS comparator validation
+12/46 Test #12: compare_validation ...............   Passed    0.01 sec
+test 13
+      Start 13: gpu_naive_tiny
+
+13: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "tiny" "naive"
+13: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+13: Test timeout computed to be: 120
+13: Variant: naive
+13: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+13: Shape 1,1,2,2 dense
+13: S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+13: P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+13: O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+13: O[0] = 6.697616e+00, 6.604769e+00
+13: O[1] = 3.302385e+00, 1.339523e+01
+13: Shape 1,1,2,2 causal
+13: S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+13: P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+13: O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+13: O[0] = 1.000000e+01, 0.000000e+00
+13: O[1] = 3.302385e+00, 1.339523e+01
+13: PASS tiny
+13/46 Test #13: gpu_naive_tiny ...................   Passed    0.10 sec
+test 14
+      Start 14: gpu_naive_singleton
+
+14: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "singleton" "naive"
+14: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+14: Test timeout computed to be: 120
+14: Variant: naive
+14: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+14: Shape 2,3,1,7 dense
+14: S: max_abs=3.473289e-08 max_rel=1.182461e-07 failures=0
+14: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+14: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+14: Shape 2,3,1,7 causal
+14: S: max_abs=3.473289e-08 max_rel=1.182461e-07 failures=0
+14: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+14: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+14: PASS singleton
+14/46 Test #14: gpu_naive_singleton ..............   Passed    0.10 sec
+test 15
+      Start 15: gpu_naive_uniform
+
+15: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "uniform" "naive"
+15: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+15: Test timeout computed to be: 120
+15: Variant: naive
+15: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+15: Shape 2,2,17,7 dense
+15: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+15: P: max_abs=2.191347e-10 max_rel=3.725290e-09 failures=0
+15: O: max_abs=6.145733e-09 max_rel=6.145733e+03 failures=0
+15: Shape 2,2,17,7 causal
+15: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+15: P: max_abs=9.934107e-09 max_rel=5.215406e-08 failures=0
+15: O: max_abs=2.235174e-08 max_rel=7.450581e+03 failures=0
+15: PASS uniform
+15/46 Test #15: gpu_naive_uniform ................   Passed    0.09 sec
+test 16
+      Start 16: gpu_naive_stability
+
+16: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "stability" "naive"
+16: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+16: Test timeout computed to be: 120
+16: Variant: naive
+16: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+16: Shape 1,1,2,1 dense
+16: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+16: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+16: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+16: Shape 1,1,2,1 causal
+16: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+16: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+16: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+16: PASS stability
+16/46 Test #16: gpu_naive_stability ..............   Passed    0.09 sec
+test 17
+      Start 17: gpu_naive_isolation
+
+17: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "isolation" "naive"
+17: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+17: Test timeout computed to be: 120
+17: Variant: naive
+17: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+17: Shape 2,3,17,7 dense
+17: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+17: P: max_abs=2.387244e-08 max_rel=2.725675e-07 failures=0
+17: O: max_abs=4.193989e-08 max_rel=2.659337e-05 failures=0
+17: Shape 2,3,17,7 causal
+17: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+17: P: max_abs=6.548373e-08 max_rel=2.477498e-07 failures=0
+17: O: max_abs=7.949540e-08 max_rel=2.562164e-05 failures=0
+17: PASS isolation
+17/46 Test #17: gpu_naive_isolation ..............   Passed    0.09 sec
+test 18
+      Start 18: gpu_naive_irregular
+
+18: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "irregular" "naive"
+18: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+18: Test timeout computed to be: 120
+18: Variant: naive
+18: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+18: Shape 1,1,33,7 dense
+18: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+18: P: max_abs=1.467490e-08 max_rel=3.554687e-07 failures=0
+18: O: max_abs=2.404592e-08 max_rel=4.116363e-04 failures=0
+18: Shape 1,1,33,7 causal
+18: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+18: P: max_abs=3.578692e-08 max_rel=3.554687e-07 failures=0
+18: O: max_abs=6.078455e-08 max_rel=6.288833e-06 failures=0
+18: Shape 2,2,65,33 dense
+18: S: max_abs=1.104559e-07 max_rel=6.549430e-06 failures=0
+18: P: max_abs=8.345102e-09 max_rel=4.737106e-07 failures=0
+18: O: max_abs=2.186278e-08 max_rel=2.234067e-03 failures=0
+18: Shape 2,2,65,33 causal
+18: S: max_abs=1.104559e-07 max_rel=6.549430e-06 failures=0
+18: P: max_abs=5.625844e-08 max_rel=3.953480e-07 failures=0
+18: O: max_abs=6.834110e-08 max_rel=1.414211e-04 failures=0
+18: Shape 1,2,129,65 dense
+18: S: max_abs=8.787548e-08 max_rel=3.533979e+01 failures=0
+18: P: max_abs=6.430750e-09 max_rel=6.849120e-07 failures=0
+18: O: max_abs=1.687536e-08 max_rel=3.333048e-04 failures=0
+18: Shape 1,2,129,65 causal
+18: S: max_abs=8.787548e-08 max_rel=3.533979e+01 failures=0
+18: P: max_abs=2.700608e-08 max_rel=6.298197e-07 failures=0
+18: O: max_abs=5.996543e-08 max_rel=5.340793e-04 failures=0
+18: PASS irregular
+18/46 Test #18: gpu_naive_irregular ..............   Passed    0.10 sec
+test 19
+      Start 19: gpu_naive_row_lengths
+
+19: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "row_lengths" "naive"
+19: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+19: Test timeout computed to be: 120
+19: Variant: naive
+19: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+19: Shape 1,1,255,15 dense
+19: S: max_abs=8.854590e-08 max_rel=2.798473e-06 failures=0
+19: P: max_abs=3.185953e-09 max_rel=6.195376e-07 failures=0
+19: O: max_abs=1.525204e-08 max_rel=5.065432e-05 failures=0
+19: Shape 1,1,255,15 causal
+19: S: max_abs=8.854590e-08 max_rel=2.798473e-06 failures=0
+19: P: max_abs=2.507981e-08 max_rel=7.124859e-07 failures=0
+19: O: max_abs=5.957358e-08 max_rel=1.190173e+04 failures=0
+19: Shape 1,1,256,16 dense
+19: S: max_abs=8.110092e-08 max_rel=3.069642e-06 failures=0
+19: P: max_abs=5.831895e-09 max_rel=1.129708e-06 failures=0
+19: O: max_abs=6.964965e-09 max_rel=5.928242e-04 failures=0
+19: Shape 1,1,256,16 causal
+19: S: max_abs=8.110092e-08 max_rel=3.069642e-06 failures=0
+19: P: max_abs=3.377332e-08 max_rel=1.032724e-06 failures=0
+19: O: max_abs=4.825818e-08 max_rel=1.468192e-03 failures=0
+19: Shape 1,1,257,17 dense
+19: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+19: P: max_abs=4.171716e-09 max_rel=8.975799e-07 failures=0
+19: O: max_abs=9.981612e-09 max_rel=4.128244e-05 failures=0
+19: Shape 1,1,257,17 causal
+19: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+19: P: max_abs=1.621426e-08 max_rel=8.133267e-07 failures=0
+19: O: max_abs=3.489195e-08 max_rel=1.922135e-04 failures=0
+19: PASS row_lengths
+19/46 Test #19: gpu_naive_row_lengths ............   Passed    0.11 sec
+test 20
+      Start 20: gpu_naive_causal_prefix
+
+20: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "causal_prefix" "naive"
+20: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+20: Test timeout computed to be: 120
+20: Variant: naive
+20: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+20: Shape 2,2,33,17 causal
+20: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+20: P: max_abs=5.608216e-08 max_rel=2.751940e-07 failures=0
+20: O: max_abs=5.528022e-08 max_rel=1.460781e-04 failures=0
+20: Shape 2,2,33,17 causal
+20: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+20: P: max_abs=5.608216e-08 max_rel=2.751940e-07 failures=0
+20: O: max_abs=5.528022e-08 max_rel=1.460781e-04 failures=0
+20: PASS causal_prefix
+20/46 Test #20: gpu_naive_causal_prefix ..........   Passed    0.09 sec
+test 21
+      Start 21: gpu_tiled_tiny
+
+21: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "tiny" "tiled"
+21: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+21: Test timeout computed to be: 120
+21: Variant: tiled
+21: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+21: Shape 1,1,2,2 dense
+21: S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+21: P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+21: O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+21: O[0] = 6.697616e+00, 6.604769e+00
+21: O[1] = 3.302385e+00, 1.339523e+01
+21: Shape 1,1,2,2 causal
+21: S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+21: P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+21: O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+21: O[0] = 1.000000e+01, 0.000000e+00
+21: O[1] = 3.302385e+00, 1.339523e+01
+21: PASS tiny
+21/46 Test #21: gpu_tiled_tiny ...................   Passed    0.09 sec
+test 22
+      Start 22: gpu_tiled_singleton
+
+22: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "singleton" "tiled"
+22: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+22: Test timeout computed to be: 120
+22: Variant: tiled
+22: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+22: Shape 2,3,1,7 dense
+22: S: max_abs=3.473289e-08 max_rel=1.182461e-07 failures=0
+22: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+22: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+22: Shape 2,3,1,7 causal
+22: S: max_abs=3.473289e-08 max_rel=1.182461e-07 failures=0
+22: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+22: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+22: PASS singleton
+22/46 Test #22: gpu_tiled_singleton ..............   Passed    0.09 sec
+test 23
+      Start 23: gpu_tiled_uniform
+
+23: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "uniform" "tiled"
+23: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+23: Test timeout computed to be: 120
+23: Variant: tiled
+23: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+23: Shape 2,2,17,7 dense
+23: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+23: P: max_abs=2.191347e-10 max_rel=3.725290e-09 failures=0
+23: O: max_abs=6.145733e-09 max_rel=6.145733e+03 failures=0
+23: Shape 2,2,17,7 causal
+23: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+23: P: max_abs=9.934107e-09 max_rel=5.215406e-08 failures=0
+23: O: max_abs=2.235174e-08 max_rel=7.450581e+03 failures=0
+23: PASS uniform
+23/46 Test #23: gpu_tiled_uniform ................   Passed    0.09 sec
+test 24
+      Start 24: gpu_tiled_stability
+
+24: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "stability" "tiled"
+24: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+24: Test timeout computed to be: 120
+24: Variant: tiled
+24: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+24: Shape 1,1,2,1 dense
+24: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+24: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+24: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+24: Shape 1,1,2,1 causal
+24: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+24: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+24: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+24: PASS stability
+24/46 Test #24: gpu_tiled_stability ..............   Passed    0.09 sec
+test 25
+      Start 25: gpu_tiled_isolation
+
+25: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "isolation" "tiled"
+25: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+25: Test timeout computed to be: 120
+25: Variant: tiled
+25: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+25: Shape 2,3,17,7 dense
+25: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+25: P: max_abs=2.387244e-08 max_rel=2.725675e-07 failures=0
+25: O: max_abs=4.193989e-08 max_rel=2.659337e-05 failures=0
+25: Shape 2,3,17,7 causal
+25: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+25: P: max_abs=6.548373e-08 max_rel=2.477498e-07 failures=0
+25: O: max_abs=7.949540e-08 max_rel=2.562164e-05 failures=0
+25: PASS isolation
+25/46 Test #25: gpu_tiled_isolation ..............   Passed    0.10 sec
+test 26
+      Start 26: gpu_tiled_irregular
+
+26: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "irregular" "tiled"
+26: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+26: Test timeout computed to be: 120
+26: Variant: tiled
+26: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+26: Shape 1,1,33,7 dense
+26: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+26: P: max_abs=1.467490e-08 max_rel=3.554687e-07 failures=0
+26: O: max_abs=2.404592e-08 max_rel=4.116363e-04 failures=0
+26: Shape 1,1,33,7 causal
+26: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+26: P: max_abs=3.578692e-08 max_rel=3.554687e-07 failures=0
+26: O: max_abs=6.078455e-08 max_rel=6.288833e-06 failures=0
+26: Shape 2,2,65,33 dense
+26: S: max_abs=1.104559e-07 max_rel=6.549430e-06 failures=0
+26: P: max_abs=8.345102e-09 max_rel=4.737106e-07 failures=0
+26: O: max_abs=2.186278e-08 max_rel=2.234067e-03 failures=0
+26: Shape 2,2,65,33 causal
+26: S: max_abs=1.104559e-07 max_rel=6.549430e-06 failures=0
+26: P: max_abs=5.625844e-08 max_rel=3.953480e-07 failures=0
+26: O: max_abs=6.834110e-08 max_rel=1.414211e-04 failures=0
+26: Shape 1,2,129,65 dense
+26: S: max_abs=8.787548e-08 max_rel=3.533979e+01 failures=0
+26: P: max_abs=6.430750e-09 max_rel=6.849120e-07 failures=0
+26: O: max_abs=1.687536e-08 max_rel=3.333048e-04 failures=0
+26: Shape 1,2,129,65 causal
+26: S: max_abs=8.787548e-08 max_rel=3.533979e+01 failures=0
+26: P: max_abs=2.700608e-08 max_rel=6.298197e-07 failures=0
+26: O: max_abs=5.996543e-08 max_rel=5.340793e-04 failures=0
+26: PASS irregular
+26/46 Test #26: gpu_tiled_irregular ..............   Passed    0.10 sec
+test 27
+      Start 27: gpu_tiled_row_lengths
+
+27: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "row_lengths" "tiled"
+27: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+27: Test timeout computed to be: 120
+27: Variant: tiled
+27: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+27: Shape 1,1,255,15 dense
+27: S: max_abs=8.854590e-08 max_rel=2.798473e-06 failures=0
+27: P: max_abs=3.185953e-09 max_rel=6.195376e-07 failures=0
+27: O: max_abs=1.525204e-08 max_rel=5.065432e-05 failures=0
+27: Shape 1,1,255,15 causal
+27: S: max_abs=8.854590e-08 max_rel=2.798473e-06 failures=0
+27: P: max_abs=2.507981e-08 max_rel=7.124859e-07 failures=0
+27: O: max_abs=5.957358e-08 max_rel=1.190173e+04 failures=0
+27: Shape 1,1,256,16 dense
+27: S: max_abs=8.110092e-08 max_rel=3.069642e-06 failures=0
+27: P: max_abs=5.831895e-09 max_rel=1.129708e-06 failures=0
+27: O: max_abs=6.964965e-09 max_rel=5.928242e-04 failures=0
+27: Shape 1,1,256,16 causal
+27: S: max_abs=8.110092e-08 max_rel=3.069642e-06 failures=0
+27: P: max_abs=3.377332e-08 max_rel=1.032724e-06 failures=0
+27: O: max_abs=4.825818e-08 max_rel=1.468192e-03 failures=0
+27: Shape 1,1,257,17 dense
+27: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+27: P: max_abs=4.171716e-09 max_rel=8.975799e-07 failures=0
+27: O: max_abs=9.981612e-09 max_rel=4.128244e-05 failures=0
+27: Shape 1,1,257,17 causal
+27: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+27: P: max_abs=1.621426e-08 max_rel=8.133267e-07 failures=0
+27: O: max_abs=3.489195e-08 max_rel=1.922135e-04 failures=0
+27: PASS row_lengths
+27/46 Test #27: gpu_tiled_row_lengths ............   Passed    0.11 sec
+test 28
+      Start 28: gpu_tiled_causal_prefix
+
+28: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "causal_prefix" "tiled"
+28: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+28: Test timeout computed to be: 120
+28: Variant: tiled
+28: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+28: Shape 2,2,33,17 causal
+28: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+28: P: max_abs=5.608216e-08 max_rel=2.751940e-07 failures=0
+28: O: max_abs=5.528022e-08 max_rel=1.460781e-04 failures=0
+28: Shape 2,2,33,17 causal
+28: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+28: P: max_abs=5.608216e-08 max_rel=2.751940e-07 failures=0
+28: O: max_abs=5.528022e-08 max_rel=1.460781e-04 failures=0
+28: PASS causal_prefix
+28/46 Test #28: gpu_tiled_causal_prefix ..........   Passed    0.10 sec
+test 29
+      Start 29: gpu_parallel_tiny
+
+29: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "tiny" "parallel"
+29: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+29: Test timeout computed to be: 120
+29: Variant: parallel
+29: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+29: Shape 1,1,2,2 dense
+29: S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+29: P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+29: O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+29: O[0] = 6.697616e+00, 6.604769e+00
+29: O[1] = 3.302385e+00, 1.339523e+01
+29: Shape 1,1,2,2 causal
+29: S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+29: P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+29: O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+29: O[0] = 1.000000e+01, 0.000000e+00
+29: O[1] = 3.302385e+00, 1.339523e+01
+29: PASS tiny
+29/46 Test #29: gpu_parallel_tiny ................   Passed    0.10 sec
+test 30
+      Start 30: gpu_parallel_singleton
+
+30: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "singleton" "parallel"
+30: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+30: Test timeout computed to be: 120
+30: Variant: parallel
+30: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+30: Shape 2,3,1,7 dense
+30: S: max_abs=3.473289e-08 max_rel=1.182461e-07 failures=0
+30: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+30: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+30: Shape 2,3,1,7 causal
+30: S: max_abs=3.473289e-08 max_rel=1.182461e-07 failures=0
+30: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+30: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+30: PASS singleton
+30/46 Test #30: gpu_parallel_singleton ...........   Passed    0.09 sec
+test 31
+      Start 31: gpu_parallel_uniform
+
+31: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "uniform" "parallel"
+31: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+31: Test timeout computed to be: 120
+31: Variant: parallel
+31: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+31: Shape 2,2,17,7 dense
+31: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+31: P: max_abs=2.191347e-10 max_rel=3.725290e-09 failures=0
+31: O: max_abs=6.145733e-09 max_rel=6.145733e+03 failures=0
+31: Shape 2,2,17,7 causal
+31: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+31: P: max_abs=9.934107e-09 max_rel=5.215406e-08 failures=0
+31: O: max_abs=2.235174e-08 max_rel=7.450581e+03 failures=0
+31: PASS uniform
+31/46 Test #31: gpu_parallel_uniform .............   Passed    0.10 sec
+test 32
+      Start 32: gpu_parallel_stability
+
+32: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "stability" "parallel"
+32: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+32: Test timeout computed to be: 120
+32: Variant: parallel
+32: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+32: Shape 1,1,2,1 dense
+32: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+32: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+32: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+32: Shape 1,1,2,1 causal
+32: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+32: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+32: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+32: PASS stability
+32/46 Test #32: gpu_parallel_stability ...........   Passed    0.10 sec
+test 33
+      Start 33: gpu_parallel_isolation
+
+33: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "isolation" "parallel"
+33: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+33: Test timeout computed to be: 120
+33: Variant: parallel
+33: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+33: Shape 2,3,17,7 dense
+33: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+33: P: max_abs=1.497326e-08 max_rel=1.732099e-07 failures=0
+33: O: max_abs=3.363043e-08 max_rel=1.787528e-05 failures=0
+33: Shape 2,3,17,7 causal
+33: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+33: P: max_abs=6.548373e-08 max_rel=2.650852e-07 failures=0
+33: O: max_abs=7.949540e-08 max_rel=2.995398e-05 failures=0
+33: PASS isolation
+33/46 Test #33: gpu_parallel_isolation ...........   Passed    0.10 sec
+test 34
+      Start 34: gpu_parallel_irregular
+
+34: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "irregular" "parallel"
+34: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+34: Test timeout computed to be: 120
+34: Variant: parallel
+34: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+34: Shape 1,1,33,7 dense
+34: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+34: P: max_abs=5.807422e-09 max_rel=1.806896e-07 failures=0
+34: O: max_abs=1.853540e-08 max_rel=4.001500e-04 failures=0
+34: Shape 1,1,33,7 causal
+34: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+34: P: max_abs=4.343885e-08 max_rel=1.894202e-07 failures=0
+34: O: max_abs=6.078455e-08 max_rel=6.493313e-06 failures=0
+34: Shape 2,2,65,33 dense
+34: S: max_abs=1.104559e-07 max_rel=6.549430e-06 failures=0
+34: P: max_abs=4.566381e-09 max_rel=2.934092e-07 failures=0
+34: O: max_abs=1.751755e-08 max_rel=1.126479e-03 failures=0
+34: Shape 2,2,65,33 causal
+34: S: max_abs=1.104559e-07 max_rel=6.549430e-06 failures=0
+34: P: max_abs=5.625844e-08 max_rel=3.012142e-07 failures=0
+34: O: max_abs=6.834110e-08 max_rel=2.298316e-04 failures=0
+34: Shape 1,2,129,65 dense
+34: S: max_abs=8.787548e-08 max_rel=3.533979e+01 failures=0
+34: P: max_abs=2.327486e-09 max_rel=2.179125e-07 failures=0
+34: O: max_abs=1.806585e-08 max_rel=2.838893e-04 failures=0
+34: Shape 1,2,129,65 causal
+34: S: max_abs=8.787548e-08 max_rel=3.533979e+01 failures=0
+34: P: max_abs=2.700608e-08 max_rel=2.327468e-07 failures=0
+34: O: max_abs=5.996543e-08 max_rel=4.173511e-04 failures=0
+34: PASS irregular
+34/46 Test #34: gpu_parallel_irregular ...........   Passed    0.11 sec
+test 35
+      Start 35: gpu_parallel_row_lengths
+
+35: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "row_lengths" "parallel"
+35: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+35: Test timeout computed to be: 120
+35: Variant: parallel
+35: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+35: Shape 1,1,255,15 dense
+35: S: max_abs=8.854590e-08 max_rel=2.798473e-06 failures=0
+35: P: max_abs=9.576286e-10 max_rel=1.961115e-07 failures=0
+35: O: max_abs=1.211430e-08 max_rel=1.134475e-04 failures=0
+35: Shape 1,1,255,15 causal
+35: S: max_abs=8.854590e-08 max_rel=2.798473e-06 failures=0
+35: P: max_abs=2.507981e-08 max_rel=2.309264e-07 failures=0
+35: O: max_abs=5.979356e-08 max_rel=1.088574e+04 failures=0
+35: Shape 1,1,256,16 dense
+35: S: max_abs=8.110092e-08 max_rel=3.069642e-06 failures=0
+35: P: max_abs=1.019092e-09 max_rel=1.810342e-07 failures=0
+35: O: max_abs=5.430447e-09 max_rel=2.853869e-03 failures=0
+35: Shape 1,1,256,16 causal
+35: S: max_abs=8.110092e-08 max_rel=3.069642e-06 failures=0
+35: P: max_abs=2.697454e-08 max_rel=2.876780e-07 failures=0
+35: O: max_abs=4.825818e-08 max_rel=1.051527e-03 failures=0
+35: Shape 1,1,257,17 dense
+35: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+35: P: max_abs=8.942005e-10 max_rel=2.271985e-07 failures=0
+35: O: max_abs=7.029134e-09 max_rel=2.176029e-05 failures=0
+35: Shape 1,1,257,17 causal
+35: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+35: P: max_abs=2.815899e-08 max_rel=2.336809e-07 failures=0
+35: O: max_abs=5.428146e-08 max_rel=3.421983e-04 failures=0
+35: PASS row_lengths
+35/46 Test #35: gpu_parallel_row_lengths .........   Passed    0.11 sec
+test 36
+      Start 36: gpu_parallel_causal_prefix
+
+36: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "causal_prefix" "parallel"
+36: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+36: Test timeout computed to be: 120
+36: Variant: parallel
+36: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+36: Shape 2,2,33,17 causal
+36: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+36: P: max_abs=5.392709e-08 max_rel=2.144139e-07 failures=0
+36: O: max_abs=6.677928e-08 max_rel=1.201905e-04 failures=0
+36: Shape 2,2,33,17 causal
+36: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+36: P: max_abs=5.392709e-08 max_rel=2.144139e-07 failures=0
+36: O: max_abs=6.677928e-08 max_rel=1.201905e-04 failures=0
+36: PASS causal_prefix
+36/46 Test #36: gpu_parallel_causal_prefix .......   Passed    0.10 sec
+test 37
+      Start 37: gpu_optimized_tiny
+
+37: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "tiny" "optimized"
+37: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+37: Test timeout computed to be: 120
+37: Variant: optimized
+37: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+37: Shape 1,1,2,2 dense
+37: S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+37: P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+37: O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+37: O[0] = 6.697616e+00, 6.604769e+00
+37: O[1] = 3.302385e+00, 1.339523e+01
+37: Shape 1,1,2,2 causal
+37: S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+37: P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+37: O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+37: O[0] = 1.000000e+01, 0.000000e+00
+37: O[1] = 3.302385e+00, 1.339523e+01
+37: PASS tiny
+37/46 Test #37: gpu_optimized_tiny ...............   Passed    0.09 sec
+test 38
+      Start 38: gpu_optimized_singleton
+
+38: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "singleton" "optimized"
+38: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+38: Test timeout computed to be: 120
+38: Variant: optimized
+38: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+38: Shape 2,3,1,7 dense
+38: S: max_abs=3.473289e-08 max_rel=1.182461e-07 failures=0
+38: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+38: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+38: Shape 2,3,1,7 causal
+38: S: max_abs=3.473289e-08 max_rel=1.182461e-07 failures=0
+38: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+38: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+38: PASS singleton
+38/46 Test #38: gpu_optimized_singleton ..........   Passed    0.09 sec
+test 39
+      Start 39: gpu_optimized_uniform
+
+39: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "uniform" "optimized"
+39: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+39: Test timeout computed to be: 120
+39: Variant: optimized
+39: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+39: Shape 2,2,17,7 dense
+39: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+39: P: max_abs=2.191347e-10 max_rel=3.725290e-09 failures=0
+39: O: max_abs=6.145733e-09 max_rel=6.145733e+03 failures=0
+39: Shape 2,2,17,7 causal
+39: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+39: P: max_abs=9.934107e-09 max_rel=5.215406e-08 failures=0
+39: O: max_abs=2.235174e-08 max_rel=7.450581e+03 failures=0
+39: PASS uniform
+39/46 Test #39: gpu_optimized_uniform ............   Passed    0.09 sec
+test 40
+      Start 40: gpu_optimized_stability
+
+40: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "stability" "optimized"
+40: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+40: Test timeout computed to be: 120
+40: Variant: optimized
+40: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+40: Shape 1,1,2,1 dense
+40: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+40: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+40: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+40: Shape 1,1,2,1 causal
+40: S: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+40: P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+40: O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+40: PASS stability
+40/46 Test #40: gpu_optimized_stability ..........   Passed    0.09 sec
+test 41
+      Start 41: gpu_optimized_isolation
+
+41: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "isolation" "optimized"
+41: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+41: Test timeout computed to be: 120
+41: Variant: optimized
+41: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+41: Shape 2,3,17,7 dense
+41: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+41: P: max_abs=1.497326e-08 max_rel=1.732099e-07 failures=0
+41: O: max_abs=3.363043e-08 max_rel=1.787528e-05 failures=0
+41: Shape 2,3,17,7 causal
+41: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+41: P: max_abs=6.548373e-08 max_rel=2.650852e-07 failures=0
+41: O: max_abs=7.949540e-08 max_rel=2.995398e-05 failures=0
+41: PASS isolation
+41/46 Test #41: gpu_optimized_isolation ..........   Passed    0.09 sec
+test 42
+      Start 42: gpu_optimized_irregular
+
+42: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "irregular" "optimized"
+42: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+42: Test timeout computed to be: 120
+42: Variant: optimized
+42: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+42: Shape 1,1,33,7 dense
+42: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+42: P: max_abs=5.807422e-09 max_rel=1.806896e-07 failures=0
+42: O: max_abs=1.853540e-08 max_rel=4.001500e-04 failures=0
+42: Shape 1,1,33,7 causal
+42: S: max_abs=6.672995e-08 max_rel=7.075473e+00 failures=0
+42: P: max_abs=4.343885e-08 max_rel=1.894202e-07 failures=0
+42: O: max_abs=6.078455e-08 max_rel=6.493313e-06 failures=0
+42: Shape 2,2,65,33 dense
+42: S: max_abs=1.104559e-07 max_rel=6.549430e-06 failures=0
+42: P: max_abs=4.566381e-09 max_rel=2.934092e-07 failures=0
+42: O: max_abs=1.751755e-08 max_rel=1.126479e-03 failures=0
+42: Shape 2,2,65,33 causal
+42: S: max_abs=1.104559e-07 max_rel=6.549430e-06 failures=0
+42: P: max_abs=5.625844e-08 max_rel=3.012142e-07 failures=0
+42: O: max_abs=6.834110e-08 max_rel=2.298316e-04 failures=0
+42: Shape 1,2,129,65 dense
+42: S: max_abs=8.787548e-08 max_rel=3.533979e+01 failures=0
+42: P: max_abs=2.327486e-09 max_rel=2.179125e-07 failures=0
+42: O: max_abs=1.806585e-08 max_rel=2.838893e-04 failures=0
+42: Shape 1,2,129,65 causal
+42: S: max_abs=8.787548e-08 max_rel=3.533979e+01 failures=0
+42: P: max_abs=2.700608e-08 max_rel=2.327468e-07 failures=0
+42: O: max_abs=5.996543e-08 max_rel=4.173511e-04 failures=0
+42: PASS irregular
+42/46 Test #42: gpu_optimized_irregular ..........   Passed    0.10 sec
+test 43
+      Start 43: gpu_optimized_row_lengths
+
+43: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "row_lengths" "optimized"
+43: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+43: Test timeout computed to be: 120
+43: Variant: optimized
+43: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+43: Shape 1,1,255,15 dense
+43: S: max_abs=8.854590e-08 max_rel=2.798473e-06 failures=0
+43: P: max_abs=9.576286e-10 max_rel=1.961115e-07 failures=0
+43: O: max_abs=1.211430e-08 max_rel=1.134475e-04 failures=0
+43: Shape 1,1,255,15 causal
+43: S: max_abs=8.854590e-08 max_rel=2.798473e-06 failures=0
+43: P: max_abs=2.507981e-08 max_rel=2.309264e-07 failures=0
+43: O: max_abs=5.979356e-08 max_rel=1.088574e+04 failures=0
+43: Shape 1,1,256,16 dense
+43: S: max_abs=8.110092e-08 max_rel=3.069642e-06 failures=0
+43: P: max_abs=1.019092e-09 max_rel=1.810342e-07 failures=0
+43: O: max_abs=5.430447e-09 max_rel=2.853869e-03 failures=0
+43: Shape 1,1,256,16 causal
+43: S: max_abs=8.110092e-08 max_rel=3.069642e-06 failures=0
+43: P: max_abs=2.697454e-08 max_rel=2.876780e-07 failures=0
+43: O: max_abs=4.825818e-08 max_rel=1.051527e-03 failures=0
+43: Shape 1,1,257,17 dense
+43: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+43: P: max_abs=8.942005e-10 max_rel=2.271985e-07 failures=0
+43: O: max_abs=7.029134e-09 max_rel=2.176029e-05 failures=0
+43: Shape 1,1,257,17 causal
+43: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+43: P: max_abs=2.815899e-08 max_rel=2.336809e-07 failures=0
+43: O: max_abs=5.428146e-08 max_rel=3.421983e-04 failures=0
+43: PASS row_lengths
+43/46 Test #43: gpu_optimized_row_lengths ........   Passed    0.11 sec
+test 44
+      Start 44: gpu_optimized_causal_prefix
+
+44: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe "causal_prefix" "optimized"
+44: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/gpu_baseline
+44: Test timeout computed to be: 120
+44: Variant: optimized
+44: NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+44: Shape 2,2,33,17 causal
+44: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+44: P: max_abs=5.392709e-08 max_rel=2.144139e-07 failures=0
+44: O: max_abs=6.677928e-08 max_rel=1.201905e-04 failures=0
+44: Shape 2,2,33,17 causal
+44: S: max_abs=6.478903e-08 max_rel=2.947603e-06 failures=0
+44: P: max_abs=5.392709e-08 max_rel=2.144139e-07 failures=0
+44: O: max_abs=6.677928e-08 max_rel=1.201905e-04 failures=0
+44: PASS causal_prefix
+44/46 Test #44: gpu_optimized_causal_prefix ......   Passed    0.09 sec
+test 45
+      Start 45: benchmark_harness
+
+45: Test command: D:\Code_Python\CEG5206-part-a\repo\build-gpu\benchmarks\Release\benchmark_harness_tests.exe
+45: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/benchmarks
+45: Test timeout computed to be: 10000000
+45: PASS shared inputs, legacy compatibility, shape overflow and quantiles
+45/46 Test #45: benchmark_harness ................   Passed    0.01 sec
+test 46
+      Start 46: gpu_benchmark_smoke
+
+46: Test command: "C:\Program Files\CMake\bin\cmake.exe" "-DBENCHMARK_EXE=D:/Code_Python/CEG5206-part-a/repo/build-gpu/benchmarks/Release/attention_benchmark.exe" "-DRESULT_ROOT=D:/Code_Python/CEG5206-part-a/repo/build-gpu/benchmarks/smoke-results" "-P" "D:/Code_Python/CEG5206-part-a/repo/benchmarks/tests/run_gpu_smoke.cmake"
+46: Working Directory: D:/Code_Python/CEG5206-part-a/repo/build-gpu/benchmarks
+46: Test timeout computed to be: 180
+46: PASS representative CPU/GPU gate
+46: 1,1,17,7,dense,naive,8,128 median_ms=0.016464 IQR_ms=0.001832
+46: 1,1,17,7,dense,naive,16,256 median_ms=0.021456 IQR_ms=0.010208
+46: 1,1,17,7,dense,naive,32,256 median_ms=0.016352 IQR_ms=0.001528
+46: 1,1,17,7,dense,tiled,8,128 median_ms=0.016448 IQR_ms=0.005136
+46: 1,1,17,7,dense,tiled,16,256 median_ms=0.016048 IQR_ms=0.001864
+46: 1,1,17,7,dense,tiled,32,256 median_ms=0.019248 IQR_ms=0.001912
+46: 1,1,17,7,dense,parallel,8,128 median_ms=0.012656 IQR_ms=0.002224
+46: 1,1,17,7,dense,parallel,16,256 median_ms=0.01248 IQR_ms=0.001864
+46: 1,1,17,7,dense,parallel,32,256 median_ms=0.013504 IQR_ms=0.003024
+46: 1,1,17,7,dense,optimized,8,128 median_ms=0.021824 IQR_ms=0.01368
+46: 1,1,17,7,dense,optimized,16,256 median_ms=0.015744 IQR_ms=0.010304
+46: 1,1,17,7,dense,optimized,32,256 median_ms=0.015168 IQR_ms=0.002536
+46: 1,1,17,7,causal,naive,8,128 median_ms=0.027568 IQR_ms=0.022744
+46: 1,1,17,7,causal,naive,16,256 median_ms=0.016384 IQR_ms=0.002208
+46: 1,1,17,7,causal,naive,32,256 median_ms=0.016336 IQR_ms=0.0118
+46: 1,1,17,7,causal,tiled,8,128 median_ms=0.017632 IQR_ms=0.008224
+46: 1,1,17,7,causal,tiled,16,256 median_ms=0.028032 IQR_ms=0.012088
+46: 1,1,17,7,causal,tiled,32,256 median_ms=0.01688 IQR_ms=0.002992
+46: 1,1,17,7,causal,parallel,8,128 median_ms=0.022032 IQR_ms=0.013592
+46: 1,1,17,7,causal,parallel,16,256 median_ms=0.014336 IQR_ms=0.001448
+46: 1,1,17,7,causal,parallel,32,256 median_ms=0.013456 IQR_ms=0.00192
+46: 1,1,17,7,causal,optimized,8,128 median_ms=0.025664 IQR_ms=0.004936
+46: 1,1,17,7,causal,optimized,16,256 median_ms=0.026656 IQR_ms=0.014448
+46: 1,1,17,7,causal,optimized,32,256 median_ms=0.01632 IQR_ms=0.00192
+46: PASS benchmark; results=D:/Code_Python/CEG5206-part-a/repo/build-gpu/benchmarks/smoke-results/145d3c76563d
+46/46 Test #46: gpu_benchmark_smoke ..............   Passed    0.33 sec
+
+100% tests passed out of 46
+
+Label Time Summary:
+GPU          =   3.47 sec*proc (33 tests)
+benchmark    =   0.33 sec*proc (1 test)
+naive        =   0.79 sec*proc (8 tests)
+optimized    =   0.77 sec*proc (8 tests)
+parallel     =   0.79 sec*proc (8 tests)
+tiled        =   0.78 sec*proc (8 tests)
+
+Total Test time (real) =   3.69 sec
+PASS representative CPU/GPU gate
+4,8,256,64,dense,optimized,8,128 median_ms=0.392096 IQR_ms=0.00132001
+4,8,256,64,dense,optimized,16,256 median_ms=0.359712 IQR_ms=0.001312
+4,8,256,64,dense,optimized,32,256 median_ms=0.430432 IQR_ms=0.00116
+4,8,256,64,causal,optimized,8,128 median_ms=0.315856 IQR_ms=0.001344
+4,8,256,64,causal,optimized,16,256 median_ms=0.305808 IQR_ms=0.001224
+4,8,256,64,causal,optimized,32,256 median_ms=0.367488 IQR_ms=0.00126402
+4,8,1024,64,dense,optimized,8,128 median_ms=6.27459 IQR_ms=0.285944
+4,8,1024,64,dense,optimized,16,256 median_ms=5.02786 IQR_ms=0.0170398
+4,8,1024,64,dense,optimized,32,256 median_ms=6.37037 IQR_ms=0.237264
+4,8,1024,64,causal,optimized,8,128 median_ms=4.80829 IQR_ms=0.19368
+4,8,1024,64,causal,optimized,16,256 median_ms=3.95446 IQR_ms=0.162712
+4,8,1024,64,causal,optimized,32,256 median_ms=5.11413 IQR_ms=0.16764
+PASS benchmark; results=D:\Code_Python\CEG5206-part-a\repo\results\gpu-benchmarks\2026-10-13T105851Z-645406\benchmark
+Results: D:\Code_Python\CEG5206-part-a\repo\results\gpu-benchmarks\2026-10-13T105851Z-645406

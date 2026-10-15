@@ -1,0 +1,1 @@
+PASS: build, CTest and selected benchmark completed. Profiling is a separate step.

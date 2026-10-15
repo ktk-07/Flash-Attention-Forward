@@ -1,0 +1,2 @@
+B,H,N,d,mode,variant,tile,softmax_threads,status
+4,8,2048,64,dense,optimized,16,128,PROFILED

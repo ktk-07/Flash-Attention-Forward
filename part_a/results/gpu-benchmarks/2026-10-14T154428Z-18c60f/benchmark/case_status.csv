@@ -1,0 +1,17 @@
+B,H,N,d,mode,variant,tile,softmax_threads,status
+4,8,256,64,dense,optimized,8,256,PASS
+4,8,256,64,dense,optimized,16,256,PASS
+4,8,256,64,dense,optimized,32,256,PASS
+4,8,256,64,dense,optimized,16,128,PASS
+4,8,256,64,causal,optimized,8,256,PASS
+4,8,256,64,causal,optimized,16,256,PASS
+4,8,256,64,causal,optimized,32,256,PASS
+4,8,256,64,causal,optimized,16,128,PASS
+4,8,1024,64,dense,optimized,8,256,PASS
+4,8,1024,64,dense,optimized,16,256,PASS
+4,8,1024,64,dense,optimized,32,256,PASS
+4,8,1024,64,dense,optimized,16,128,PASS
+4,8,1024,64,causal,optimized,8,256,PASS
+4,8,1024,64,causal,optimized,16,256,PASS
+4,8,1024,64,causal,optimized,32,256,PASS
+4,8,1024,64,causal,optimized,16,128,PASS

@@ -1,0 +1,1 @@
+FAIL: Failed to find real location of D:\Anaconda\python.exe

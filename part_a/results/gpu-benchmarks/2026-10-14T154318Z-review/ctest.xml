@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="18"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname=""
+	time="0"
+	timestamp="2026-10-14T23:49:22"
+	>
+	<testcase name="tiny" classname="tiny" time="0.0127568" status="run">
+		<properties/>
+		<system-out>PASS tiny
+</system-out>
+	</testcase>
+	<testcase name="singleton" classname="singleton" time="0.0079966" status="run">
+		<properties/>
+		<system-out>PASS singleton
+</system-out>
+	</testcase>
+	<testcase name="uniform" classname="uniform" time="0.0062864" status="run">
+		<properties/>
+		<system-out>PASS uniform
+</system-out>
+	</testcase>
+	<testcase name="stability" classname="stability" time="0.0061803" status="run">
+		<properties/>
+		<system-out>PASS stability
+</system-out>
+	</testcase>
+	<testcase name="isolation" classname="isolation" time="0.0060942" status="run">
+		<properties/>
+		<system-out>PASS isolation
+</system-out>
+	</testcase>
+	<testcase name="causal_prefix" classname="causal_prefix" time="0.0059688" status="run">
+		<properties/>
+		<system-out>PASS causal_prefix
+</system-out>
+	</testcase>
+	<testcase name="irregular" classname="irregular" time="0.0123741" status="run">
+		<properties/>
+		<system-out>PASS irregular
+</system-out>
+	</testcase>
+	<testcase name="validation" classname="validation" time="0.006017" status="run">
+		<properties/>
+		<system-out>PASS validation
+</system-out>
+	</testcase>
+	<testcase name="compare_tolerance" classname="compare_tolerance" time="0.0096978" status="run">
+		<properties/>
+		<system-out>PASS comparator tolerance
+</system-out>
+	</testcase>
+	<testcase name="compare_nonfinite" classname="compare_nonfinite" time="0.005875" status="run">
+		<properties/>
+		<system-out>PASS comparator nonfinite
+</system-out>
+	</testcase>
+	<testcase name="compare_metrics" classname="compare_metrics" time="0.005954" status="run">
+		<properties/>
+		<system-out>PASS comparator metrics
+</system-out>
+	</testcase>
+	<testcase name="compare_validation" classname="compare_validation" time="0.0061839" status="run">
+		<properties/>
+		<system-out>PASS comparator validation
+</system-out>
+	</testcase>
+	<testcase name="gpu_naive" classname="gpu_naive" time="0.132791" status="run">
+		<properties>
+			<property name="cmake_labels" value="GPU;naive"/>
+		</properties>
+		<system-out>Variant: naive
+NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+Case: tiny
+Shape 1,1,2,2 dense
+S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+O[0] = 6.697616e+00, 6.604769e+00
+O[1] = 3.302385e+00, 1.339523e+01
+Shape 1,1,2,2 causal
+S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+O[0] = 1.000000e+01, 0.000000e+00
+O[1] = 3.302385e+00, 1.339523e+01
+PASS tiny
+Case: singleton
+Shape 2,3,1,7 dense
+S: max_abs=5.175836e-08 max_rel=1.509814e-07 failures=0
+P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+Shape 2,3,1,7 causal
+S: max_abs=5.175836e-08 max_rel=1.509814e-07 failures=0
+P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+PASS si...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="gpu_tiled" classname="gpu_tiled" time="0.12505" status="run">
+		<properties>
+			<property name="cmake_labels" value="GPU;tiled"/>
+		</properties>
+		<system-out>Variant: tiled
+NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+Case: tiny
+Shape 1,1,2,2 dense
+S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+O[0] = 6.697616e+00, 6.604769e+00
+O[1] = 3.302385e+00, 1.339523e+01
+Shape 1,1,2,2 causal
+S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+O[0] = 1.000000e+01, 0.000000e+00
+O[1] = 3.302385e+00, 1.339523e+01
+PASS tiny
+Case: singleton
+Shape 2,3,1,7 dense
+S: max_abs=5.175836e-08 max_rel=1.509814e-07 failures=0
+P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+Shape 2,3,1,7 causal
+S: max_abs=5.175836e-08 max_rel=1.509814e-07 failures=0
+P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+PASS si...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="gpu_parallel" classname="gpu_parallel" time="0.120336" status="run">
+		<properties>
+			<property name="cmake_labels" value="GPU;parallel"/>
+		</properties>
+		<system-out>Variant: parallel
+NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+Case: tiny
+Shape 1,1,2,2 dense
+S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+O[0] = 6.697616e+00, 6.604769e+00
+O[1] = 3.302385e+00, 1.339523e+01
+Shape 1,1,2,2 causal
+S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+O[0] = 1.000000e+01, 0.000000e+00
+O[1] = 3.302385e+00, 1.339523e+01
+PASS tiny
+Case: singleton
+Shape 2,3,1,7 dense
+S: max_abs=5.175836e-08 max_rel=1.509814e-07 failures=0
+P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+Shape 2,3,1,7 causal
+S: max_abs=5.175836e-08 max_rel=1.509814e-07 failures=0
+P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+PASS...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="gpu_optimized" classname="gpu_optimized" time="0.120711" status="run">
+		<properties>
+			<property name="cmake_labels" value="GPU;optimized"/>
+		</properties>
+		<system-out>Variant: optimized
+NVIDIA GeForce RTX 5060 Ti; compute capability 12.0; VRAM bytes 8546484224
+Case: tiny
+Shape 1,1,2,2 dense
+S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+O[0] = 6.697616e+00, 6.604769e+00
+O[1] = 3.302385e+00, 1.339523e+01
+Shape 1,1,2,2 causal
+S: max_abs=1.210162e-08 max_rel=1.711427e-08 failures=0
+P: max_abs=1.082110e-08 max_rel=3.276754e-08 failures=0
+O: max_abs=2.604151e-07 max_rel=3.276754e-08 failures=0
+O[0] = 1.000000e+01, 0.000000e+00
+O[1] = 3.302385e+00, 1.339523e+01
+PASS tiny
+Case: singleton
+Shape 2,3,1,7 dense
+S: max_abs=5.175836e-08 max_rel=1.509814e-07 failures=0
+P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+Shape 2,3,1,7 causal
+S: max_abs=5.175836e-08 max_rel=1.509814e-07 failures=0
+P: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+O: max_abs=0.000000e+00 max_rel=0.000000e+00 failures=0
+PAS...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="benchmark_harness" classname="benchmark_harness" time="0.0084023" status="run">
+		<properties/>
+		<system-out>PASS shared inputs, shape overflow and quantiles
+</system-out>
+	</testcase>
+	<testcase name="gpu_config_validation" classname="gpu_config_validation" time="0.217166" status="run">
+		<properties>
+			<property name="cmake_labels" value="GPU;validation"/>
+		</properties>
+		<system-out>PASS representative CPU/GPU gate
+PASS configuration validation
+</system-out>
+	</testcase>
+</testsuite>

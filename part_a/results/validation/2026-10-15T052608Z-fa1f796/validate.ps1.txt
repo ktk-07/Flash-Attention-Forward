@@ -1,0 +1,39 @@
+param([switch]$ResumeAfterCTest)
+$ErrorActionPreference = 'Stop'
+$record = $PSScriptRoot
+Set-Location (Resolve-Path "$PSScriptRoot/../../..")
+function Run([string]$Name, [string]$Program, [string[]]$Arguments) {
+    "$Program $($Arguments -join ' ')" | Add-Content "$record/commands.txt"
+    $savedPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & $Program @Arguments 2>&1 | Tee-Object "$record/$Name.log"
+        $code = $LASTEXITCODE
+    } finally { $ErrorActionPreference = $savedPreference }
+    "$Name=$code" | Add-Content "$record/exit-codes.txt"
+    if ($code -ne 0) { throw "$Name failed: $code" }
+}
+try {
+    if (-not $ResumeAfterCTest) {
+    Run 'ancestry' git @('merge-base','--is-ancestor','fa1f796','HEAD')
+    Run 'source' git @('show','--no-patch','--format=fuller','HEAD')
+    "OS: $([Environment]::OSVersion.VersionString); 64-bit OS: $([Environment]::Is64BitOperatingSystem); PowerShell: $($PSVersionTable.PSVersion)" | Out-File "$record/environment.txt"
+    Get-ChildItem Env: | Where-Object Name -Match '^(CUDA|VSCMD|VCTools|WindowsSDK|PROCESSOR|VSLANG|DOTNET_CLI_UI_LANGUAGE)' | Out-File "$record/environment.txt" -Append
+    Run 'gpu' nvidia-smi @()
+    Run 'cuda' nvcc @('--version')
+    Run 'cmake-version' cmake @('--version')
+    Run 'compiler' where.exe @('cl')
+    Run 'python-version' python @('--version')
+    Run 'configure' cmake @('-S','.', '-B','build-gpu','-G','Visual Studio 17 2022','-A','x64','-DPART_A_ENABLE_CUDA=ON','-DCMAKE_CUDA_ARCHITECTURES=120','-DPART_A_PROFILE_INFO=OFF')
+    Run 'build' cmake @('--build','build-gpu','--config','Release')
+    Run 'ctest' ctest @('--test-dir','build-gpu','-C','Release','--verbose','--output-on-failure')
+    }
+    Run 'analyzer-tests' python @('benchmarks/tests/analyzer_tests.py')
+    Run 'gpu-before' nvidia-smi @('--query-gpu=name,driver_version,pstate,temperature.gpu,power.draw,power.limit,clocks.sm,clocks.mem,utilization.gpu','--format=csv')
+    Run 'benchmark' './build-gpu/benchmarks/Release/attention_benchmark.exe' @('--grid','representative','--variants','main','--configs','default','--tile','16','--softmax-threads','128','--warmup','5','--repeats','20','--output',"$record/benchmark")
+    Run 'gpu-after' nvidia-smi @('--query-gpu=name,driver_version,pstate,temperature.gpu,power.draw,power.limit,clocks.sm,clocks.mem,utilization.gpu','--format=csv')
+    'PASS' | Set-Content "$record/status.txt"
+} catch {
+    "FAIL: $_" | Set-Content "$record/status.txt"
+    throw
+}

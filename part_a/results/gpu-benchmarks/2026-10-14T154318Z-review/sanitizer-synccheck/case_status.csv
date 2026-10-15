@@ -1,0 +1,9 @@
+B,H,N,d,mode,variant,tile,softmax_threads,status
+1,1,33,33,dense,optimized,8,256,PROFILED
+1,1,33,33,dense,optimized,16,256,PROFILED
+1,1,33,33,dense,optimized,32,256,PROFILED
+1,1,33,33,dense,optimized,16,128,PROFILED
+1,1,33,33,causal,optimized,8,256,PROFILED
+1,1,33,33,causal,optimized,16,256,PROFILED
+1,1,33,33,causal,optimized,32,256,PROFILED
+1,1,33,33,causal,optimized,16,128,PROFILED

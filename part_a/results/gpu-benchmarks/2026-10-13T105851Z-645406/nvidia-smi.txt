@@ -1,0 +1,41 @@
+[English transcription; unrelated process names omitted; original SHA-256 recorded in results/log_sources.csv]
+Tue Oct 13 18:58:51 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 610.88                 KMD Version: 610.88        CUDA UMD Version: 13.3     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                  Driver-Model | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 5060 Ti   WDDM  |   00000000:01:00.0  On |                  N/A |
+|  0%   35C    P3             20W /  180W |     729MiB /   8151MiB |      1%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A            4568    C+G   ...em32\ApplicationFrameHost.exe      N/A      |
+|    0   N/A  N/A            6544    C+G   ...8bbwe\PhoneExperienceHost.exe      N/A      |
+|    0   N/A  N/A            7004    C+G   [background-process]      N/A      |
+|    0   N/A  N/A            7576    C+G   ...iles\Riot Vanguard\vgtray.exe      N/A      |
+|    0   N/A  N/A            8608    C+G   ...2p2nqsd0c76g0\app\ChatGPT.exe      N/A      |
+|    0   N/A  N/A            9104    C+G   C:\Windows\explorer.exe               N/A      |
+|    0   N/A  N/A            9152    C+G   ...indows\System32\ShellHost.exe      N/A      |
+|    0   N/A  N/A            9508    C+G   ...2txyewy\CrossDeviceResume.exe      N/A      |
+|    0   N/A  N/A            9924    C+G   ...IA App\CEF\NVIDIA Overlay.exe      N/A      |
+|    0   N/A  N/A           10740    C+G   ...IA App\CEF\NVIDIA Overlay.exe      N/A      |
+|    0   N/A  N/A           11320    C+G   ..._cw5n1h2txyewy\SearchHost.exe      N/A      |
+|    0   N/A  N/A           11352    C+G   ...y\StartMenuExperienceHost.exe      N/A      |
+|    0   N/A  N/A           11716    C+G   ...cw5n1h2txyewy\WidgetBoard.exe      N/A      |
+|    0   N/A  N/A           13780    C+G   ...xyewy\ShellExperienceHost.exe      N/A      |
+|    0   N/A  N/A           14400    C+G   ....0.4258.62\msedgewebview2.exe      N/A      |
+|    0   N/A  N/A           15636    C+G   ...2p2nqsd0c76g0\app\ChatGPT.exe      N/A      |
+|    0   N/A  N/A           16468    C+G   ...Chrome\Application\chrome.exe      N/A      |
+|    0   N/A  N/A           17324    C+G   ...5n1h2txyewy\TextInputHost.exe      N/A      |
+|    0   N/A  N/A           18276    C+G   ...t\Edge\Application\msedge.exe      N/A      |
+|    0   N/A  N/A           18944    C+G   ...ntrolPanel\SystemSettings.exe      N/A      |
+|    0   N/A  N/A           20048    C+G   ...Chrome\Application\chrome.exe      N/A      |
++-----------------------------------------------------------------------------------------+

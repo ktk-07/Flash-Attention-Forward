@@ -1,0 +1,17 @@
+git merge-base --is-ancestor fa1f796 HEAD
+git show --no-patch --format=fuller HEAD
+git merge-base --is-ancestor fa1f796 HEAD
+git show --no-patch --format=fuller HEAD
+nvidia-smi 
+nvcc --version
+cmake --version
+where.exe cl
+python --version
+cmake -S . -B build-gpu -G Visual Studio 17 2022 -A x64 -DPART_A_ENABLE_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=120 -DPART_A_PROFILE_INFO=OFF
+cmake --build build-gpu --config Release
+ctest --test-dir build-gpu -C Release --verbose --output-on-failure
+python benchmarks/tests/analyzer_tests.py
+python benchmarks/tests/analyzer_tests.py
+nvidia-smi --query-gpu=name,driver_version,pstate,temperature.gpu,power.draw,power.limit,clocks.sm,clocks.mem,utilization.gpu --format=csv
+./build-gpu/benchmarks/Release/attention_benchmark.exe --grid representative --variants main --configs default --tile 16 --softmax-threads 128 --warmup 5 --repeats 20 --output D:\Code_Python\CEG5206-part-a\repo\results\validation\2026-10-15T052608Z-fa1f796/benchmark
+nvidia-smi --query-gpu=name,driver_version,pstate,temperature.gpu,power.draw,power.limit,clocks.sm,clocks.mem,utilization.gpu --format=csv

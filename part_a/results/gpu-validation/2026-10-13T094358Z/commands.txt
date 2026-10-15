@@ -1,0 +1,8 @@
+build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe tiny naive
+build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe tiny optimized
+C:\Program Files\CMake\bin\ctest.exe --test-dir build-gpu -C Release -N
+C:\Program Files\CMake\bin\ctest.exe --test-dir build-gpu -C Release --verbose --output-log results\gpu-validation\2026-10-13T094358Z\ctest-native.log --output-junit results\gpu-validation\2026-10-13T094358Z\ctest.xml
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.4\compute-sanitizer\compute-sanitizer.exe --tool memcheck --error-exitcode 99 build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe irregular naive
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.4\compute-sanitizer\compute-sanitizer.exe --tool memcheck --error-exitcode 99 build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe irregular optimized
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.4\compute-sanitizer\compute-sanitizer.exe --tool racecheck --error-exitcode 99 build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe irregular optimized
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.4\compute-sanitizer\compute-sanitizer.exe --tool synccheck --error-exitcode 99 build-gpu\gpu_baseline\Release\gpu_baseline_tests.exe row_lengths optimized

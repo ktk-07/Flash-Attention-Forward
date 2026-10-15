@@ -1,0 +1,10 @@
+MSBuild version 17.14.60+43b635718 for .NET Framework
+
+  attention_gpu_baseline.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu-profile\gpu_baseline\Release\attention_gpu_baseline.lib
+  attention_reference.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu-profile\cpu_reference\Release\attention_reference.lib
+  attention_benchmark.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu-profile\benchmarks\Release\attention_benchmark.exe
+  attention_demo.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu-profile\cpu_reference\Release\attention_demo.exe
+  benchmark_harness_tests.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu-profile\benchmarks\Release\benchmark_harness_tests.exe
+  compare_tests.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu-profile\validation\Release\compare_tests.exe
+  gpu_baseline_tests.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu-profile\gpu_baseline\Release\gpu_baseline_tests.exe
+  reference_tests.vcxproj -> D:\Code_Python\CEG5206-part-a\repo\build-gpu-profile\cpu_reference\Release\reference_tests.exe

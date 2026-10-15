@@ -1,0 +1,3 @@
+2026-10-13T105709Z-ec50cd: PASS; 16 planned/completed rows; 320 samples; 192 passing stage comparisons; medians/IQR/speedups verified from samples.
+2026-10-13T105851Z-645406: PASS; 12 planned/completed rows; 240 samples; 108 passing stage comparisons; medians/IQR/speedups verified from samples.
+Profiler: 3 kernels per shape; selected metrics retain original units.
