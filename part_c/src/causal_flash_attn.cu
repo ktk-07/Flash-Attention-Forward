@@ -1,33 +1,85 @@
-#include <iostream>
-#include <algorithm>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <iostream>
+#include <algorithm>
+#include <cfloat>
 
-
-__global__ void casual_flash_attention_forward(float* Q,
-                                               float* K_transposed,
-                                               float* V,
-                                               float* O,
-                                               int row,
-                                               int col,
-                                               int inner_dimension,
-                                               int stride_qb, int stride_qn, int stride_qs, int stride_qh,
-                                               int stride_kb, int stride_kn, int stride_kh, int stride_ks,
-                                               int stride_vb, int stride_vn, int stride_vs, int stride_vh,
-                                               int stride_ob, int stride_on, int stride_os, int stride_oh,
-                                               float softmax_scale
-                                            )
+// Why is this a template parameter?
+template<int HEAD_DIM>
+__global__ void correct_casual_flash_attention_forward(float* Q,
+                                                       float* K_transposed,
+                                                       float* V,
+                                                       float* O,
+                                                       int row,
+                                                       int col,
+                                                       int inner_dimension,
+                                                       int B, int N,
+                                                       int stride_qb, int stride_qn, int stride_qs, int stride_qh,
+                                                       int stride_kb, int stride_kn, int stride_kh, int stride_ks,
+                                                       int stride_vb, int stride_vn, int stride_vs, int stride_vh,
+                                                       int stride_ob, int stride_on, int stride_os, int stride_oh,
+                                                       float softmax_scale,
+                                                       int BLOCK_Q,
+                                                       int BLOCK_KV,
+                                                       int BLOCK_INNER
+                                                       )
 {
-    // Compute the base offsets first
+    // Section 1 Compute the base offsets first
+    int b_idx, n_idx, tile_r_idx, s_idx;
+    b_idx = blockIdx.x / N;
+    n_idx = blockIdx.x % N;
+    tile_r_idx = blockIdx.y;
+    
+    // Section 1.1 Computing the row
+    // We will loop through the block when computing matmul? so it snot liek triton where we can conveninetly do, , i mean we can create an array but that woudl increase the number of register being used for storign?? idk so i didnt do it?
+    // tl.arange(0,BLOCK_Q) + pid1 * BLOCK_Q
+    // one thread per query row, each thread independently computes one output row of length HEAD_DIM
+    s_idx = tile_r_idx * BLOCK_Q + threadIdx.x;
+    if (s_idx >= row) return;
 
-    // Defining the variables needed for Online Softmax Recurrence
-
-    // QK^T
-
-    // S = softmax(QK^T) Online Softmax Softmax
+    // Computing the inner dimension
 
 
-    //
+    // Ssection 1.2 for the s and h we will do it in the inner loop?
+    int q_base_offset, k_base_offset, v_base_offset, o_base_offset;
+    q_base_offset = b_idx * stride_qb + n_idx * stride_qn + s_idx * stride_qs;
+    k_base_offset = b_idx * stride_kb + n_idx * stride_kn; // no dependency on BLOCK Q' Sequence
+    v_base_offset = b_idx * stride_vb + n_idx * stride_vn; // no dependency on BLOCK Q' Sequence
+    o_base_offset = b_idx * stride_ob + n_idx * stride_on + s_idx * stride_os;
+
+    
+    // Section 2: Defining the variables needed for Online Softmax Recurrence
+    // Do we have to define this outside the cuda kernel or inside is perfectly fine?
+    // Each thread owns one query row and its own softmax state
+    float global_max, global_denominator;
+    global_denominator = 0.0f;
+    global_max = -INFINITY; // In C++ FLT_MIN, in CUDA they already have this pre-built macro
+    float final_acc[HEAD_DIM] = {};
+    for (int i = 0 ; i < col; i += BLOCK_KV){
+        // S = QK^T - First Matmul
+        int col_start = i;
+
+        // Looping through the head_dimension
+        for (int j = 0 ; j < BLOCK_KV; j++){
+            int col_idx = col_start + j;
+            if (col_idx >= col) return;
+            int cur_k_base_offset = k_base_offset + j * stride_ks;
+            // inner_dimension is jsut the HEAD_DIM no?
+            for (int k = 0 ; k < inner_dimension ; k++){
+                int q_ptr = q_base_offset + k * stride_qh;
+                int k_ptr = cur_k_base_offset + k * stride_kh;
+                final_acc[k] += *(Q + q_ptr) + *(K_transposed + k_ptr);
+            }
+        }
+        // P = softmax(S) Online Softmax Softmax
+        
+
+
+        // O = PV - Second Matmul, O is not normalised yet
+
+    }
+
+    // Write to the O 
 
 }
 
@@ -48,7 +100,6 @@ int main(){
     int stride_ob, stride_on, stride_oqs, stride_oh;
 
     int row, col, inner_dim;
-
 
     // Copy from data from host to device
     // Determining the Grid Size
@@ -75,10 +126,11 @@ int main(){
     dim3 gridDimension(B*N, TILE_R);
 
     // 1 thread block handles 
-    int num_of_threads_per_block_by_user = 128;
-    int num_of_threads_per_block = std::min(1024,num_of_threads_per_block_by_user);
-    dim3 blockDimension(num_of_threads_per_block);
+    //int num_of_threads_per_block_by_user = 128;
+    //int num_of_threads_per_block = std::min(1024,num_of_threads_per_block_by_user);
+    //dim3 blockDimension(num_of_threads_per_block);
 
+    dim3 blockDimension(BLOCK_Q);
 
 
 
