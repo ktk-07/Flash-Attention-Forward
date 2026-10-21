@@ -76,7 +76,7 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
 
         // Attention scaling by sqrt
         for (int i = 0 ; i < BLOCK_KV; i++){
-            matmul_acc[i] /= softmax_scale;     
+            matmul_acc[i] *= softmax_scale;     
         }
 
         // P = softmax(S) Online Softmax Softmax
@@ -120,7 +120,7 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
         for (int j = 0 ; j < HEAD_DIM ; j++){
             for (int k = 0 ; k < BLOCK_KV ; k++){
                 int col_idx = i + k;
-                if (col_idx >= col) return; 
+                if (col_idx >= col) continue;
                 int cur_v_base_offset = v_base_offset + col_idx * stride_vs;
                 int v_ptr = cur_v_base_offset + j * stride_vh;
                 final_acc[j] +=  matmul_acc[k] * *(V + v_ptr);
@@ -135,7 +135,8 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
 
     // Write to the O 
     for (int i = 0 ; i < HEAD_DIM ; i++){
-
+        int o_ptr = o_base_offset + i * stride_oh;
+        *(O + o_ptr) = final_acc[i];
     }
 
 }
