@@ -2,6 +2,7 @@
 #include <cuda_runtime.h>
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 #include <cfloat>
 
 // Why is this a template parameter?
@@ -13,7 +14,7 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
                                                        float* O,
                                                        int row,
                                                        int col,
-                                                       int inner_dimension,
+                                                       int inner_dimension, // not too sure if this is needed cause it is essentially HEAD_DIM
                                                        int B, int N,
                                                        int stride_qb, int stride_qn, int stride_qs, int stride_qh,
                                                        int stride_kb, int stride_kn, int stride_kh, int stride_ks,
@@ -36,7 +37,7 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
     if (s_idx >= row) return;
 
     // Computing the inner dimension
-    // 
+    // No need for this, because we are just going to directly loop over it
 
     // Ssection 1.2 for the s and h we will do it in the inner loop?
     int q_base_offset, k_base_offset, v_base_offset, o_base_offset;
@@ -57,7 +58,6 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
         // S = QK^T - First Matmul
         int col_start = i;
         float matmul_acc[BLOCK_KV] = {};
-
         // K/V Loop
         for (int j = 0 ; j < BLOCK_KV; j++){
             int col_idx = col_start + j;
@@ -73,15 +73,62 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
                 matmul_acc[j] += *(Q + q_ptr) * *(K_transposed + k_ptr);
             }
         }
-        // P = softmax(S) Online Softmax Softmax
-        
 
+        // Attention scaling by sqrt
+        for (int i = 0 ; i < BLOCK_KV; i++){
+            matmul_acc[i] /= softmax_scale;     
+        }
+
+        // P = softmax(S) Online Softmax Softmax
+        // Defining local running statistics
+        float new_max = -INFINITY;        
+        float local_max = -INFINITY;
+        // Get Local Max
+        for (int i = 0 ; i < BLOCK_KV; i++){
+            local_max = max(matmul_acc[i], local_max);
+        }
+        
+        // Skip tiles with no valid keys this if or causal attn, we skip this first is fine
+
+        // Get the new_max, dont update first cause we need to rescale
+        new_max = max(global_max, local_max);
+        
+        // Rescaling running statisit
+        float rescaling_factor = expf(global_max - new_max);
+        for (int i = 0 ; i < HEAD_DIM ; i++){
+            final_acc[i] *= rescaling_factor;
+        }
+        global_denominator *= rescaling_factor;
+
+        // Update the global_max
+        global_max  = new_max;
+
+        // Compute the score = exp(matmul_acc - global_max), which is P
+        // We will overwrite the matmul_acc
+        // Can we combine it in the loop on line 83? i think we can? 
+        // after local_max = max(matmul_acc[i], local_max);
+        for (int i = 0 ; i < BLOCK_KV; i++){
+            matmul_acc[i] = std::exp(matmul_acc[i] - global_max);
+            // we can probably sum here global_denominator += matmul_acc[i]; basically kernel fusion
+        }
+
+        for (int i = 0 ; i < BLOCK_KV; i++){
+            global_denominator += matmul_acc[i];
+        }
 
         // O = PV - Second Matmul, O is not normalised yet
 
     }
 
+    // divide the weighted accumulator by the denominator
+    for (int i = 0 ; i < HEAD_DIM ; i++){
+        final_acc[i] /= global_denominator;
+    }
+
     // Write to the O 
+    for (int i = 0 ; i < HEAD_DIM ; i++){
+
+    }
 
 }
 
