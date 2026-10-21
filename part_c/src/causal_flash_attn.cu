@@ -117,7 +117,15 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
         }
 
         // O = PV - Second Matmul, O is not normalised yet
-
+        for (int j = 0 ; j < HEAD_DIM ; j++){
+            for (int k = 0 ; k < BLOCK_KV ; k++){
+                int col_idx = i + k;
+                if (col_idx >= col) return; 
+                int cur_v_base_offset = v_base_offset + col_idx * stride_vs;
+                int v_ptr = cur_v_base_offset + j * stride_vh;
+                final_acc[j] +=  matmul_acc[k] * *(V + v_ptr);
+            }
+        }
     }
 
     // divide the weighted accumulator by the denominator
