@@ -5,7 +5,8 @@
 #include <cfloat>
 
 // Why is this a template parameter?
-template<int HEAD_DIM>
+// Compile Time Constants
+template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM>
 __global__ void correct_casual_flash_attention_forward(float* Q,
                                                        float* K_transposed,
                                                        float* V,
@@ -18,10 +19,7 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
                                                        int stride_kb, int stride_kn, int stride_kh, int stride_ks,
                                                        int stride_vb, int stride_vn, int stride_vs, int stride_vh,
                                                        int stride_ob, int stride_on, int stride_os, int stride_oh,
-                                                       float softmax_scale,
-                                                       int BLOCK_Q,
-                                                       int BLOCK_KV,
-                                                       int BLOCK_INNER
+                                                       float softmax_scale
                                                        )
 {
     // Section 1 Compute the base offsets first
@@ -38,7 +36,7 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
     if (s_idx >= row) return;
 
     // Computing the inner dimension
-
+    // 
 
     // Ssection 1.2 for the s and h we will do it in the inner loop?
     int q_base_offset, k_base_offset, v_base_offset, o_base_offset;
@@ -58,17 +56,21 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
     for (int i = 0 ; i < col; i += BLOCK_KV){
         // S = QK^T - First Matmul
         int col_start = i;
+        float matmul_acc[BLOCK_KV] = {};
 
-        // Looping through the head_dimension
+        // K/V Loop
         for (int j = 0 ; j < BLOCK_KV; j++){
             int col_idx = col_start + j;
-            if (col_idx >= col) return;
-            int cur_k_base_offset = k_base_offset + j * stride_ks;
-            // inner_dimension is jsut the HEAD_DIM no?
-            for (int k = 0 ; k < inner_dimension ; k++){
+            if (col_idx >= col) break;
+            
+            // Casual Mask add code here later
+
+            int cur_k_base_offset = k_base_offset + col_idx * stride_ks;
+            // Head Dimension Loop, which is the same as me passing in the inner_dimension no? is this variable redundant?
+            for (int k = 0 ; k < HEAD_DIM ; k++){
                 int q_ptr = q_base_offset + k * stride_qh;
                 int k_ptr = cur_k_base_offset + k * stride_kh;
-                final_acc[k] += *(Q + q_ptr) + *(K_transposed + k_ptr);
+                matmul_acc[j] += *(Q + q_ptr) * *(K_transposed + k_ptr);
             }
         }
         // P = softmax(S) Online Softmax Softmax
