@@ -5,7 +5,7 @@
 #include <cmath>
 #include <cfloat>
 
-// Why is this a template parameter?
+// No Hardware Optimisations Done to this Kernel
 // Compile Time Constants
 template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM>
 __global__ void correct_casual_flash_attention_forward(float* Q,
@@ -33,7 +33,7 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
     // We will loop through the block when computing matmul? so it snot liek triton where we can conveninetly do, , i mean we can create an array but that woudl increase the number of register being used for storign?? idk so i didnt do it?
     // tl.arange(0,BLOCK_Q) + pid1 * BLOCK_Q
     // one thread per query row, each thread independently computes one output row of length HEAD_DIM
-    s_idx = tile_r_idx * BLOCK_Q + threadIdx.x;
+    s_idx = tile_r_idx * BLOCK_Q + threadIdx.x; // position of the query token being processed by the current CUDA thread
     if (s_idx >= row) return;
 
     // Computing the inner dimension
@@ -54,17 +54,19 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
     global_denominator = 0.0f;
     global_max = -INFINITY; // In C++ FLT_MIN, in CUDA they already have this pre-built macro
     float final_acc[HEAD_DIM] = {};
-    for (int i = 0 ; i < col; i += BLOCK_KV){
+    for (int i = 0 ; i < col && i <= s_idx ; i += BLOCK_KV){ // Causal attention: query at position s_idx can only attend to keys at positions <= s_idx (including itself).
         // S = QK^T - First Matmul
         int col_start = i;
         float matmul_acc[BLOCK_KV] = {};
         // K/V Loop
         for (int j = 0 ; j < BLOCK_KV; j++){
             int col_idx = col_start + j;
-            if (col_idx >= col) break;
+            if (col_idx >= col || col_idx > s_idx){
+                matmul_acc[j] = -INFINITY;
+                continue;
+            }
             
             // Casual Mask add code here later
-
             int cur_k_base_offset = k_base_offset + col_idx * stride_ks;
             // Head Dimension Loop, which is the same as me passing in the inner_dimension no? is this variable redundant?
             for (int k = 0 ; k < HEAD_DIM ; k++){
@@ -75,8 +77,8 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
         }
 
         // Attention scaling by sqrt
-        for (int i = 0 ; i < BLOCK_KV; i++){
-            matmul_acc[i] *= softmax_scale;     
+        for (int j = 0 ; j < BLOCK_KV; j++){
+            matmul_acc[j] *= softmax_scale;     
         }
 
         // P = softmax(S) Online Softmax Softmax
@@ -84,8 +86,8 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
         float new_max = -INFINITY;        
         float local_max = -INFINITY;
         // Get Local Max
-        for (int i = 0 ; i < BLOCK_KV; i++){
-            local_max = max(matmul_acc[i], local_max);
+        for (int j = 0 ; j < BLOCK_KV; j++){
+            local_max = max(matmul_acc[j], local_max);
         }
         
         // Skip tiles with no valid keys this if or causal attn, we skip this first is fine
@@ -95,8 +97,8 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
         
         // Rescaling running statisit
         float rescaling_factor = expf(global_max - new_max);
-        for (int i = 0 ; i < HEAD_DIM ; i++){
-            final_acc[i] *= rescaling_factor;
+        for (int j = 0 ; j < HEAD_DIM ; j++){
+            final_acc[j] *= rescaling_factor;
         }
         global_denominator *= rescaling_factor;
 
@@ -107,20 +109,20 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
         // We will overwrite the matmul_acc
         // Can we combine it in the loop on line 83? i think we can? 
         // after local_max = max(matmul_acc[i], local_max);
-        for (int i = 0 ; i < BLOCK_KV; i++){
-            matmul_acc[i] = std::exp(matmul_acc[i] - global_max);
-            // we can probably sum here global_denominator += matmul_acc[i]; basically kernel fusion
+        for (int j = 0 ; j < BLOCK_KV; j++){
+            matmul_acc[j] = std::exp(matmul_acc[j] - global_max);
+            // we can probably sum here global_denominator += matmul_acc[j]; basically kernel fusion
         }
 
-        for (int i = 0 ; i < BLOCK_KV; i++){
-            global_denominator += matmul_acc[i];
+        for (int j = 0 ; j < BLOCK_KV; j++){
+            global_denominator += matmul_acc[j];
         }
 
         // O = PV - Second Matmul, O is not normalised yet
         for (int j = 0 ; j < HEAD_DIM ; j++){
             for (int k = 0 ; k < BLOCK_KV ; k++){
                 int col_idx = i + k;
-                if (col_idx >= col) continue;
+                if (col_idx >= col || col_idx > s_idx) continue; // No need to compute future tokens
                 int cur_v_base_offset = v_base_offset + col_idx * stride_vs;
                 int v_ptr = cur_v_base_offset + j * stride_vh;
                 final_acc[j] +=  matmul_acc[k] * *(V + v_ptr);
@@ -128,15 +130,12 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
         }
     }
 
-    // divide the weighted accumulator by the denominator
-    for (int i = 0 ; i < HEAD_DIM ; i++){
-        final_acc[i] /= global_denominator;
-    }
-
+    // Divide the weighted accumulator by the denominator
     // Write to the O 
+    float inv_denominator = 1.0f / global_denominator;
     for (int i = 0 ; i < HEAD_DIM ; i++){
         int o_ptr = o_base_offset + i * stride_oh;
-        *(O + o_ptr) = final_acc[i];
+        *(O + o_ptr) = final_acc[i] * inv_denominator;
     }
 
 }
