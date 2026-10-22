@@ -107,14 +107,9 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
 
         // Compute the score = exp(matmul_acc - global_max), which is P
         // We will overwrite the matmul_acc
-        // Can we combine it in the loop on line 83? i think we can? 
-        // after local_max = max(matmul_acc[i], local_max);
+        // Accumulate the global denominator in the same loop
         for (int j = 0 ; j < BLOCK_KV; j++){
             matmul_acc[j] = std::exp(matmul_acc[j] - global_max);
-            // we can probably sum here global_denominator += matmul_acc[j]; basically kernel fusion
-        }
-
-        for (int j = 0 ; j < BLOCK_KV; j++){
             global_denominator += matmul_acc[j];
         }
 
