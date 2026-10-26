@@ -1,6 +1,0 @@
-==PROF== Connected to process 9000 (D:\Code_Python\CEG5206-part-a\repo\build-gpu-profile\benchmarks\Release\attention_benchmark.exe)
-==ERROR== ERR_NVGPUCTRPERM - The user does not have permission to access NVIDIA GPU Performance Counters on the target device 0. For instructions on enabling permissions and to get more information see https://developer.nvidia.com/ERR_NVGPUCTRPERM
-==PROF== Disconnected from process 9000
-PASS representative CPU/GPU gate
-PROFILE forward 4,8,2048,64,dense,optimized,16,256
-PASS benchmark; results=results/gpu-benchmarks/2026-10-13T105814Z-review/profile-large-run

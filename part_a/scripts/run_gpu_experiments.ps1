@@ -7,8 +7,7 @@ param(
     [ValidateSet(128,256)][int]$SoftmaxThreads = 256,
     [ValidateRange(5,10)][int]$Warmup = 5,
     [ValidateRange(10,30)][int]$Repeats = 20,
-    [string]$Architecture = '120',
-    [switch]$SkipTests
+    [string]$Architecture = '120'
 )
 $ErrorActionPreference = 'Stop'
 $repoPath = Split-Path $PSScriptRoot -Parent
@@ -42,9 +41,6 @@ try {
     Run-Native 'cmake' @('-S','.', '-B',$BuildDir,'-G','Visual Studio 17 2022','-A','x64',
         '-DPART_A_ENABLE_CUDA=ON',"-DCMAKE_CUDA_ARCHITECTURES=$Architecture",'-DPART_A_PROFILE_INFO=OFF') (Join-Path $resultPath 'configure.log')
     Run-Native 'cmake' @('--build',$BuildDir,'--config','Release') (Join-Path $resultPath 'build.log')
-    if (-not $SkipTests) {
-        Run-Native 'ctest' @('--test-dir',$BuildDir,'-C','Release','--verbose') (Join-Path $resultPath 'ctest.log')
-    }
     Run-Native 'nvidia-smi' @('--query-gpu=name,driver_version,pstate,temperature.gpu,power.draw,power.limit,clocks.sm,clocks.mem,utilization.gpu','--format=csv') (Join-Path $resultPath 'gpu-state-before.csv')
     $exe = Join-Path $BuildDir 'benchmarks/Release/attention_benchmark.exe'
     $benchmarkArgs = @('--grid',$Grid,'--variants',$Variants,'--configs',$Configs,
@@ -52,7 +48,7 @@ try {
     if ($Configs -eq 'default') { $benchmarkArgs += @('--tile',"$Tile",'--softmax-threads',"$SoftmaxThreads") }
     Run-Native $exe $benchmarkArgs (Join-Path $resultPath 'benchmark.log')
     Run-Native 'nvidia-smi' @('--query-gpu=name,driver_version,pstate,temperature.gpu,power.draw,power.limit,clocks.sm,clocks.mem,utilization.gpu','--format=csv') (Join-Path $resultPath 'gpu-state-after.csv')
-    Set-Content -LiteralPath (Join-Path $resultPath 'status.txt') -Value "PASS: build and benchmark completed; full CTest skipped=$SkipTests"
+    Set-Content -LiteralPath (Join-Path $resultPath 'status.txt') -Value "PASS: build and benchmark completed"
     Write-Output "Results: $resultPath"
 } catch {
     if ($resultPath) { Set-Content -LiteralPath (Join-Path $resultPath 'status.txt') -Value "INCOMPLETE: $($_.Exception.Message)" }

@@ -1,9 +1,0 @@
-==PROF== Connected to process 15616 (D:\Code_Python\CEG5206-part-a\repo\build-gpu-profile\benchmarks\Release\attention_benchmark.exe)
-==PROF== Profiling "qk_tiled_kernel" - 0 (1/3): 0%....50%....100% - 41 passes
-==PROF== Profiling "softmax_parallel_kernel" - 1 (2/3): 0%....50%....100% - 41 passes
-==PROF== Profiling "pv_tiled_kernel" - 2 (3/3): 0%....50%....100% - 41 passes
-==PROF== Disconnected from process 15616
-PASS representative CPU/GPU gate
-PROFILE forward 4,8,256,64,dense,optimized,16,256
-PASS benchmark; results=results/gpu-benchmarks/2026-10-13T105814Z-review/profile-admin-small-run
-==PROF== Report: D:\Code_Python\CEG5206-part-a\repo\results\gpu-benchmarks\2026-10-13T105814Z-review\profile-admin-small.ncu-repz

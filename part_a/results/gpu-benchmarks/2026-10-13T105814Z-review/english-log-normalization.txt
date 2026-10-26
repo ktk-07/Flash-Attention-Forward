@@ -1,3 +1,0 @@
-Translated localized warning C4819 descriptions into English. Codes, file/line references, measurements and exit codes are unchanged. Original files are preserved locally outside Git. Original SHA-256 values:
-results/gpu-benchmarks\2026-10-13T105709Z-ec50cd\build.log : 5DFDCC817C430908F8A0B63BE0E6E12E8E00C4F0DE49B43BCA5FA2090123CA89
-results/gpu-benchmarks\2026-10-13T105814Z-review\profile-build.log : 78ED6150E01253A44FA4B144E31665DDA0126AFF403021B026925122B9234641

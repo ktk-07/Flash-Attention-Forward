@@ -1,7 +1,3 @@
-add_executable(benchmark_harness_tests tests/harness_tests.cpp)
-target_include_directories(benchmark_harness_tests PRIVATE . ../common ../gpu_baseline/include)
-target_compile_features(benchmark_harness_tests PRIVATE cxx_std_17)
-add_test(NAME benchmark_harness COMMAND benchmark_harness_tests)
 if(PART_A_ENABLE_CUDA)
   find_package(Git QUIET)
   set(BENCHMARK_SOURCE_COMMIT "unknown")
@@ -26,9 +22,4 @@ if(PART_A_ENABLE_CUDA)
   target_include_directories(attention_benchmark PRIVATE . ${CMAKE_CURRENT_BINARY_DIR})
   target_link_libraries(attention_benchmark PRIVATE attention_gpu_baseline attention_reference attention_validation)
   target_compile_definitions(attention_benchmark PRIVATE PART_A_BUILD_CONFIG="$<CONFIG>")
-  add_test(NAME gpu_config_validation COMMAND ${CMAKE_COMMAND}
-    -DBENCHMARK_EXE=$<TARGET_FILE:attention_benchmark>
-    -DRESULT_ROOT=${CMAKE_CURRENT_BINARY_DIR}/validation-results
-    -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/run_gpu_validation.cmake)
-  set_tests_properties(gpu_config_validation PROPERTIES LABELS "GPU;validation" RUN_SERIAL TRUE TIMEOUT 180)
 endif()

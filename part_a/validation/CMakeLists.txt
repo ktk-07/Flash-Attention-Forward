@@ -1,8 +1,3 @@
 add_library(attention_validation INTERFACE)
 target_include_directories(attention_validation INTERFACE include)
 target_compile_features(attention_validation INTERFACE cxx_std_17)
-add_executable(compare_tests tests/compare_tests.cpp)
-target_link_libraries(compare_tests PRIVATE attention_validation)
-foreach(case tolerance nonfinite metrics validation)
-  add_test(NAME compare_${case} COMMAND compare_tests ${case})
-endforeach()

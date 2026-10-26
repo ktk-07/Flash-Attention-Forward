@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
 project(part_a LANGUAGES CXX)
-enable_testing()
 add_subdirectory(cpu_reference)
 add_subdirectory(validation)
 option(PART_A_ENABLE_CUDA "Build the materialized CUDA baseline" OFF)

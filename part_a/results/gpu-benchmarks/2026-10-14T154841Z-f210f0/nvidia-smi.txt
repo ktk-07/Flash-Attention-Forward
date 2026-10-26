@@ -1,6 +1,0 @@
-NVIDIA GeForce RTX 5060 Ti
-Driver version: 610.88
-CUDA UMD version: 13.3
-Total device memory reported by nvidia-smi: 8151 MiB
-Compute capability: 12.0
-Driver model: WDDM

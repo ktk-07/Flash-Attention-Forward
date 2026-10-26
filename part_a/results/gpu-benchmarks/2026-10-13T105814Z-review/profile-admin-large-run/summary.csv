@@ -1,1 +1,0 @@
-B,H,N,d,mode,variant,tile,softmax_threads,input_fingerprint,validation,warmup,repeats,forward_median_ms,forward_q1_ms,forward_q3_ms,forward_iqr_ms,qk_median_ms,qk_iqr_ms,softmax_median_ms,softmax_iqr_ms,pv_median_ms,pv_iqr_ms,sequences_per_second,tokens_per_second,speedup_vs_naive,peak_workspace_allocated_bytes,setup_host_ms

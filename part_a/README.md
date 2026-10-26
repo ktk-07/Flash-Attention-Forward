@@ -1,49 +1,79 @@
-# Part A: CPU reference and GPU attention baseline
+# Part A: CPU reference and GPU baselines
 
-Part A implements forward scaled dot-product attention in FP32, with an independent FP64 CPU reference. Both dense and causal modes are supported.
+Part A implements materialized FP32 attention with an independent FP64 CPU reference. Dense and causal modes are supported.
 
 ## Implementation
 
-- `common/`: tensor shapes, deterministic FP32 inputs and input fingerprints
-- `cpu_reference/`: materialized FP64 attention
-- `gpu_baseline/`: separate QK, softmax and PV kernels, including tiled matrix multiplication and parallel reduction
+- `common/`: tensor shapes and deterministic FP32 Q/K/V inputs
+- `cpu_reference/`: straightforward FP64 QK, row-wise softmax and PV
+- `gpu_baseline/`: naive and optimized CUDA kernels with reusable device buffers
 - `validation/`: absolute-plus-relative error comparison
-- `benchmarks/`: correctness checks, CUDA timing, statistics and plots
-- `scripts/`: Windows experiment and profiling commands
-- `results/`: measured data and environment records
+- `benchmarks/`: correctness comparisons, CUDA timing, statistics and plotting
+- `scripts/`: experiment and profiling commands
+- `results/`: selected measurements and their interpretation
 
-Q/K/V/O use contiguous `[B,H,N,d]` storage. S/P use `[B,H,N,N]` storage. The computation is `S=QK^T/sqrt(d)`, `P=softmax(S)` and `O=PV`. Causal attention includes the diagonal and masks `j>i`.
+Q/K/V/O use `[B,H,N,d]`; S/P use `[B,H,N,N]`. The computation is `S=QK^T/sqrt(d)`, `P=softmax(S)`, `O=PV`. Causal attention includes the diagonal and masks `j>i`.
 
-## Build and test
+| Variant | QK and PV | Softmax |
+| --- | --- | --- |
+| naive | One output element per thread | One row per thread |
+| tiled | Shared-memory tiles | One row per thread |
+| parallel | One output element per thread | Block reduction |
+| optimized | Shared-memory tiles | Block reduction |
 
-Requires CMake 3.18+, C++17 and a compatible compiler. GPU builds also require an NVIDIA GPU and a compatible CUDA Toolkit. For RTX 5060 Ti, use a Toolkit supporting `sm_120` and its supported MSVC toolset.
+The default tile is 16 and softmax uses 256 threads. Recorded main-grid measurements explicitly use (16,128), selected from a bounded tuning study.
 
-CPU example with MinGW:
+## Build and run
+
+Requires CMake 3.18+ and C++17. CUDA builds also need a compatible CUDA Toolkit and host compiler. Run from `part_a/`.
+
+CPU library with MinGW:
 
 ```powershell
 cmake -S . -B build-cpu -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
 cmake --build build-cpu
-ctest --test-dir build-cpu --output-on-failure
 ```
 
-GPU example from an x64 Visual Studio 2022 developer shell:
+GPU build from an x64 Visual Studio 2022 developer shell:
 
 ```powershell
 cmake -S . -B build-gpu -G "Visual Studio 17 2022" -A x64 -DPART_A_ENABLE_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=120
 cmake --build build-gpu --config Release
-ctest --test-dir build-gpu -C Release --output-on-failure
 ```
 
-Use separate build directories for different toolchains. Set `CMAKE_CUDA_ARCHITECTURES` for the actual GPU. CPU builds register 13 test groups. CUDA builds add four variant groups and one configuration-validation group, for 18 total. All numerical and boundary cases remain inside these groups.
+Set the architecture for the actual GPU; 120 is used for RTX 5060 Ti.
+
+Check all variants and candidate configurations against the CPU reference:
+
+```powershell
+.\build-gpu\benchmarks\Release\attention_benchmark.exe --validate-only --variants all --configs study --output results/local/correctness-run
+```
+
+The output directory must be new. CPU S/P/O comparisons use identical FP32 inputs, FP64 arithmetic and `atol=rtol=1e-4`. Representative shapes include nonmultiples and tile boundaries. Timed shapes with N<=257 receive exact-shape comparisons before and after measurement; larger shapes use representative comparisons and finite-output checks.
 
 ## Experiments
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run_gpu_experiments.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run_gpu_experiments.ps1 -Grid tuning -Configs study
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run_gpu_experiments.ps1 -Grid proposal -Tile 16 -SoftmaxThreads 128
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run_gpu_experiments.ps1 -Grid ablation -Tile 16 -SoftmaxThreads 128
 ```
 
-This builds, tests and measures representative cases. The main proposal grid uses `B=4`, `H=8`, `N={256,512,1024,2048,4096}`, `d={32,64,128}`, FP32 and both modes. See [benchmark commands](benchmarks/README.md) and [measured results](results/README.md).
+The main grid uses B=4, H=8, N={256,512,1024,2048,4096}, d={32,64,128}, FP32 and both modes. It compares naive and optimized implementations in 60 rows. Ablation measures all four variants at N=256/1024,d=64. Tuning compares (8,256), (16,256), (32,256) and (16,128); select one configuration before the main grid.
 
-The default tile is 16 and the parallel softmax block has 256 threads. Input generation, allocation, copies and CPU validation are outside GPU timing. Backward attention, KV-cached decoding, mixed precision and fused FlashAttention are outside this Part A implementation. The measured implementation from `e2487da` passed 18/18 test groups, three sanitizer tools, and both profiling runs. The full 60-row main grid was measured using the frozen experimental configuration (16,128), with representative, tuning and ablation data.
+Buffers are preallocated and uploaded once. CUDA events measure full forward latency and separate QK/softmax/PV passes. Five warmups and 20 repeats are used by default. Allocation, copies, CPU comparisons and file I/O are outside timing. CSV files report median, IQR, throughput, workspace allocation and kernel resources.
 
-The [Release validation](results/validation/2026-10-15T052608Z-fa1f796/README.md) of `fa1f796` passed 18 CTest groups, 7 analysis tests and the representative benchmark at (16,128). Full-grid and profile measurements remain from `e2487da`.
+Profile small and large dense cases, separately from normal timing:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/profile_gpu.ps1 -N 256 -Tile 16 -SoftmaxThreads 128
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/profile_gpu.ps1 -N 2048 -Tile 16 -SoftmaxThreads 128
+```
+
+Profiling requires Nsight Compute and access to GPU counters. Plot a measured summary with Python and matplotlib:
+
+```powershell
+python benchmarks/plot_results.py results/gpu-benchmarks/RUN/benchmark/summary.csv --output results/local/figures
+```
+
+See [measured results](results/README.md). This component provides materialized baselines; fused attention belongs to Parts B/C. Finite inputs must keep FP32 products and accumulations representable. A workspace result can be downloaded only after a successful forward execution.

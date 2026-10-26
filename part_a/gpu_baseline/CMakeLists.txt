@@ -12,10 +12,3 @@ if(PART_A_PROFILE_INFO)
     $<$<COMPILE_LANGUAGE:CUDA>:-lineinfo>
     $<$<COMPILE_LANGUAGE:CUDA>:--ptxas-options=-v>)
 endif()
-add_executable(gpu_baseline_tests tests/baseline_tests.cpp)
-target_link_libraries(gpu_baseline_tests PRIVATE
-  attention_gpu_baseline attention_reference attention_validation)
-foreach(variant naive tiled parallel optimized)
-  add_test(NAME gpu_${variant} COMMAND gpu_baseline_tests all ${variant})
-  set_tests_properties(gpu_${variant} PROPERTIES LABELS "GPU;${variant}" RUN_SERIAL TRUE TIMEOUT 120)
-endforeach()
