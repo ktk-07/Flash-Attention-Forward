@@ -325,7 +325,12 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
         }
 
     }
-
+    // Normalise Accumulation then Write to O which is in HBM
+    for (int i = 0 ; i < NUM_OUTPUT_GROUPS; i++){
+        final_acc[i] /= global_denominator;
+        int col_output_idx = warp_lane_idx + warp_size * i;
+        *(O + o_base_ptr + col_output_idx * stride_oh) = final_acc[i];
+    }
 }
 
 // Implementing the TensorCore Optimised Kernels
