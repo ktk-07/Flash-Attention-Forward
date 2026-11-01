@@ -7,6 +7,8 @@
 
 // No Hardware Optimisations Done to this Kernel
 // Compile Time Constants
+// Take note that  K is mathematically tranposed and not physically tranposed, K is stored in row major format and K_tranposed is not
+// In flash attention, it is taken that K is mathematically tranposed and not physically tranposed
 template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM>
 __global__ void correct_casual_flash_attention_forward(float* Q,
                                                        float* K_transposed,
@@ -134,6 +136,54 @@ __global__ void correct_casual_flash_attention_forward(float* Q,
     }
 
 }
+
+// Implementing the General GPU Optimisations
+// Global Memory Coalescing - Reviewed not implemented
+// Shared Memory Caching - Reviewed not implemented
+// 1D Blocktiling - 
+// 2D Blocktiling
+// Vectorised Memory Access
+// References : https://siboehm.com/articles/22/CUDA-MMM
+
+
+__device__ float warp_max(float val, int warp_size){
+    // warp max
+    constexpr int FULL_MASK = 0xffffffffu;
+    for (int offset = 16; offset > 0 ; offset /= 2){
+        float remote_val = __shfl_down_sync(FULL_MASK, val, offset);
+        val = fmaxf(val,remote_val);
+    }
+    int srclane = 0;
+    int width = warp_size;
+    return __shfl_sync(FULL_MASK, val, srclane, width); // broadcast the final_sum to all other warps, it is sually accumulated into lane 0;
+}
+
+__device__ float warp_sum(float val, int warp_size){
+    // warp sum
+    constexpr int FULL_MASK = 0xffffffffu;
+    for (int offset = 16; offset > 0 ; offset /= 2){
+        float remote_val = __shfl_down_sync(FULL_MASK, val, offset);
+        val += remote_val;
+    }
+    int srclane = 0;
+    int width = warp_size;
+    return __shfl_sync(FULL_MASK, val, srclane, width); // broadcast the final_sum to all other warps, it is sually accumulated into lane 0;
+}
+
+
+template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM>
+__global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float* Q,
+                                                                           float* K_transposed,
+                                                                           float* V,
+                                                                           float* O
+                                                                           )
+{
+    std::cout << "Hello" << std::endl;
+}
+
+// Implementing the TensorCore Optimised Kernels
+__global__ void
+
 
 int main(){
     
