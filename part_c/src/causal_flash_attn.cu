@@ -171,18 +171,114 @@ __device__ float warp_sum(float val, int warp_size){
 }
 
 
+// 1 warp is responsible for 1 query row
+// Example Grid and BlockDimension
+// dim3 gridDim(B*N, (Q + BLOCK_Q -1 )/ BLOCK_Q); dim3 blockDim(num_warps & warp_size);
+// num_warps = BLOCK_Q right now, but it does not have to be but we would have to adjust the code
 template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM>
 __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float* Q,
                                                                            float* K_transposed,
                                                                            float* V,
-                                                                           float* O
+                                                                           float* O,
+                                                                           int row,
+                                                                           int col,
+                                                                           int inner_dimension, // not too sure if this is needed cause it is essentially HEAD_DIM
+                                                                           int B, int N,
+                                                                           int num_warps, int warp_size;
+                                                                           int stride_qb, int stride_qn, int stride_qs, int stride_qh,
+                                                                           int stride_kb, int stride_kn, int stride_kh, int stride_ks,
+                                                                           int stride_vb, int stride_vn, int stride_vs, int stride_vh,
+                                                                           int stride_ob, int stride_on, int stride_os, int stride_oh,
+                                                                           float softmax_scale
                                                                            )
 {
-    std::cout << "Hello" << std::endl;
+    int b_idx = blockIdx.x / N;
+    int n_idx = blockIdx.x % N;
+    int tile_r_idx = blockIdx.y;
+
+    //int warp_size = 32;
+    int warp_idx = threadIdx.x / warp_size;
+    int warp_lane_idx = threadIdx.x % warp_size;
+    int s_idx = tile_r_idx * BLOCK_Q + warp_idx;
+
+    int q_base_ptr = b_idx * stride_qb + n_idx * stride_qn + s_idx * stride_qs;
+    int k_base_ptr = b_idx * stride_kb + n_idx * stride_kn;
+    int v_base_ptr = b_idx * stride_vb + n_idx * stride_vn; 
+    int o_base_ptr = b_idx * stride_ob + n_idx * stride_on + s_idx * stride_os;
+    
+    // Defining the running statistics;
+    float global_denominator = 0.0f;
+    float global_max = -INFINITY;
+    constexpr int NUM_OUTPUT_GROUPS = ( HEAD_DIM + warp_size - 1 ) / warp_size;
+    // NUM_OUTPUT_GROUP Probably has to be a compile time constant
+    float final_acc[NUM_OUTPUT_GROUPS] = {}; // 1 query 1 warp, each warp_lane, (HEAD_DIM + WARP_SIZE - 1 ) / warp_size number of output group
+
+    int tile_c = (col + BLOCK_KV - 1 ) / BLOCK_KV;
+
+    // Is this shared amongst each threadblock or each warp?
+    __shared__ float K_SHARED[BLOCK_KV][HEAD_DIM];
+    __shared__ float V_SHARED[BLOCK_KV][HEAD_DIM];
+
+    for (int i ; i < tile_c; i++){
+        int tile_c_start = i * BLOCK_KV;
+
+        // Loading Loop
+        // Cooperative Loading of K and V
+        // We want to load K and V in a memory coalescing manner. Since K and V are both in row major format
+        // Each warp should be responsible for each col, that why memory coalescing happens
+        constexpr int no_col_iterations = (HEAD_DIM + warp_size - 1) / warp_size;
+        constexpr int no_row_iterations = (BLOCK_KV + num_warps - 1) / num_warps;
+        for (int j = 0 ; j < no_col_iterations ; j++){
+            int col_idx = j * warp_size + warp_lane_idx;
+            for (int k = 0 ; k < no_row_iterations ; k++){
+                int row_local = k * num_warps + warp_idx;
+                int row_idx = tile_c_start + row_local; 
+
+                if (row_local >= BLOCK_KV)
+                    continue;
+
+                if (row_idx >= col) {
+                    K_shared[row_local][inner_dim_idx] = 0.0f;
+                    V_shared[row_local][inner_dim_idx] = 0.0f;
+                    continue;
+                } 
+
+                K_SHARED[row_local][col_idx] = *(K + k_base_ptr + col_idx * stride_kh + row_idx * stride_ks);
+                V_SHARED[row_local][col_idx] = *(V + v_base_ptr + col_idx * stride_vh + row_idx * stride_vs);
+            }
+        }
+
+        __syncthreads();
+
+        // Computation Loop : QK^T
+
+        // Softmax Recurrence
+
+
+        // Rescale Running Statistics
+
+
+        // Computation Loop : PV
+
+
+    }
+    
+
+    // Normalise Accumulation
+
+    // Write to O which is in HBM
+
 }
 
 // Implementing the TensorCore Optimised Kernels
-__global__ void
+template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM>
+__global__ void casual_flash_attention_forward_gpu_optimised_for_tensor_core(float* Q,
+                                                                             float* K
+                                                                             float* V
+                                                                             float* O
+){
+
+}
 
 
 int main(){
