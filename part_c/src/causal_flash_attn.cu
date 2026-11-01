@@ -274,8 +274,34 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
         __syncthreads();
 
         // Softmax Recurrence
-
+        // Getting the warp lane max
+        float new_max = -INFINITY;
+        float warp_lane_max = -INFINITY;
+        for (int j = 0 ; j < NUM_KEY_GROUPS ; j++){
+            warp_lane_max = max(matmul_acc[j],warp_lane_max);
+        }
+        // Essentially the local max of that row;
+        float local_max = warp_max(warp_lane_max,32);
+        new_max = max(global_max, local_max);
         // Rescale Running Statistics
+        // Geting the rescaling_factor
+        // Rescale final_acc
+        float rescaling_factor = (new_max == -INFINITY) ? 0.0f : expf(global_max - new_max);
+        for (int j = 0 ; j < NUM_OUTPUT_GROUPS ; j++){
+            final_acc[j] *= rescaling_factor;
+        }
+        global_denominator *=  rescaling_factor;
+
+        global_max = new_max;
+
+        // Sum up the score
+        float warp_lane_sum = 0.0f;
+        for (int j = 0 ; j < NUM_KEY_GROUPS ; j++){
+            matmul_acc[j] = (global_max == -INFINITY) ? 0.0f : expf(matmul_acc[j] - global_max);
+            warp_lane_sum += matmul_acc[j];
+        }
+        float local_warp_sum = warp_sum(warp_lane_sum,32);
+        global_denominator += local_warp_sum;
 
         // Computation Loop : PV
 
