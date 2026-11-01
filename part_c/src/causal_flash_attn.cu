@@ -297,21 +297,34 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
         // Sum up the score
         float warp_lane_sum = 0.0f;
         for (int j = 0 ; j < NUM_KEY_GROUPS ; j++){
-            matmul_acc[j] = (global_max == -INFINITY) ? 0.0f : expf(matmul_acc[j] - global_max);
+            matmul_acc[j] = (global_max == -INFINITY) ? 0.0f : expf(matmul_acc[j] - global_max); // Update matmul_acc with probability
             warp_lane_sum += matmul_acc[j];
         }
         float local_warp_sum = warp_sum(warp_lane_sum,32);
         global_denominator += local_warp_sum;
 
         // Computation Loop : PV
-
+        // We are trying to compute 1 query row
+        // We need to distribute the probabilyt of the element to every other row then sum it up
+        // 1. Broadcasting of probability to each warp
+        // 2. Accumulated into the final_acc
+        constexpr int FULLMASK = 0xffffffffu;
+        int width = 32;
+        for (int j = 0 ; j < NUM_KEY_GROUPS ; j++){
+            for(int k = 0 ; k < warp_size ; k++){
+                // We want to broadcast this probability value
+                int p_idx = warp_idx * warp_size + k;
+                int srcLane = k;
+                float broadcast_probability_value = __shfl_sync(FULL_MASK, matmul[j], srcLane, width);
+                for(int l = 0 ; l < NUM_OUTPUT_GROUPS; l++){
+                    int row_idx = l * warp_lane_idx +  ;
+                    int col_idx = tile_c_start + l * warp_lane_idx;
+                    final_acc[l] += broadcast_probability_value * V[][];
+                }
+            }
+        }
 
     }
-    
-
-    // Normalise Accumulation
-
-    // Write to O which is in HBM
 
 }
 
