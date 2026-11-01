@@ -250,13 +250,32 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
 
         __syncthreads();
 
-        // Computation Loop : QK^T
+         // Computation Loop : QK^T
+        // We are computing 1 query row., each warplane assign to 1 element of the K
+        // Then we loop throught the inner_dim
+        constexpr int NUM_KEY_GROUPS = (BLOCK_KV + warp_size - 1 ) / warp_size;
+        float matmul_acc[NUM_KEY_GROUPS];
+        for (int j = 0 ; j < NUM_KEY_GROUPS ; j++){
+            int col_local = j * warp_size + warp_lane_idx;
+            int col_idx = tile_c_start + col_local; 
+
+            if (col_idx >= col || col_idx > s_idx || col_local >= BLOCK_KV){
+                matmul_acc[j] = -INFINITY;
+                continue;
+            }
+
+            for (int k = 0 ; k < HEAD_DIM ; k++){
+                matmul_acc[j] += *(Q + q_base_ptr + k * stride_qh) * K_SHARED[col_local][k];
+            }
+
+            matmul_acc[j] *= softmax_scale;
+        }
+
+        __syncthreads();
 
         // Softmax Recurrence
 
-
         // Rescale Running Statistics
-
 
         // Computation Loop : PV
 
