@@ -176,40 +176,40 @@ __device__ float warp_sum(float val, int warp_size){
 // dim3 gridDim(B*N, (Q + BLOCK_Q -1 )/ BLOCK_Q); dim3 blockDim(num_warps & warp_size);
 // num_warps = BLOCK_Q right now, but it does not have to be but we would have to adjust the code
 template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM>
-__global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float* Q,
-                                                                           float* K_transposed,
-                                                                           float* V,
-                                                                           float* O,
-                                                                           int row,
-                                                                           int col,
-                                                                           int inner_dimension, // not too sure if this is needed cause it is essentially HEAD_DIM
-                                                                           int B, int N,
-                                                                           int num_warps, int warp_size;
-                                                                           int stride_qb, int stride_qn, int stride_qs, int stride_qh,
-                                                                           int stride_kb, int stride_kn, int stride_kh, int stride_ks,
-                                                                           int stride_vb, int stride_vn, int stride_vs, int stride_vh,
-                                                                           int stride_ob, int stride_on, int stride_os, int stride_oh,
-                                                                           float softmax_scale
-                                                                           )
+__global__ void casual_flash_attention_forward_gpu_optimised_warp_per_query(float* Q,
+                                                                            float* K,
+                                                                            float* V,
+                                                                            float* O,
+                                                                            int row,
+                                                                            int col,
+                                                                            int B, int N,
+                                                                            int stride_qb, int stride_qn, int stride_qs, int stride_qh,
+                                                                            int stride_kb, int stride_kn, int stride_kh, int stride_ks,
+                                                                            int stride_vb, int stride_vn, int stride_vs, int stride_vh,
+                                                                            int stride_ob, int stride_on, int stride_os, int stride_oh,
+                                                                            float softmax_scale
+                                                                            )
 {
+    constexpr int WARP_SIZE = 32;
+    constexpr int NUM_WARPS = BLOCK_Q;
     int b_idx = blockIdx.x / N;
     int n_idx = blockIdx.x % N;
     int tile_r_idx = blockIdx.y;
 
     //int warp_size = 32;
-    int warp_idx = threadIdx.x / warp_size;
-    int warp_lane_idx = threadIdx.x % warp_size;
+    int warp_idx = threadIdx.x / WARP_SIZE;
+    int warp_lane_idx = threadIdx.x % WARP_SIZE;
     int s_idx = tile_r_idx * BLOCK_Q + warp_idx;
 
     int q_base_ptr = b_idx * stride_qb + n_idx * stride_qn + s_idx * stride_qs;
     int k_base_ptr = b_idx * stride_kb + n_idx * stride_kn;
     int v_base_ptr = b_idx * stride_vb + n_idx * stride_vn; 
     int o_base_ptr = b_idx * stride_ob + n_idx * stride_on + s_idx * stride_os;
+   
     
-    // Defining the running statistics;
     float global_denominator = 0.0f;
     float global_max = -INFINITY;
-    constexpr int NUM_OUTPUT_GROUPS = ( HEAD_DIM + warp_size - 1 ) / warp_size;
+    constexpr int NUM_OUTPUT_GROUPS = ( HEAD_DIM + WARP_SIZE - 1 ) / WARP_SIZE;
     // NUM_OUTPUT_GROUP Probably has to be a compile time constant
     float final_acc[NUM_OUTPUT_GROUPS] = {}; // 1 query 1 warp, each warp_lane, (HEAD_DIM + WARP_SIZE - 1 ) / warp_size number of output group
 
@@ -219,7 +219,7 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
     __shared__ float K_SHARED[BLOCK_KV][HEAD_DIM];
     __shared__ float V_SHARED[BLOCK_KV][HEAD_DIM];
 
-    for (int i ; i < tile_c; i++){
+    for (int i = 0; i < tile_c; i++){
         int tile_c_start = i * BLOCK_KV;
 
         // Loading Loop
@@ -229,40 +229,43 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
         // During loading:
         // - warp_idx distributes V rows across warps.
         // - warp_lane_idx distributes feature columns across lanes.
-        constexpr int no_col_iterations = (HEAD_DIM + warp_size - 1) / warp_size;
-        constexpr int no_row_iterations = (BLOCK_KV + num_warps - 1) / num_warps;
+        constexpr int no_col_iterations = (HEAD_DIM + WARP_SIZE - 1) / WARP_SIZE;
+        constexpr int no_row_iterations = (BLOCK_KV + NUM_WARPS - 1) / NUM_WARPS;
         for (int j = 0 ; j < no_col_iterations ; j++){
-            int col_idx = j * warp_size + warp_lane_idx;
+            int col_idx = j * WARP_SIZE + warp_lane_idx;
+            if (col_idx >= HEAD_DIM) continue;
             for (int k = 0 ; k < no_row_iterations ; k++){
-                int row_local = k * num_warps + warp_idx;
+                int row_local = k * NUM_WARPS + warp_idx;
                 int row_idx = tile_c_start + row_local; 
 
-                if (row_local >= BLOCK_KV)
+                if (row_local >= BLOCK_KV){
                     continue;
+                }
 
                 if (row_idx >= col) {
-                    K_shared[row_local][inner_dim_idx] = 0.0f;
-                    V_shared[row_local][inner_dim_idx] = 0.0f;
-                    continue;
+                    K_SHARED[row_local][col_idx] = 0.0f;
+                    V_SHARED[row_local][col_idx] = 0.0f;
+                }else{
+                    K_SHARED[row_local][col_idx] = *(K + k_base_ptr + col_idx * stride_kh + row_idx * stride_ks);
+                    V_SHARED[row_local][col_idx] = *(V + v_base_ptr + col_idx * stride_vh + row_idx * stride_vs);
                 } 
-
-                K_SHARED[row_local][col_idx] = *(K + k_base_ptr + col_idx * stride_kh + row_idx * stride_ks);
-                V_SHARED[row_local][col_idx] = *(V + v_base_ptr + col_idx * stride_vh + row_idx * stride_vs);
             }
         }
-
+        
+        //The first barrier protects consumers from incomplete loading.
         __syncthreads();
 
-         // Computation Loop : QK^T
+        // Computation Loop : QK^T
         // We are computing 1 query row., each warplane assign to 1 element of the K
         // Then we loop throught the inner_dim
-        constexpr int NUM_KEY_GROUPS = (BLOCK_KV + warp_size - 1 ) / warp_size;
+        constexpr int NUM_KEY_GROUPS = (BLOCK_KV + WARP_SIZE - 1 ) / WARP_SIZE;
         float matmul_acc[NUM_KEY_GROUPS];
         for (int j = 0 ; j < NUM_KEY_GROUPS ; j++){
-            int col_local = j * warp_size + warp_lane_idx;
+            matmul_acc[j] = 0.0f;
+            int col_local = j * WARP_SIZE + warp_lane_idx;
             int col_idx = tile_c_start + col_local; 
 
-            if (col_idx >= col || col_idx > s_idx || col_local >= BLOCK_KV){
+            if (s_idx >= row || col_idx >= col || col_idx > s_idx || col_local >= BLOCK_KV){
                 matmul_acc[j] = -INFINITY;
                 continue;
             }
@@ -273,8 +276,6 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
 
             matmul_acc[j] *= softmax_scale;
         }
-
-        __syncthreads();
 
         // Softmax Recurrence
         // Getting the warp lane max
@@ -323,33 +324,35 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
         //  - Every warp can access all V rows in the current tile.
         //  - warp_lane_idx still determines which output feature columns each lane owns.
         //  - The loop over k moves sequentially across V rows.
-        constexpr unsigned FULLMASK = 0xffffffffu;
+        constexpr unsigned FULL_MASK = 0xffffffffu;
         int width = 32;
         for (int j = 0 ; j < NUM_KEY_GROUPS ; j++) {
-            for (int k = 0 ; k < warp_size ; k++){
+            for (int k = 0 ; k < WARP_SIZE ; k++){
                 // Loop to broadcast probability store in every warp to every other lanes
                 int srclane = k;
-                int k_local = j * warp_size + k;
+                int k_local = j * WARP_SIZE + k;
                 int k_idx = tile_c_start + k_local;
 
                 float broadcast_probability_val = __shfl_sync(FULL_MASK, matmul_acc[j], srclane, width);
                 for (int l = 0 ; l < NUM_OUTPUT_GROUPS ; l++){
                     // Multiply prbability val with
                     // Each Warp Lane, accumulated into their own final_acc[l];
-                    int inner_dim_idx = l * warp_size + warp_lane_idx;
+                    int inner_dim_idx = l * WARP_SIZE + warp_lane_idx;
                     if (k_local < BLOCK_KV && k_idx < col && inner_dim_idx < HEAD_DIM){
                         final_acc[l] += broadcast_probability_val * V_SHARED[k_local][inner_dim_idx];
                     }
                 }
             }
         }
+        // The second protects consumers from the next iteration's overwrites.
+        __syncthreads();
 
     }
     // Each warp would do 
     // 1. Normalise Accumulation with final global denominator
     // 2. Write final_acc to O which is in HBM
     for (int i = 0 ; i < NUM_OUTPUT_GROUPS; i++){
-        int col_output_idx = warp_lane_idx + warp_size * i;
+        int col_output_idx = warp_lane_idx + WARP_SIZE * i;
         if (s_idx < row && col_output_idx < HEAD_DIM){
             float output_val = (global_denominator > 0.0f) ? final_acc[i] / global_denominator: 0.0f;
             *(O + o_base_ptr + col_output_idx * stride_oh) = output_val;
@@ -357,11 +360,15 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
     }
 }
 
+__global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(){
+    std::cout << "Hello" << std::endl;
+}
+
 // Implementing the TensorCore Optimised Kernels
 template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM>
 __global__ void casual_flash_attention_forward_gpu_optimised_for_tensor_core(float* Q,
-                                                                             float* K
-                                                                             float* V
+                                                                             float* K,
+                                                                             float* V,
                                                                              float* O
 ){
 
