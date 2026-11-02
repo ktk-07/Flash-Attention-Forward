@@ -225,7 +225,10 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
         // Loading Loop
         // Cooperative Loading of K and V
         // We want to load K and V in a memory coalescing manner. Since K and V are both in row major format
-        // Each warp should be responsible for each col, that why memory coalescing happens
+        // Each warp should be responsible for each col, that why memory coalescing happens 
+        // During loading:
+        // - warp_idx distributes V rows across warps.
+        // - warp_lane_idx distributes feature columns across lanes.
         constexpr int no_col_iterations = (HEAD_DIM + warp_size - 1) / warp_size;
         constexpr int no_row_iterations = (BLOCK_KV + num_warps - 1) / num_warps;
         for (int j = 0 ; j < no_col_iterations ; j++){
@@ -305,21 +308,38 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
 
         // Computation Loop : PV
         // We are trying to compute 1 query row
-        // We need to distribute the probabilyt of the element to every other row then sum it up
-        // 1. Broadcasting of probability to each warp
+        // We need to distribute the probability of the element to every other row then sum it up
+        //  - Pq_warp,k is distributed to Vk_warp_lane_idx,innerdim_i
+        // Each warp_lane has an element in the q row of P 
+        // Each warp_lane responsible for each column in the warp_idx
+        // Think of it as we take an element in the q row of P and broadcast it to every other warp_lane which is responsible for their own output element
+        // So we take the 
+        // Each of warp lane take the broadcasted value and multiplyt it by the V row's indivudial column
+        // We then accumulated it into the final_acc
+        // then we move on to the next element in the q row of P , which shifting the V row to the next row, but each warp indexes the output column they are resopnsible for
+        // 1. Broadcasting of probability to each warp manually
         // 2. Accumulated into the final_acc
-        constexpr int FULLMASK = 0xffffffffu;
+        // During PV computation:
+        //  - Every warp can access all V rows in the current tile.
+        //  - warp_lane_idx still determines which output feature columns each lane owns.
+        //  - The loop over k moves sequentially across V rows.
+        constexpr unsigned FULLMASK = 0xffffffffu;
         int width = 32;
-        for (int j = 0 ; j < NUM_KEY_GROUPS ; j++){
-            for(int k = 0 ; k < warp_size ; k++){
-                // We want to broadcast this probability value
-                int p_idx = warp_idx * warp_size + k;
-                int srcLane = k;
-                float broadcast_probability_value = __shfl_sync(FULL_MASK, matmul[j], srcLane, width);
-                for(int l = 0 ; l < NUM_OUTPUT_GROUPS; l++){
-                    int row_idx = l * warp_lane_idx +  ;
-                    int col_idx = tile_c_start + l * warp_lane_idx;
-                    final_acc[l] += broadcast_probability_value * V[][];
+        for (int j = 0 ; j < NUM_KEY_GROUPS ; j++) {
+            for (int k = 0 ; k < warp_size ; k++){
+                // Loop to broadcast probability store in every warp to every other lanes
+                int srclane = k;
+                int k_local = j * warp_size + k;
+                int k_idx = tile_c_start + k_local;
+
+                float broadcast_probability_val = __shfl_sync(FULL_MASK, matmul_acc[j], srclane, width);
+                for (int l = 0 ; l < NUM_OUTPUT_GROUPS ; l++){
+                    // Multiply prbability val with
+                    // Each Warp Lane, accumulated into their own final_acc[l];
+                    int inner_dim_idx = l * warp_size + warp_lane_idx;
+                    if (k_local < BLOCK_KV && k_idx < col && inner_dim_idx < HEAD_DIM){
+                        final_acc[l] += broadcast_probability_val * V_SHARED[k_local][inner_dim_idx];
+                    }
                 }
             }
         }
