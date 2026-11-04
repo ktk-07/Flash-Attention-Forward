@@ -1,7 +1,6 @@
 /build*/
-/results/local/
 __pycache__/
 *.pyc
-
-# Saved experiment logs
-!/results/**/*.log
+*.log
+*.ncu-rep
+*.ncu-repz

@@ -1,3 +1,0 @@
-add_library(attention_validation INTERFACE)
-target_include_directories(attention_validation INTERFACE include)
-target_compile_features(attention_validation INTERFACE cxx_std_17)

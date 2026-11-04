@@ -1,79 +1,59 @@
-# Part A: CPU reference and GPU baselines
+# Part A
 
-Part A implements materialized FP32 attention with an independent FP64 CPU reference. Dense and causal modes are supported.
-
-## Implementation
-
-- `common/`: tensor shapes and deterministic FP32 Q/K/V inputs
-- `cpu_reference/`: straightforward FP64 QK, row-wise softmax and PV
-- `gpu_baseline/`: naive and optimized CUDA kernels with reusable device buffers
-- `validation/`: absolute-plus-relative error comparison
-- `benchmarks/`: correctness comparisons, CUDA timing, statistics and plotting
-- `scripts/`: experiment and profiling commands
-- `results/`: selected measurements and their interpretation
-
-Q/K/V/O use `[B,H,N,d]`; S/P use `[B,H,N,N]`. The computation is `S=QK^T/sqrt(d)`, `P=softmax(S)`, `O=PV`. Causal attention includes the diagonal and masks `j>i`.
-
-| Variant | QK and PV | Softmax |
-| --- | --- | --- |
-| naive | One output element per thread | One row per thread |
-| tiled | Shared-memory tiles | One row per thread |
-| parallel | One output element per thread | Block reduction |
-| optimized | Shared-memory tiles | Block reduction |
-
-The default tile is 16 and softmax uses 256 threads. Recorded main-grid measurements explicitly use (16,128), selected from a bounded tuning study.
+CPU FP64 reference and materialized GPU attention baselines for dense and causal modes. ChatGPT Codex assisted development.
 
 ## Build and run
 
-Requires CMake 3.18+ and C++17. CUDA builds also need a compatible CUDA Toolkit and host compiler. Run from `part_a/`.
-
-CPU library with MinGW:
+Requires CMake 3.18+, C++17, CUDA and Python with Matplotlib for figures. Saved measurements use an RTX 5060 Ti with CUDA architecture 120.
 
 ```powershell
-cmake -S . -B build-cpu -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
-cmake --build build-cpu
-```
-
-GPU build from an x64 Visual Studio 2022 developer shell:
-
-```powershell
-cmake -S . -B build-gpu -G "Visual Studio 17 2022" -A x64 -DPART_A_ENABLE_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=120
+cmake -S . -B build-gpu -G "Visual Studio 17 2022" -A x64 -DPART_A_ENABLE_CUDA=ON -DPART_A_PROFILE_INFO=ON -DCMAKE_CUDA_ARCHITECTURES=120
 cmake --build build-gpu --config Release
+.\build-gpu\Release\attention.exe --grid correctness --output build-gpu/correctness
+.\build-gpu\Release\attention.exe --shape 4 8 256 64 --mode both --tile 16 --softmax-threads 128 --output build-gpu/representative
 ```
 
-Set the architecture for the actual GPU; 120 is used for RTX 5060 Ti.
+Each run writes to a new output directory. Build directories keep new run records separate from the saved results. For CPU-only execution, configure without CUDA and run `attention --cpu --shape 1 1 2 2`.
 
-Check all variants and candidate configurations against the CPU reference:
+## Implementation
+
+Q/K/V/O use row-major `[B,H,N,d]`; S/P use `[B,H,N,N]`. Each forward pass runs separate QK, softmax and PV kernels.
+
+- `naive`: one score/output element per thread and one softmax row per thread
+- `tiled`: shared-memory matrix multiplication with naive softmax
+- `parallel`: naive matrix multiplication with block-parallel softmax
+- `optimized`: tiled matrix multiplication and block-parallel softmax
+- `tensorcore`: FP16 Q/K/V/S/P/O, WMMA 16x16x16 multiplication with FP16 accumulators, and CUDA half-precision softmax
+
+`main` selects naive and optimized; `all` selects the four FP32 variants. The Tensor Core extension changes precision and matrix hardware together. Its CPU reference reads the same FP16-rounded inputs.
+
+Small shapes compare S/P/O against FP64. Representative performance shapes compare O: N=256/2048, d=64; the representative preset also validates its shapes. Other new performance rows leave error fields empty. The criterion is `abs(error)<=atol+rtol*abs(reference)`: FP32 uses atol=rtol=0.0001; FP16 uses atol=0.002 and rtol=0.02.
+
+Seed=5206, 5 warmups, 20 repeats. CUDA events measure forward and stage times in separate passes, excluding input preparation, allocation, transfers and comparison. Results report medians, IQR, sequences/s and allocated Q/K/V/S/P/O bytes.
+
+## Results
+
+CSV tables use `experiment` and `precision` to distinguish runs.
+
+| File | Contents |
+|---|---|
+| `results/correctness.csv` | FP32/FP16 small-shape S/P/O comparisons |
+| `results/samples.csv` | Individual timing samples for the main grid, tuning and ablation |
+| `results/summary.csv` | Timing statistics, errors, throughput and allocated workspace |
+| `results/profiles.csv` | Measured DRAM traffic, bandwidth, registers, shared memory and occupancy |
+| `results/resources.csv` | Launch settings and kernel resource usage |
+| `results/environment.txt` | Environment, configurations, tuning selection and rerun details |
+| `results/figures/` | Six report figures |
+
+The main grid uses B=4, H=8, N=256/512/1024/2048/4096 and d=32/64/128 in both modes. The frozen configuration is tile=16, softmax threads=128.
+
+The saved data contains 330 passing S/P/O records, 122 performance configurations, 2440 timing samples and 12 profiling cases. FP32 optimized is 3.18-6.96x faster than naive. FP16 Tensor Core is 1.27-1.78x faster than FP32 optimized, with a geometric mean of 1.42x and half the allocated workspace. The largest recorded main-grid FP16 output absolute error is 0.000919.
+
+Six FP16 performance cases were repeated; their complete 20-sample runs replaced the earlier timings. Forward IQR/median is at most 5.30% for FP32 and 7.19% for FP16. Saved output errors come from the original numerical validation. No further experiment runs are pending.
 
 ```powershell
-.\build-gpu\benchmarks\Release\attention_benchmark.exe --validate-only --variants all --configs study --output results/local/correctness-run
+python -m pip install matplotlib
+python plot_results.py
 ```
 
-The output directory must be new. CPU S/P/O comparisons use identical FP32 inputs, FP64 arithmetic and `atol=rtol=1e-4`. Representative shapes include nonmultiples and tile boundaries. Timed shapes with N<=257 receive exact-shape comparisons before and after measurement; larger shapes use representative comparisons and finite-output checks.
-
-## Experiments
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run_gpu_experiments.ps1 -Grid tuning -Configs study
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run_gpu_experiments.ps1 -Grid proposal -Tile 16 -SoftmaxThreads 128
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run_gpu_experiments.ps1 -Grid ablation -Tile 16 -SoftmaxThreads 128
-```
-
-The main grid uses B=4, H=8, N={256,512,1024,2048,4096}, d={32,64,128}, FP32 and both modes. It compares naive and optimized implementations in 60 rows. Ablation measures all four variants at N=256/1024,d=64. Tuning compares (8,256), (16,256), (32,256) and (16,128); select one configuration before the main grid.
-
-Buffers are preallocated and uploaded once. CUDA events measure full forward latency and separate QK/softmax/PV passes. Five warmups and 20 repeats are used by default. Allocation, copies, CPU comparisons and file I/O are outside timing. CSV files report median, IQR, throughput, workspace allocation and kernel resources.
-
-Profile small and large dense cases, separately from normal timing:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/profile_gpu.ps1 -N 256 -Tile 16 -SoftmaxThreads 128
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/profile_gpu.ps1 -N 2048 -Tile 16 -SoftmaxThreads 128
-```
-
-Profiling requires Nsight Compute and access to GPU counters. Plot a measured summary with Python and matplotlib:
-
-```powershell
-python benchmarks/plot_results.py results/gpu-benchmarks/RUN/benchmark/summary.csv --output results/local/figures
-```
-
-See [measured results](results/README.md). This component provides materialized baselines; fused attention belongs to Parts B/C. Finite inputs must keep FP32 products and accumulations representable. A workspace result can be downloaded only after a successful forward execution.
+Use `python plot_results.py --select-config` to print the best FP32 tuning configuration. Plotting reads `results/summary.csv` and writes only to `results/figures/`.

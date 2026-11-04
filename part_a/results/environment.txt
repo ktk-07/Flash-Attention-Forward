@@ -1,0 +1,159 @@
+[Shared settings]
+gpu=NVIDIA GeForce RTX 5060 Ti
+compute_capability=12.0
+vram_bytes=8546484224
+CUDA_toolkit=13.4.59
+host_compiler=MSVC-19.44.35229.0
+build=Release
+CUDA_architectures=120
+CUDA_runtime_API=13030
+CUDA_driver_API=13030
+CXX_standard=17
+CUDA_standard=17
+profile_info=1
+CXX_flags=/DWIN32 /D_WINDOWS /GR /EHsc /O2 /Ob2 /DNDEBUG
+CUDA_flags=-D_WINDOWS -Xcompiler=" /GR /EHsc" -Xcompiler="-O2 -Ob2" -DNDEBUG
+generator=splitmix64-fp32-v1
+seed=5206
+mode=both
+relative_error_denominator=max(abs(reference),1e-12)
+warmup=5
+repeats=20
+timing=CUDA events; separate forward and stage passes; setup and copies excluded
+workspace=Q/K/V/S/P/O allocations only; not device-wide usage or memory traffic
+
+[FP32 settings]
+precision=FP32; CPU_accumulation=FP64
+atol=0.0001
+rtol=0.0001
+source_commit=889915408ce179135ee413a80412d11fbc91a4f7
+
+[FP32 correctness]
+grid=correctness
+variants=all
+configuration=8,256
+configuration=16,256
+configuration=32,256
+configuration=16,128
+shape=1,1,1,1
+shape=2,3,15,7
+shape=1,2,16,16
+shape=2,1,17,33
+shape=1,1,33,65
+
+[FP32 proposal]
+grid=proposal
+variants=main
+configuration=16,128
+shape=4,8,256,32
+shape=4,8,256,64
+shape=4,8,256,128
+shape=4,8,512,32
+shape=4,8,512,64
+shape=4,8,512,128
+shape=4,8,1024,32
+shape=4,8,1024,64
+shape=4,8,1024,128
+shape=4,8,2048,32
+shape=4,8,2048,64
+shape=4,8,2048,128
+shape=4,8,4096,32
+shape=4,8,4096,64
+shape=4,8,4096,128
+output_error_source=Original full-grid validation
+
+[FP32 tuning]
+grid=tuning
+variants=optimized
+configuration=8,256
+configuration=16,256
+configuration=32,256
+configuration=16,128
+shape=4,8,256,64
+shape=4,8,1024,64
+
+[FP32 ablation]
+grid=ablation
+variants=all
+configuration=16,128
+shape=4,8,256,64
+shape=4,8,1024,64
+
+[FP32 GPU snapshot]
+name, driver_version, pstate, clocks.current.sm [MHz], clocks.current.memory [MHz], power.limit [W]
+NVIDIA GeForce RTX 5060 Ti, 610.88, P0, 2670 MHz, 14001 MHz, 180.00 W
+
+[FP32 profiler]
+NVIDIA (R) Nsight Compute Command Line Profiler
+Copyright (c) 2018-2026 NVIDIA Corporation
+Version 2026.3.0.0 (build 38525999) (public-release)
+Profiling executed from an elevated Administrator process; no metric substitutions.
+
+[FP16 settings]
+variants=tensorcore
+precision=FP16 storage, WMMA accumulator and softmax
+CPU_accumulation=FP64
+CPU_input=FP16-rounded Q/K/V
+atol=0.002
+rtol=0.02
+
+
+[FP16 correctness]
+grid=correctness
+configuration=16,256
+shape=1,1,1,1
+shape=2,3,15,7
+shape=1,2,16,16
+shape=2,1,17,33
+shape=1,1,33,65
+
+[FP16 proposal]
+grid=proposal
+configuration=16,128
+shape=4,8,256,32
+shape=4,8,256,64
+shape=4,8,256,128
+shape=4,8,512,32
+shape=4,8,512,64
+shape=4,8,512,128
+shape=4,8,1024,32
+shape=4,8,1024,64
+shape=4,8,1024,128
+shape=4,8,2048,32
+shape=4,8,2048,64
+shape=4,8,2048,128
+shape=4,8,4096,32
+shape=4,8,4096,64
+shape=4,8,4096,128
+
+rerun=Six FP16 performance cases; 5 warmups; 20 repeats; tile=16; softmax_threads=128
+rerun_error_fields=Original validation retained where the rerun skips CPU comparison
+rerun_case=4,8,1024,32,dense
+rerun_case=4,8,1024,64,dense
+rerun_case=4,8,2048,32,dense
+rerun_case=4,8,1024,64,causal
+rerun_case=4,8,1024,128,causal
+rerun_case=4,8,2048,32,causal
+rerun_gpu_state:
+name, driver_version, pstate, clocks.current.sm [MHz], clocks.current.memory [MHz], power.limit [W]
+NVIDIA GeForce RTX 5060 Ti, 610.88, P5, 390 MHz, 810 MHz, 180.00 W
+output_error_source=Original full-grid validation; six repeated rows retain original errors
+
+[FP16 GPU snapshot]
+name, driver_version, pstate, clocks.current.sm [MHz], clocks.current.memory [MHz], power.limit [W]
+NVIDIA GeForce RTX 5060 Ti, 610.88, P3, 2257 MHz, 7001 MHz, 180.00 W
+
+
+[FP16 profiler]
+NVIDIA (R) Nsight Compute Command Line Profiler
+Copyright (c) 2018-2026 NVIDIA Corporation
+Version 2026.3.0.0 (build 38525999) (public-release)
+Tensor Core instruction inspection: cuobjdump --dump-sass build-fp16/Release/attention.exe (sm_120). Both matmul_fp16_kernel<true> (QK) and matmul_fp16_kernel<false> (PV) contain HMMA.16816.F16, with FP16 rather than FP32 accumulator result type. WMMA accumulator fragments in source use half. No metric substitutions; profiler run elevated.
+
+
+[FP32 tuning selection]
+criterion=Minimum geometric mean forward latency over the tuning cases
+tile=8,softmax_threads=256,geometric_mean_ms=1.4709408374109658,selected=0
+tile=16,softmax_threads=256,geometric_mean_ms=1.218445980061039,selected=0
+tile=32,softmax_threads=256,geometric_mean_ms=1.5077883571399309,selected=0
+tile=16,softmax_threads=128,geometric_mean_ms=1.139944462505883,selected=1

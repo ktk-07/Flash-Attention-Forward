@@ -1,0 +1,253 @@
+experiment,precision,N,variant,mode,kernel,metric,unit,value
+profiling,FP32,2048,naive,causal,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",gpu__time_duration.sum,ns,"52,381,728"
+profiling,FP32,2048,naive,causal,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",dram__bytes_op_read.sum,byte,"229,197,568"
+profiling,FP32,2048,naive,causal,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",dram__bytes_op_write.sum,byte,"630,933,504"
+profiling,FP32,2048,naive,causal,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",dram__bytes.sum.per_second,byte/s,"16,420,440,959.87"
+profiling,FP32,2048,naive,causal,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",launch__registers_per_thread,register/thread,33
+profiling,FP32,2048,naive,causal,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",launch__shared_mem_per_block_static,byte/block,0
+profiling,FP32,2048,naive,causal,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,91.59
+profiling,FP32,2048,naive,causal,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",gpu__time_duration.sum,ns,"13,136,288"
+profiling,FP32,2048,naive,causal,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_read.sum,byte,"943,641,088"
+profiling,FP32,2048,naive,causal,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_write.sum,byte,"869,297,152"
+profiling,FP32,2048,naive,causal,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",dram__bytes.sum.per_second,byte/s,"138,009,934,008.75"
+profiling,FP32,2048,naive,causal,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",launch__registers_per_thread,register/thread,40
+profiling,FP32,2048,naive,causal,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",launch__shared_mem_per_block_static,byte/block,0
+profiling,FP32,2048,naive,causal,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,80.98
+profiling,FP32,2048,naive,causal,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",gpu__time_duration.sum,ns,"11,819,712"
+profiling,FP32,2048,naive,causal,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",dram__bytes_op_read.sum,byte,"588,688,896"
+profiling,FP32,2048,naive,causal,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",dram__bytes_op_write.sum,byte,"16,203,008"
+profiling,FP32,2048,naive,causal,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",dram__bytes.sum.per_second,byte/s,"51,176,534,927.42"
+profiling,FP32,2048,naive,causal,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",launch__registers_per_thread,register/thread,40
+profiling,FP32,2048,naive,causal,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",launch__shared_mem_per_block_static,byte/block,0
+profiling,FP32,2048,naive,causal,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,91.32
+profiling,FP32,2048,naive,dense,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",gpu__time_duration.sum,ns,"99,248,256"
+profiling,FP32,2048,naive,dense,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",dram__bytes_op_read.sum,byte,"371,202,304"
+profiling,FP32,2048,naive,dense,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",dram__bytes_op_write.sum,byte,"595,529,472"
+profiling,FP32,2048,naive,dense,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",dram__bytes.sum.per_second,byte/s,"9,740,541,697.78"
+profiling,FP32,2048,naive,dense,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",launch__registers_per_thread,register/thread,33
+profiling,FP32,2048,naive,dense,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",launch__shared_mem_per_block_static,byte/block,0
+profiling,FP32,2048,naive,dense,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,99.14
+profiling,FP32,2048,naive,dense,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",gpu__time_duration.sum,ns,"31,245,216"
+profiling,FP32,2048,naive,dense,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_read.sum,byte,"1,861,102,336"
+profiling,FP32,2048,naive,dense,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_write.sum,byte,"1,198,295,808"
+profiling,FP32,2048,naive,dense,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",dram__bytes.sum.per_second,byte/s,"97,915,730,331.32"
+profiling,FP32,2048,naive,dense,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",launch__registers_per_thread,register/thread,40
+profiling,FP32,2048,naive,dense,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",launch__shared_mem_per_block_static,byte/block,0
+profiling,FP32,2048,naive,dense,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,76.83
+profiling,FP32,2048,naive,dense,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",gpu__time_duration.sum,ns,"11,815,520"
+profiling,FP32,2048,naive,dense,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",dram__bytes_op_read.sum,byte,"590,814,720"
+profiling,FP32,2048,naive,dense,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",dram__bytes_op_write.sum,byte,"16,190,720"
+profiling,FP32,2048,naive,dense,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",dram__bytes.sum.per_second,byte/s,"51,373,569,677.85"
+profiling,FP32,2048,naive,dense,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",launch__registers_per_thread,register/thread,40
+profiling,FP32,2048,naive,dense,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",launch__shared_mem_per_block_static,byte/block,0
+profiling,FP32,2048,naive,dense,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,91.46
+profiling,FP32,2048,optimized,causal,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",gpu__time_duration.sum,ns,"5,269,056"
+profiling,FP32,2048,optimized,causal,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",dram__bytes_op_read.sum,byte,"50,869,248"
+profiling,FP32,2048,optimized,causal,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",dram__bytes_op_write.sum,byte,"529,103,872"
+profiling,FP32,2048,optimized,causal,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",dram__bytes.sum.per_second,byte/s,"110,071,542,226.92"
+profiling,FP32,2048,optimized,causal,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",launch__registers_per_thread,register/thread,48
+profiling,FP32,2048,optimized,causal,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",launch__shared_mem_per_block_static,byte/block,"2,112"
+profiling,FP32,2048,optimized,causal,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",sm__warps_active.avg.pct_of_peak_sustained_active,%,81.85
+profiling,FP32,2048,optimized,causal,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",gpu__time_duration.sum,ns,"2,231,296"
+profiling,FP32,2048,optimized,causal,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_read.sum,byte,"278,922,496"
+profiling,FP32,2048,optimized,causal,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_write.sum,byte,"527,097,856"
+profiling,FP32,2048,optimized,causal,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",dram__bytes.sum.per_second,byte/s,"361,234,167,049.11"
+profiling,FP32,2048,optimized,causal,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",launch__registers_per_thread,register/thread,26
+profiling,FP32,2048,optimized,causal,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",launch__shared_mem_per_block_static,byte/block,512
+profiling,FP32,2048,optimized,causal,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,98.99
+profiling,FP32,2048,optimized,causal,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",gpu__time_duration.sum,ns,"9,026,336"
+profiling,FP32,2048,optimized,causal,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_read.sum,byte,"579,391,232"
+profiling,FP32,2048,optimized,causal,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_write.sum,byte,"15,810,560"
+profiling,FP32,2048,optimized,causal,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",dram__bytes.sum.per_second,byte/s,"65,940,575,666.58"
+profiling,FP32,2048,optimized,causal,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",launch__registers_per_thread,register/thread,36
+profiling,FP32,2048,optimized,causal,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",launch__shared_mem_per_block_static,byte/block,"2,048"
+profiling,FP32,2048,optimized,causal,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,99.41
+profiling,FP32,2048,optimized,dense,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",gpu__time_duration.sum,ns,"10,728,736"
+profiling,FP32,2048,optimized,dense,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",dram__bytes_op_read.sum,byte,"86,116,096"
+profiling,FP32,2048,optimized,dense,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",dram__bytes_op_write.sum,byte,"574,484,224"
+profiling,FP32,2048,optimized,dense,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",dram__bytes.sum.per_second,byte/s,"61,572,986,789.87"
+profiling,FP32,2048,optimized,dense,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",launch__registers_per_thread,register/thread,48
+profiling,FP32,2048,optimized,dense,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",launch__shared_mem_per_block_static,byte/block,"2,112"
+profiling,FP32,2048,optimized,dense,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",sm__warps_active.avg.pct_of_peak_sustained_active,%,82.88
+profiling,FP32,2048,optimized,dense,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",gpu__time_duration.sum,ns,"2,805,888"
+profiling,FP32,2048,optimized,dense,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_read.sum,byte,"545,456,384"
+profiling,FP32,2048,optimized,dense,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_write.sum,byte,"519,346,944"
+profiling,FP32,2048,optimized,dense,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",dram__bytes.sum.per_second,byte/s,"379,488,891,930.11"
+profiling,FP32,2048,optimized,dense,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",launch__registers_per_thread,register/thread,26
+profiling,FP32,2048,optimized,dense,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",launch__shared_mem_per_block_static,byte/block,512
+profiling,FP32,2048,optimized,dense,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,99.19
+profiling,FP32,2048,optimized,dense,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",gpu__time_duration.sum,ns,"10,768,800"
+profiling,FP32,2048,optimized,dense,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_read.sum,byte,"601,089,792"
+profiling,FP32,2048,optimized,dense,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_write.sum,byte,"88,278,272"
+profiling,FP32,2048,optimized,dense,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",dram__bytes.sum.per_second,byte/s,"64,015,309,412.38"
+profiling,FP32,2048,optimized,dense,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",launch__registers_per_thread,register/thread,36
+profiling,FP32,2048,optimized,dense,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",launch__shared_mem_per_block_static,byte/block,"2,048"
+profiling,FP32,2048,optimized,dense,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,99.41
+profiling,FP32,256,naive,causal,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",gpu__time_duration.sum,ns,"770,400"
+profiling,FP32,256,naive,causal,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",dram__bytes_op_read.sum,byte,"4,204,800"
+profiling,FP32,256,naive,causal,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",dram__bytes_op_write.sum,byte,"1,361,408"
+profiling,FP32,256,naive,causal,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",dram__bytes.sum.per_second,byte/s,"7,225,088,265.84"
+profiling,FP32,256,naive,causal,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",launch__registers_per_thread,register/thread,33
+profiling,FP32,256,naive,causal,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",launch__shared_mem_per_block_static,byte/block,0
+profiling,FP32,256,naive,causal,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,71.94
+profiling,FP32,256,naive,causal,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",gpu__time_duration.sum,ns,"121,120"
+profiling,FP32,256,naive,causal,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_read.sum,byte,"4,582,912"
+profiling,FP32,256,naive,causal,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_write.sum,byte,"54,528"
+profiling,FP32,256,naive,causal,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",dram__bytes.sum.per_second,byte/s,"38,287,978,863.94"
+profiling,FP32,256,naive,causal,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",launch__registers_per_thread,register/thread,40
+profiling,FP32,256,naive,causal,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",launch__shared_mem_per_block_static,byte/block,0
+profiling,FP32,256,naive,causal,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,11.67
+profiling,FP32,256,naive,causal,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",gpu__time_duration.sum,ns,"195,456"
+profiling,FP32,256,naive,causal,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",dram__bytes_op_read.sum,byte,"10,493,696"
+profiling,FP32,256,naive,causal,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",dram__bytes_op_write.sum,byte,0
+profiling,FP32,256,naive,causal,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",dram__bytes.sum.per_second,byte/s,"53,688,277,668.63"
+profiling,FP32,256,naive,causal,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",launch__registers_per_thread,register/thread,40
+profiling,FP32,256,naive,causal,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",launch__shared_mem_per_block_static,byte/block,0
+profiling,FP32,256,naive,causal,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,94.19
+profiling,FP32,256,naive,dense,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",gpu__time_duration.sum,ns,"1,514,368"
+profiling,FP32,256,naive,dense,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",dram__bytes_op_read.sum,byte,"5,029,376"
+profiling,FP32,256,naive,dense,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",dram__bytes_op_write.sum,byte,"476,672"
+profiling,FP32,256,naive,dense,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",dram__bytes.sum.per_second,byte/s,"3,635,871,862.06"
+profiling,FP32,256,naive,dense,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",launch__registers_per_thread,register/thread,33
+profiling,FP32,256,naive,dense,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",launch__shared_mem_per_block_static,byte/block,0
+profiling,FP32,256,naive,dense,"qk_kernel(const float *, const float *, float *, Shape, bool, float, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,96.80
+profiling,FP32,256,naive,dense,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",gpu__time_duration.sum,ns,"195,456"
+profiling,FP32,256,naive,dense,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_read.sum,byte,"11,307,008"
+profiling,FP32,256,naive,dense,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_write.sum,byte,"94,464"
+profiling,FP32,256,naive,dense,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",dram__bytes.sum.per_second,byte/s,"58,332,678,454.49"
+profiling,FP32,256,naive,dense,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",launch__registers_per_thread,register/thread,40
+profiling,FP32,256,naive,dense,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",launch__shared_mem_per_block_static,byte/block,0
+profiling,FP32,256,naive,dense,"softmax_kernel(const float *, float *, Shape, bool, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,16.56
+profiling,FP32,256,naive,dense,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",gpu__time_duration.sum,ns,"194,464"
+profiling,FP32,256,naive,dense,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",dram__bytes_op_read.sum,byte,"10,839,296"
+profiling,FP32,256,naive,dense,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",dram__bytes_op_write.sum,byte,0
+profiling,FP32,256,naive,dense,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",dram__bytes.sum.per_second,byte/s,"55,739,345,071.58"
+profiling,FP32,256,naive,dense,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",launch__registers_per_thread,register/thread,40
+profiling,FP32,256,naive,dense,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",launch__shared_mem_per_block_static,byte/block,0
+profiling,FP32,256,naive,dense,"pv_kernel(const float *, const float *, float *, Shape, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,94.35
+profiling,FP32,256,optimized,causal,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",gpu__time_duration.sum,ns,"98,400"
+profiling,FP32,256,optimized,causal,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",dram__bytes_op_read.sum,byte,"6,291,200"
+profiling,FP32,256,optimized,causal,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",dram__bytes_op_write.sum,byte,0
+profiling,FP32,256,optimized,causal,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",dram__bytes.sum.per_second,byte/s,"63,934,959,349.59"
+profiling,FP32,256,optimized,causal,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",launch__registers_per_thread,register/thread,48
+profiling,FP32,256,optimized,causal,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",launch__shared_mem_per_block_static,byte/block,"2,112"
+profiling,FP32,256,optimized,causal,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",sm__warps_active.avg.pct_of_peak_sustained_active,%,76.05
+profiling,FP32,256,optimized,causal,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",gpu__time_duration.sum,ns,"50,016"
+profiling,FP32,256,optimized,causal,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_read.sum,byte,"4,349,952"
+profiling,FP32,256,optimized,causal,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_write.sum,byte,0
+profiling,FP32,256,optimized,causal,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",dram__bytes.sum.per_second,byte/s,"86,971,209,213.05"
+profiling,FP32,256,optimized,causal,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",launch__registers_per_thread,register/thread,26
+profiling,FP32,256,optimized,causal,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",launch__shared_mem_per_block_static,byte/block,512
+profiling,FP32,256,optimized,causal,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,93.71
+profiling,FP32,256,optimized,causal,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",gpu__time_duration.sum,ns,"149,792"
+profiling,FP32,256,optimized,causal,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_read.sum,byte,"13,605,120"
+profiling,FP32,256,optimized,causal,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_write.sum,byte,0
+profiling,FP32,256,optimized,causal,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",dram__bytes.sum.per_second,byte/s,"90,826,746,421.70"
+profiling,FP32,256,optimized,causal,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",launch__registers_per_thread,register/thread,36
+profiling,FP32,256,optimized,causal,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",launch__shared_mem_per_block_static,byte/block,"2,048"
+profiling,FP32,256,optimized,causal,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,95.46
+profiling,FP32,256,optimized,dense,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",gpu__time_duration.sum,ns,"160,160"
+profiling,FP32,256,optimized,dense,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",dram__bytes_op_read.sum,byte,"4,204,800"
+profiling,FP32,256,optimized,dense,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",dram__bytes_op_write.sum,byte,"1,094,656"
+profiling,FP32,256,optimized,dense,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",dram__bytes.sum.per_second,byte/s,"33,088,511,488.51"
+profiling,FP32,256,optimized,dense,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",launch__registers_per_thread,register/thread,48
+profiling,FP32,256,optimized,dense,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",launch__shared_mem_per_block_static,byte/block,"2,112"
+profiling,FP32,256,optimized,dense,"void qk_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, float, bool)",sm__warps_active.avg.pct_of_peak_sustained_active,%,79.81
+profiling,FP32,256,optimized,dense,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",gpu__time_duration.sum,ns,"49,952"
+profiling,FP32,256,optimized,dense,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_read.sum,byte,"8,396,800"
+profiling,FP32,256,optimized,dense,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",dram__bytes_op_write.sum,byte,0
+profiling,FP32,256,optimized,dense,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",dram__bytes.sum.per_second,byte/s,"168,097,373,478.54"
+profiling,FP32,256,optimized,dense,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",launch__registers_per_thread,register/thread,26
+profiling,FP32,256,optimized,dense,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",launch__shared_mem_per_block_static,byte/block,512
+profiling,FP32,256,optimized,dense,"void softmax_parallel_kernel<128>(const float *, float *, Shape, bool, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,93.88
+profiling,FP32,256,optimized,dense,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",gpu__time_duration.sum,ns,"150,048"
+profiling,FP32,256,optimized,dense,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_read.sum,byte,"10,703,616"
+profiling,FP32,256,optimized,dense,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_write.sum,byte,0
+profiling,FP32,256,optimized,dense,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",dram__bytes.sum.per_second,byte/s,"71,334,612,923.86"
+profiling,FP32,256,optimized,dense,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",launch__registers_per_thread,register/thread,36
+profiling,FP32,256,optimized,dense,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",launch__shared_mem_per_block_static,byte/block,"2,048"
+profiling,FP32,256,optimized,dense,"void pv_tiled_kernel<16>(const float *, const float *, float *, Shape, unsigned long long, unsigned long long, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,95.51
+profiling,FP16,2048,tensorcore,causal,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",gpu__time_duration.sum,ns,"2,932,288"
+profiling,FP16,2048,tensorcore,causal,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_read.sum,byte,"25,963,008"
+profiling,FP16,2048,tensorcore,causal,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_write.sum,byte,"256,169,728"
+profiling,FP16,2048,tensorcore,causal,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes.sum.per_second,byte/s,"96,215,902,394.31"
+profiling,FP16,2048,tensorcore,causal,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__registers_per_thread,register/thread,52
+profiling,FP16,2048,tensorcore,causal,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__shared_mem_per_block_static,byte/block,"1,536"
+profiling,FP16,2048,tensorcore,causal,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,48.92
+profiling,FP16,2048,tensorcore,causal,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",gpu__time_duration.sum,ns,"1,074,048"
+profiling,FP16,2048,tensorcore,causal,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",dram__bytes_op_read.sum,byte,"135,724,544"
+profiling,FP16,2048,tensorcore,causal,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",dram__bytes_op_write.sum,byte,"253,623,040"
+profiling,FP16,2048,tensorcore,causal,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",dram__bytes.sum.per_second,byte/s,"362,504,826,599.93"
+profiling,FP16,2048,tensorcore,causal,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",launch__registers_per_thread,register/thread,40
+profiling,FP16,2048,tensorcore,causal,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",launch__shared_mem_per_block_static,byte/block,256
+profiling,FP16,2048,tensorcore,causal,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,98.03
+profiling,FP16,2048,tensorcore,causal,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",gpu__time_duration.sum,ns,"6,959,648"
+profiling,FP16,2048,tensorcore,causal,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_read.sum,byte,"295,058,432"
+profiling,FP16,2048,tensorcore,causal,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_write.sum,byte,"7,486,720"
+profiling,FP16,2048,tensorcore,causal,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes.sum.per_second,byte/s,"43,471,329,584.48"
+profiling,FP16,2048,tensorcore,causal,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__registers_per_thread,register/thread,46
+profiling,FP16,2048,tensorcore,causal,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__shared_mem_per_block_static,byte/block,"1,536"
+profiling,FP16,2048,tensorcore,causal,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,49.54
+profiling,FP16,2048,tensorcore,dense,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",gpu__time_duration.sum,ns,"7,250,144"
+profiling,FP16,2048,tensorcore,dense,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_read.sum,byte,"43,028,480"
+profiling,FP16,2048,tensorcore,dense,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_write.sum,byte,"257,026,560"
+profiling,FP16,2048,tensorcore,dense,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes.sum.per_second,byte/s,"41,386,080,055.79"
+profiling,FP16,2048,tensorcore,dense,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__registers_per_thread,register/thread,52
+profiling,FP16,2048,tensorcore,dense,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__shared_mem_per_block_static,byte/block,"1,536"
+profiling,FP16,2048,tensorcore,dense,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,49.82
+profiling,FP16,2048,tensorcore,dense,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",gpu__time_duration.sum,ns,"1,372,288"
+profiling,FP16,2048,tensorcore,dense,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",dram__bytes_op_read.sum,byte,"268,647,936"
+profiling,FP16,2048,tensorcore,dense,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",dram__bytes_op_write.sum,byte,"250,456,576"
+profiling,FP16,2048,tensorcore,dense,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",dram__bytes.sum.per_second,byte/s,"378,276,653,297.27"
+profiling,FP16,2048,tensorcore,dense,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",launch__registers_per_thread,register/thread,40
+profiling,FP16,2048,tensorcore,dense,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",launch__shared_mem_per_block_static,byte/block,256
+profiling,FP16,2048,tensorcore,dense,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,98.57
+profiling,FP16,2048,tensorcore,dense,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",gpu__time_duration.sum,ns,"6,961,696"
+profiling,FP16,2048,tensorcore,dense,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_read.sum,byte,"302,553,600"
+profiling,FP16,2048,tensorcore,dense,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_write.sum,byte,"7,164,672"
+profiling,FP16,2048,tensorcore,dense,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes.sum.per_second,byte/s,"44,488,910,748.19"
+profiling,FP16,2048,tensorcore,dense,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__registers_per_thread,register/thread,46
+profiling,FP16,2048,tensorcore,dense,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__shared_mem_per_block_static,byte/block,"1,536"
+profiling,FP16,2048,tensorcore,dense,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,49.53
+profiling,FP16,256,tensorcore,causal,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",gpu__time_duration.sum,ns,"74,208"
+profiling,FP16,256,tensorcore,causal,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_read.sum,byte,"2,113,536"
+profiling,FP16,256,tensorcore,causal,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_write.sum,byte,"51,456"
+profiling,FP16,256,tensorcore,causal,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes.sum.per_second,byte/s,"29,174,644,243.21"
+profiling,FP16,256,tensorcore,causal,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__registers_per_thread,register/thread,52
+profiling,FP16,256,tensorcore,causal,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__shared_mem_per_block_static,byte/block,"1,536"
+profiling,FP16,256,tensorcore,causal,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,44.23
+profiling,FP16,256,tensorcore,causal,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",gpu__time_duration.sum,ns,"48,800"
+profiling,FP16,256,tensorcore,causal,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",dram__bytes_op_read.sum,byte,"2,246,144"
+profiling,FP16,256,tensorcore,causal,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",dram__bytes_op_write.sum,byte,0
+profiling,FP16,256,tensorcore,causal,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",dram__bytes.sum.per_second,byte/s,"46,027,540,983.61"
+profiling,FP16,256,tensorcore,causal,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",launch__registers_per_thread,register/thread,40
+profiling,FP16,256,tensorcore,causal,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",launch__shared_mem_per_block_static,byte/block,256
+profiling,FP16,256,tensorcore,causal,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,93.68
+profiling,FP16,256,tensorcore,causal,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",gpu__time_duration.sum,ns,"136,320"
+profiling,FP16,256,tensorcore,causal,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_read.sum,byte,"5,267,200"
+profiling,FP16,256,tensorcore,causal,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_write.sum,byte,0
+profiling,FP16,256,tensorcore,causal,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes.sum.per_second,byte/s,"38,638,497,652.58"
+profiling,FP16,256,tensorcore,causal,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__registers_per_thread,register/thread,46
+profiling,FP16,256,tensorcore,causal,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__shared_mem_per_block_static,byte/block,"1,536"
+profiling,FP16,256,tensorcore,causal,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,39.52
+profiling,FP16,256,tensorcore,dense,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",gpu__time_duration.sum,ns,"123,840"
+profiling,FP16,256,tensorcore,dense,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_read.sum,byte,"2,113,792"
+profiling,FP16,256,tensorcore,dense,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_write.sum,byte,0
+profiling,FP16,256,tensorcore,dense,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes.sum.per_second,byte/s,"17,068,733,850.13"
+profiling,FP16,256,tensorcore,dense,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__registers_per_thread,register/thread,52
+profiling,FP16,256,tensorcore,dense,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__shared_mem_per_block_static,byte/block,"1,536"
+profiling,FP16,256,tensorcore,dense,"void matmul_fp16_kernel<1>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,47.06
+profiling,FP16,256,tensorcore,dense,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",gpu__time_duration.sum,ns,"50,080"
+profiling,FP16,256,tensorcore,dense,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",dram__bytes_op_read.sum,byte,"4,208,128"
+profiling,FP16,256,tensorcore,dense,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",dram__bytes_op_write.sum,byte,0
+profiling,FP16,256,tensorcore,dense,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",dram__bytes.sum.per_second,byte/s,"84,028,115,015.97"
+profiling,FP16,256,tensorcore,dense,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",launch__registers_per_thread,register/thread,40
+profiling,FP16,256,tensorcore,dense,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",launch__shared_mem_per_block_static,byte/block,256
+profiling,FP16,256,tensorcore,dense,"void softmax_fp16_kernel<128>(const __half *, __half *, Shape, bool, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,93.95
+profiling,FP16,256,tensorcore,dense,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",gpu__time_duration.sum,ns,"137,024"
+profiling,FP16,256,tensorcore,dense,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_read.sum,byte,"5,252,864"
+profiling,FP16,256,tensorcore,dense,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes_op_write.sum,byte,0
+profiling,FP16,256,tensorcore,dense,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",dram__bytes.sum.per_second,byte/s,"38,335,357,309.67"
+profiling,FP16,256,tensorcore,dense,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__registers_per_thread,register/thread,46
+profiling,FP16,256,tensorcore,dense,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",launch__shared_mem_per_block_static,byte/block,"1,536"
+profiling,FP16,256,tensorcore,dense,"void matmul_fp16_kernel<0>(const __half *, const __half *, __half *, Shape, bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long)",sm__warps_active.avg.pct_of_peak_sustained_active,%,39.55
