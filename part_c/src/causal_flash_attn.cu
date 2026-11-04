@@ -5,6 +5,27 @@
 #include <cmath>
 #include <cfloat>
 
+// https://arxiv.org/pdf/2205.14135
+template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM>
+__global__ void flash_attention1_forward(float* Q,
+                                         float* K_transposed,
+                                         float* V,
+                                         float* O,
+                                         int row,
+                                         int col,
+                                         int inner_dimension, // not too sure if this is needed cause it is essentially HEAD_DIM
+                                         int B, int N,
+                                         int stride_qb, int stride_qn, int stride_qs, int stride_qh,
+                                         int stride_kb, int stride_kn, int stride_kh, int stride_ks,
+                                         int stride_vb, int stride_vn, int stride_vs, int stride_vh,
+                                         int stride_ob, int stride_on, int stride_os, int stride_oh,
+                                         float softmax_scale
+                                         )
+{
+    std::cout << "This is the flash attention 1 kernel" << std::endl;
+}
+
+// From this line onwards we are implementing FlashAttention2 progressively https://arxiv.org/pdf/2307.08691
 // No Hardware Optimisations Done to this Kernel
 // Compile Time Constants
 // Take note that  K is mathematically tranposed and not physically tranposed, K is stored in row major format and K_tranposed is not
@@ -360,11 +381,63 @@ __global__ void casual_flash_attention_forward_gpu_optimised_warp_per_query(floa
     }
 }
 
-__global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(){
-    std::cout << "Hello" << std::endl;
+
+// Multiple query rows per warp.
+// Multiple warps per CTA.
+// 2D register tiling with explicit operand reuse.
+// Vectorized, coalesced global-memory loading.
+// Shared-memory tiling for Q/K/V.
+// Online softmax and causal tile skipping.
+template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM, int NUM_WARPS, int THREAD_Q, int THREAD_K>
+__global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float* Q,
+                                                                           float* K,
+                                                                           float* V,
+                                                                           float* O,
+                                                                           int row,
+                                                                           int col,
+                                                                           int B, int N,
+                                                                           int stride_qb, int stride_qn, int stride_qs, int stride_qh,
+                                                                           int stride_kb, int stride_kn, int stride_kh, int stride_ks,
+                                                                           int stride_vb, int stride_vn, int stride_vs, int stride_vh,
+                                                                           int stride_ob, int stride_on, int stride_os, int stride_oh,
+                                                                           float softmax_scale
+                                                                           )
+{
+    // We decide how many query rows per warp via this 
+    constexpr int query_tile_size = (BLOCK_Q + NUM_WARPS - 1) / NUM_WARPS;
+    constexpr int WARP_SIZE = 32;
+    constexpr int NUM_OUTPUT_GROUPS = (HEAD_DIM + WARP_SIZE - 1) / WARP_SIZE;
+    constexpr int NUM_KEY_GROUPS = (BLOCK_KV + WARP_SIZE - 1) / WARP_SIZE;
+
+    int BN = blockIdx.x;
+    int b_idx = BN / N;
+    int n_idx = BN % N;
+
+    int warp_idx = threadIdx.x / WARP_SIZE;
+    int warp_lane_idx = threadIdx.x % WARP_SIZE;
+
+    // Computing the base_pointers;
+    int q_base_ptr = b_idx * stride_qb + n_idx * stride_qn;
+    int k_base_ptr = b_idx * stride_kb + n_idx * stride_kn;
+    int v_base_ptr = b_idx * stride_vb + n_idx * stride_vn;
+    int o_base_ptr = b_idx * stride_ob + n_idx * stride_on;
+
+    // Running Statistics to keep track of
+    float final_acc[query_tile_size][NUM_OUTPUT_GROUPS]; // each warp_lane (thread) has this
+    float global_denominator[query_tile_size]; // each warp_lane (thread) is responsible for this
+    float global_max[query_tile_size]; // each warp_lane (thread) is responsible for this
+
+    // Shared Memory
+    __shared__ float Q_SHARED[BLOCK_Q][HEAD_DIM];
+    __shared__ float K_SHARED[BLOCK_KV][HEAD_DIM];
+    __shared__ float V_SHARED[BLOCK_KV][HEAD_DIM];
+
+    int tile_r_start = blockIdx.y * BLOCK_Q;
+
 }
 
 // Implementing the TensorCore Optimised Kernels
+// Doing the Matmul with Tensor Cores Instead of Cuda Cores
 template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM>
 __global__ void casual_flash_attention_forward_gpu_optimised_for_tensor_core(float* Q,
                                                                              float* K,
