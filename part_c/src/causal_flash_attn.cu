@@ -433,7 +433,70 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
     __shared__ float V_SHARED[BLOCK_KV][HEAD_DIM];
 
     int tile_r_start = blockIdx.y * BLOCK_Q;
+    // Cooperative Loading of Q, we want to reuse Q 
+    // Different warps load query_tile_size of rows
+    // Each lane loads one float per instruction;
+    for (int j = 0 ; j < query_tile_size ; j++){
+        // Loading Loop for 
+        // Cooperative Loading of Q, K, V, in the memory coalesced way
+        int q_local = warp_idx * query_tile_size + j;
+        int sq_idx = tile_r_start + q_local; // row_idx for q
 
+        // Q Load
+        for (int k = 0 ; k < NUM_OUTPUT_GROUPS ; k++){
+            int h_idx = k * WARP_SIZE + warp_lane_idx; // col_idx
+            if (q_local >= BLOCK_Q || h_idx >= HEAD_DIM) continue;
+            if (sq_idx >= row) {
+                Q_SHARED[q_local][h_idx] = 0.0f;
+            } else {
+                Q_SHARED[q_local][h_idx] = *(Q + q_base_ptr + sq_idx * stride_qs + h_idx * stride_qh);
+            }
+        }
+    }
+    __syncthreads();
+
+    int tile_c = ( col + BLOCK_KV - 1 ) / BLOCK_KV;
+    for (int i = 0 ; i < tile_c ; i++){
+        int tile_c_start = i * BLOCK_KV;
+        // Loading Loop for 
+        // Cooperative Loading of K, V, in the memory coalesced way
+
+        // Basicaly 1 warp load query_tile_size of the row of K and V;
+        // Stored K in a transpose manner and K normally.
+        // The problem with this is that im afraid shared memory would fill up 
+        constexpr int no_of_row_iterations = (BLOCK_KV + NUM_WARPS - 1) / NUM_WARPS;
+        for (int j = 0 ; j < NUM_OUTPUT_GROUPS ; j++){       
+            int h_idx = j * WARP_SIZE + warp_lane_idx;
+            if (h_idx >= HEAD_DIM) continue; 
+            // K/V Load feels like i might need another loop here that loops over kv_tile_size ?;
+            for (int k = 0 ; k < no_of_row_iterations; k++){
+                int row_local = k * NUM_WARPS + warp_idx;
+                int skv_idx = tile_c_start + row_local; // row_idx for kv 
+
+                if (row_local >= BLOCK_KV) continue;
+
+                if (skv_idx >= col){
+                    K_SHARED[row_local][h_idx] = 0.0f;
+                    V_SHARED[row_local][h_idx] = 0.0f;
+                }else{
+                    K_SHARED[row_local][h_idx] = *(K + k_base_ptr + skv_idx * stride_ks + h_idx * stride_kh);
+                    V_SHARED[row_local][h_idx] = *(V + v_base_ptr + skv_idx * stride_vs + h_idx * stride_vh);                   
+                }
+            }
+        }
+        __syncthreads();       
+
+        // Computation Loop
+        // QK^T
+        // 2D Register tiling for reuse
+
+
+        // Softmax Recurrence
+
+        // PV
+        // 2D Register tiling for reuse
+
+    }
 }
 
 // Implementing the TensorCore Optimised Kernels
