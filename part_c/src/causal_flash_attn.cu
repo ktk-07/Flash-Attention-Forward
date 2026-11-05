@@ -436,6 +436,8 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
     // Different warps load query_tile_size of rows
     // Each lane loads one float per instruction;
     for (int j = 0 ; j < query_tile_size ; j++){
+        global_max[j] = -INFINITY;
+        global_denominator[j] = 0.0f;
         // Loading Loop for 
         // Cooperative Loading of Q, K, V, in the memory coalesced way
         int q_local = warp_idx * query_tile_size + j;
@@ -551,12 +553,79 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
                     }
                 }
                 // Apply causal mask
-                
+
+                for (int q = 0; q < THREAD_Q; q++) {
+
+                    int q_offset = q_base + q;
+                    int q_local = warp_idx * query_tile_size + q_offset;
+                    int q_global = tile_r_start + q_local;
+
+                    for (int k = 0; k < THREAD_K; k++) {
+
+                        int k_local = k_base + k;
+                        int key_global = tile_c_start + k_local;
+
+                        if (q_offset >= query_tile_size || q_local >= BLOCK_Q || q_global >= row || k_local >= BLOCK_KV || key_global >= col || key_global > q_global) {
+                            score_acc[q][k] = -INFINITY;
+                        }
+                    }
+                }
+
                 // Update online softmax
+                // No need for warp maxing
+                for (int q = 0 ; q < THREAD_Q ; q++){
+                    int q_offset = q_base + q;
+                    if (q_offset >= query_tile_size) continue;
+                    int q_local = warp_idx * query_tile_size + q_offset;
+                    int q_global = tile_r_start + q_local;
 
+                    if (q_local >= BLOCK_Q || q_global >= row) continue;
 
-                // Update PV
+                    // 1. Maximum of current score tile
+                    float local_max = -INFINITY;
+                    for (int k = 0 ; k < THREAD_K ; k++){
+                        local_max = max(local_max, score_acc[q][k]);
+                    }
+                    float new_max = max(local_max, global_max[q_offset]);
+
+                    if (new_max == -INFINITY) continue;
+                    // Rescaling of global denominaotr and accumulator
+                    float rescaling_factor = (global_max[q_offset] == -INFINITY) ? 0.0f : expf(global_max[q_offset] - new_max);
+
+                    global_denominator[q_offset] *= rescaling_factor;
+                    for (int j = 0 ; j < NUM_OUTPUT_GROUPS ; j++){ // We do this because every warp_lane contains it, so its easier to do PV
+                        final_acc[q_offset][j] *= rescaling_factor; 
+                    }
+                    
+                    // Update scores to turn it into probabilites
+                    for (int k = 0 ; k < THREAD_K ; k++){
+                        score_acc[q][k] = (score_acc[q][k] == -INFINITY) ? 0.0f : expf(score_acc[q][k] - new_max);
+                        global_denominator[q_offset] += score_acc[q][k]; 
+
+                        int k_local = k_base + k;
+                        // Update PV
+                        for (int l = 0 ; l < NUM_OUTPUT_GROUPS; l++){
+                            int h_idx = l * WARP_SIZE + warp_lane_idx;
+                            if (k_local >= BLOCK_KV || h_idx >= HEAD_DIM) continue;
+                            final_acc[q_offset][l] += score_acc[q][k] * V_SHARED[k_local][h_idx];
+                        }
+                    }
+                    global_max[q_offset] = new_max;
+                }
             }
+        }
+        __syncthreads();
+    }
+    // Write O here, after ALL K/V tiles
+    for (int j = 0; j < query_tile_size; j++) {
+        int row_q_local_idx = warp_idx * query_tile_size + j;
+        int q_global = tile_r_start + row_q_local_idx;
+        if (row_q_local_idx >= BLOCK_Q || q_global >= row) continue;
+        for (int d = 0; d < NUM_OUTPUT_GROUPS; d++) {
+            int h = d * WARP_SIZE + warp_lane_idx;
+            if (h >= HEAD_DIM) continue;
+            float output = (global_denominator[j] > 0.0f) ? final_acc[j][d] / global_denominator[j] : 0.0f;
+            *(O + o_base_ptr + q_global * stride_os + h * stride_oh) = output;
         }
     }
 }
