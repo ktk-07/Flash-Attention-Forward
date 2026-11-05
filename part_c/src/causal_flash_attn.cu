@@ -191,7 +191,6 @@ __device__ float warp_sum(float val, int warp_size){
     return __shfl_sync(FULL_MASK, val, srclane, width); // broadcast the final_sum to all other warps, it is sually accumulated into lane 0;
 }
 
-
 // 1 warp is responsible for 1 query row
 // Example Grid and BlockDimension
 // dim3 gridDim(B*N, (Q + BLOCK_Q -1 )/ BLOCK_Q); dim3 blockDim(num_warps & warp_size);
@@ -489,13 +488,76 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
         // Computation Loop
         // QK^T
         // 2D Register tiling for reuse
+        // My thinking is this. 
+        // We want to 
+        // Loading 1 row of Q from shared_memory into registers of each warp
+        // Load K columns of K from shared_memory (in shared memory they are store as rows, but for matmul i just called it k column)
+        // then go to the next row
+        // We are reusing the Q row and using it for differnt columns
+        // All warp lane are computing the same thread_q x thread_k output tile
+        // However each warp lane are loading a different head_dim
+        // Each warp lane owns particular head-dimension indices, not a K row.        
+
+        // float Q_REG[NUM_OUTPUT_GROUPS] = {};
+        float Q_REG[THREAD_Q][NUM_OUTPUT_GROUPS];
+        float K_REG[THREAD_K][NUM_OUTPUT_GROUPS];
+        
+        // Loading into Q and K registers
+        for (int q_base = 0; q_base < query_tile_size; q_base += THREAD_Q) { // advances to the next register tile.
+            // Load tile_q into Q_REG
+            for (int j = 0 ; j < THREAD_Q ; j++){ // access each row wihtin tile
+                int q_offset = q_base + j;
+                int row_q_local_idx = warp_idx * query_tile_size + q_offset;
+                int q_global = tile_r_start + row_q_local_idx;
+                for (int k = 0 ; k < NUM_OUTPUT_GROUPS ; k++){
+                    int col_q_local_idx = k * WARP_SIZE + warp_lane_idx;
+                    if (col_q_local_idx >= HEAD_DIM || row_q_local_idx >= BLOCK_Q || q_global >= row){
+                        Q_REG[j][k] = 0.0f;
+                    }else{
+                        Q_REG[j][k] = Q_SHARED[row_q_local_idx][col_q_local_idx];
+                    }
+                }
+            }
+
+            for (int k_base = 0; k_base < BLOCK_KV; k_base += THREAD_K) {
+                // Load K_REG
+                float score_acc[THREAD_Q][THREAD_K] = {};
+                for (int j = 0 ; j < THREAD_K ; j++){ // access each row wihtin tile
+                    int row_k_local_idx = k_base + j;
+                    int key_global = tile_c_start + row_k_local_idx;
+                    for (int k = 0 ; k < NUM_OUTPUT_GROUPS ; k++){
+                        int col_k_local_idx = k * WARP_SIZE + warp_lane_idx;
+                        if (col_k_local_idx >= HEAD_DIM || row_k_local_idx >= BLOCK_KV || key_global >= col){
+                            K_REG[j][k] = 0.0f;
+                        }else{
+                            K_REG[j][k] = K_SHARED[row_k_local_idx][col_k_local_idx];
+                        }
+                    }
+                }
+                // Compute THREAD_Q x THREAD_K partial scores
+                for (int j = 0 ; j < NUM_OUTPUT_GROUPS ; j++){
+                    for (int q = 0 ; q < THREAD_Q ; q++){
+                        for (int k = 0 ; k < THREAD_K ; k++){
+                            score_acc[q][k] += Q_REG[q][j] * K_REG[k][j];
+                        }
+                    }
+                }
+                // Warp Reduce the partial sums and apply softmax_scale 
+                for (int q = 0 ; q < THREAD_Q ; q++){
+                    for (int k = 0 ; k < THREAD_K ; k++){
+                        int warp_size = WARP_SIZE;
+                        score_acc[q][k] = warp_sum(score_acc[q][k], warp_size);
+                        score_acc[q][k] *= softmax_scale;
+                    }
+                }
+                // Apply causal mask
+                
+                // Update online softmax
 
 
-        // Softmax Recurrence
-
-        // PV
-        // 2D Register tiling for reuse
-
+                // Update PV
+            }
+        }
     }
 }
 
