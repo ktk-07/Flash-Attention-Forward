@@ -384,7 +384,7 @@ __global__ void casual_flash_attention_forward_gpu_optimised_warp_per_query(floa
 // Multiple query rows per warp.
 // Multiple warps per CTA.
 // 2D register tiling with explicit operand reuse.
-// Vectorized, coalesced global-memory loading.
+// Coalesced scalar global-memory loading (one float per lane/instruction).
 // Shared-memory tiling for Q/K/V.
 // Online softmax and causal tile skipping.
 template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM, int NUM_WARPS, int THREAD_Q, int THREAD_K>
@@ -438,6 +438,10 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
     for (int j = 0 ; j < query_tile_size ; j++){
         global_max[j] = -INFINITY;
         global_denominator[j] = 0.0f;
+        // Required: the output accumulator is multiplied and incremented later.
+        for (int d = 0; d < NUM_OUTPUT_GROUPS; ++d) {
+            final_acc[j][d] = 0.0f;
+        }
         // Loading Loop for 
         // Cooperative Loading of Q, K, V, in the memory coalesced way
         int q_local = warp_idx * query_tile_size + j;
@@ -456,14 +460,19 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
     }
     __syncthreads();
 
-    int tile_c = ( col + BLOCK_KV - 1 ) / BLOCK_KV;
+    // Causal tile skipping: a query block cannot attend to keys beyond
+    // its last valid query position. Skip those K/V tiles entirely.
+    // This assumes aligned causal self-attention (query/key position 0 matches).
+    const int last_query_exclusive = min(row, tile_r_start + BLOCK_Q);
+    const int valid_key_exclusive = min(col, last_query_exclusive);
+    const int tile_c = (valid_key_exclusive + BLOCK_KV - 1) / BLOCK_KV;
     for (int i = 0 ; i < tile_c ; i++){
         int tile_c_start = i * BLOCK_KV;
         // Loading Loop for 
         // Cooperative Loading of K, V, in the memory coalesced way
 
         // Basicaly 1 warp load query_tile_size of the row of K and V;
-        // Stored K in a transpose manner and K normally.
+        // K and V are both stored row-major in shared memory.
         // The problem with this is that im afraid shared memory would fill up 
         constexpr int no_of_row_iterations = (BLOCK_KV + NUM_WARPS - 1) / NUM_WARPS;
         for (int j = 0 ; j < NUM_OUTPUT_GROUPS ; j++){       
@@ -632,6 +641,19 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
 
 // Implementing the TensorCore Optimised Kernels
 // Doing the Matmul with Tensor Cores Instead of Cuda Cores
+// Standalone Tensor Core GEMM
+__global__ void gemm_wmma(...);
+
+
+// WMMA QK + CUDA Core PV
+__global__ void flash_attention_wmma_qk(...);
+
+
+// Fully Fused WMMA FlashAttention
+__global__ void flash_attention_wmma_fused(...);
+
+
+// PTX MMA Optimized FlashAttention
 template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM>
 __global__ void casual_flash_attention_forward_gpu_optimised_for_tensor_core(float* Q,
                                                                              float* K,
