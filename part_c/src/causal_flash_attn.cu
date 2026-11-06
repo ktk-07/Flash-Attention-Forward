@@ -1,9 +1,16 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
+#include <mma.h>
 #include <iostream>
 #include <algorithm>
 #include <cmath>
 #include <cfloat>
+#include <math_constants.h>
+#include <stdint.h>
+#include <vector>
+#include <limits>
+
 
 // https://arxiv.org/pdf/2205.14135
 template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM>
@@ -460,8 +467,7 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
     }
     __syncthreads();
 
-    // Causal tile skipping: a query block cannot attend to keys beyond
-    // its last valid query position. Skip those K/V tiles entirely.
+    // Causal tile skipping: a query block cannot attend to keys beyond its last valid query position. Skip those K/V tiles entirely.
     // This assumes aligned causal self-attention (query/key position 0 matches).
     const int last_query_exclusive = min(row, tile_r_start + BLOCK_Q);
     const int valid_key_exclusive = min(col, last_query_exclusive);
@@ -501,7 +507,7 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
         // 2D Register tiling for reuse
         // My thinking is this. 
         // We want to 
-        // Loading 1 row of Q from shared_memory into registers of each warp
+        // Load 1 row of Q from shared_memory into registers of each warp
         // Load K columns of K from shared_memory (in shared memory they are store as rows, but for matmul i just called it k column)
         // then go to the next row
         // We are reusing the Q row and using it for differnt columns
@@ -639,21 +645,138 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
     }
 }
 
-// Implementing the TensorCore Optimised Kernels
-// Doing the Matmul with Tensor Cores Instead of Cuda Cores
-// Standalone Tensor Core GEMM
-__global__ void gemm_wmma(...);
+// FULLY FUSED WMMA FLASHATTENTION 
+// Original FP32 CUDA-core kernels above are preserved as separate variants.
+// IMPORTANT: requires BLOCK_Q == 16*NUM_WARPS; use blockDim=32*NUM_WARPS. The original [B,N,S,H] tensor strides are in ELEMENTS (not bytes).
+// WMMA ldm refers to the padded SHARED-MEMORY pitch, not the 4D tensor size.
+// Q/K/V are half*, which is FP16, unlike the existing FP32 CUDA-core kernel.
+// A separate FP32-to-FP16 conversion is needed if reusing FP32 inputs.
+template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM, int NUM_WARPS>
+__global__ void flash_attention_wmma_fused(const half* __restrict__ Q,
+                                           const half* __restrict__ K,
+                                           const half* __restrict__ V,
+                                           float* __restrict__ O,
+                                           int B, int N, 
+                                           int row, int col,
+                                           int stride_qb, int stride_qn, int stride_qs, int stride_qh,
+                                           int stride_kb, int stride_kn, int stride_ks, int stride_kh,
+                                           int stride_vb, int stride_vn, int stride_vs, int stride_vh,
+                                           int stride_ob, int stride_on, int stride_os, int stride_oh,
+                                           float softmax_scale
+                                           )
+{
+    constexpr int WARP = 32;
+    constexpr int WM = 16, WN = 16, WK = 16;
+    constexpr int PAD_HEAD = ((HEAD_DIM + 15) / 16) * 16; // Padding is needed cause wmma does 16 x 16 x 16 matrix multiplication
+    constexpr int PAD_KV = ((BLOCK_KV + 15) / 16) * 16; // Padding is needed cause wmma does 16 x 16 x 16 matrix multiplication
+    static_assert(BLOCK_Q == NUM_WARPS * WM, "Not a production ready kenel, Exactly one 16-row query tile per warp");
+    static_assert(BLOCK_KV > 0 && HEAD_DIM > 0 && NUM_WARPS > 0, "Positive dimensions required");
 
+    // All warps in the block cooperate to stage the SAME Q/K/V tiles.
+    // One warp then owns exactly 16 query rows for all KV iterations.
+    // This makes block-wide __syncthreads() safe: every warp executes the
+    // same number of outer KV iterations.
+    const int tid = threadIdx.x;
+    const int warp = tid / WARP;
+    const int lane = tid % WARP;
+   
+    if (blockIdx.x >= (unsigned)(B * N)) return; // uniform block-wide check
 
-// WMMA QK + CUDA Core PV
-__global__ void flash_attention_wmma_qk(...);
+    const int b = blockIdx.x / N;
+    const int head = blockIdx.x % N;
+    const int q_block_start = blockIdx.y * BLOCK_Q;
+    const int q_local_start = warp * WM;
 
+    // These offsets select ONE logical [sequence, head_dim] 2D matrix out of the [B,N,S,H] 4D tensor. 
+    // They are NOT WMMA leading dimensions.
+    const int64_t q_head_offset = (int64_t)b * stride_qb + (int64_t)head * stride_qn;
+    const int64_t k_head_offset = (int64_t)b * stride_kb + (int64_t)head * stride_kn;
+    const int64_t v_head_offset = (int64_t)b * stride_vb + (int64_t)head * stride_vn;
+    const int64_t o_head_offset = (int64_t)b * stride_ob + (int64_t)head * stride_on;
 
-// Fully Fused WMMA FlashAttention
-__global__ void flash_attention_wmma_fused(...);
+    // SHARED-MEMORY LEADING DIMENSION (ldm - leading dimension of a matrix):
+    // We pack [BLOCK_Q, HEAD_DIM] into [BLOCK_Q, PAD_HEAD].
+    // For a row-major WMMA load, ldm = PAD_HEAD (distance between rows).
+    // It is NOT B*N*S, and is NOT necessarily the global stride_qs.
+    // PAD_HEAD is a multiple of 16 FP16 elements, meeting WMMA ldm rules.
+    __shared__ __align__(32) half q_s[BLOCK_Q][PAD_HEAD];
+    __shared__ __align__(32) half k_s[PAD_KV][PAD_HEAD];
+    __shared__ __align__(32) half v_s[PAD_KV][PAD_HEAD];
 
+    // Separate score and probability tiles for EACH warp, so warps do not
+    // overwrite one another's intermediate tiles.
+    __shared__ __align__(32) float score_s[NUM_WARPS][WM][WN];
+    __shared__ __align__(32) half  prob_s[NUM_WARPS][WM][WN];
+    __shared__ __align__(32) float pv_s[NUM_WARPS][WM][WN];
 
-// PTX MMA Optimized FlashAttention
+    // Online softmax state, persistent across ALL key/value tiles:
+    // m_i = running maximum; l_i = running exp sum;
+    // out_acc = UNNORMALIZED sum_j exp(score_ij - m_i) * V_j.
+    // Store output in shared memory because rescaling is ROW-SPECIFIC and
+    // WMMA accumulator fragment elements have opaque lane mapping.
+    __shared__ float running_m[BLOCK_Q];
+    __shared__ float running_l[BLOCK_Q];
+    __shared__ float alpha_s[BLOCK_Q];
+    __shared__ float out_acc[BLOCK_Q][PAD_HEAD];
+
+    // Cooperative load Q. Flattened indexing makes all threads participate.
+    // Mask invalid query rows and padded head dimensions with zeros.
+    for (int idx = tid; idx < BLOCK_Q * PAD_HEAD; idx += blockDim.x) {
+        const int qr = idx / PAD_HEAD;
+        const int d  = idx % PAD_HEAD;
+        const int qg = q_block_start + qr;
+        q_s[qr][d] = (qg < row && d < HEAD_DIM)
+            ? Q[q_head_offset + (int64_t)qg * stride_qs + (int64_t)d * stride_qh]
+            : __float2half(0.0f);
+    }
+    for (int qr = tid; qr < BLOCK_Q; qr += blockDim.x) {
+        running_m[qr] = -CUDART_INF_F;
+        running_l[qr] = 0.0f;
+        alpha_s[qr] = 0.0f;
+    }
+    for (int idx = tid; idx < BLOCK_Q * PAD_HEAD; idx += blockDim.x) {
+        out_acc[idx / PAD_HEAD][idx % PAD_HEAD] = 0.0f;
+    }
+    __syncthreads();
+
+    // Causal tile skipping: a query block needs no keys beyond its final row.
+    const int last_q = min(row, q_block_start + BLOCK_Q);
+    const int key_limit = min(col, last_q);
+    const int num_kv_tiles = (key_limit + BLOCK_KV - 1) / BLOCK_KV;
+
+    for (int tile_i = 0; tile_i < num_kv_tiles; ++tile_i) {
+        const int kv_start = tile_i * BLOCK_KV;
+
+        // Q stays in shared memory across the entire loop. K/V are replaced
+        // for each outer tile. Zero-padding handles both HEAD_DIM and KV tails.
+        for (int idx = tid; idx < PAD_KV * PAD_HEAD; idx += blockDim.x) {
+            const int kr = idx / PAD_HEAD;
+            const int d  = idx % PAD_HEAD;
+            const int kg = kv_start + kr;
+            const bool valid = kr < BLOCK_KV && kg < col && d < HEAD_DIM;
+            k_s[kr][d] = valid ? K[k_head_offset + (int64_t)kg * stride_ks + (int64_t)d * stride_kh] : __float2half(0.0f);
+            v_s[kr][d] = valid ? V[v_head_offset + (int64_t)kg * stride_vs + (int64_t)d * stride_vh] : __float2half(0.0f);
+        }
+        __syncthreads(); // All warps must see completed K/V loads.
+
+        __syncthreads(); // All warps finished reading K/V before replacement.
+    }
+
+    // Final normalization happens ONCE after all KV tiles:
+    // O_i = out_acc_i / running_l_i.
+    // Here we use all lanes for coalesced output stores; the output strides can differ from the shared-memory pitch.
+    for (int idx = tid; idx < BLOCK_Q * PAD_HEAD; idx += blockDim.x) {
+        const int qr = idx / PAD_HEAD;
+        const int d = idx % PAD_HEAD;
+        const int qg = q_block_start + qr;
+        if (qg < row && d < HEAD_DIM) {
+            const float denom = running_l[qr];
+            O[o_head_offset + (int64_t)qg * stride_os + (int64_t)d * stride_oh] = denom > 0.0f ? out_acc[qr][d] / denom : 0.0f;
+        }
+    }
+}
+
+// Fully Fused PTX MMA Optimized FlashAttention
 template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM>
 __global__ void casual_flash_attention_forward_gpu_optimised_for_tensor_core(float* Q,
                                                                              float* K,
