@@ -786,46 +786,58 @@ __global__ void flash_attention_wmma_fused(const half* __restrict__ Q,
             wmma::store_matrix_sync(&score_s[warp][0][0], scores, WN, wmma::mem_row_major);
             __syncwarp();
 
-            // Lanes 0..15 each own one query row for SOFTMAX (not for MMA).
-            // Every row reads its 16 scores, applies scale+causal mask,
-            // and updates the online softmax state:
-            //   new_m = max(old_m, max(score))
-            //   alpha = exp(old_m - new_m)
-            //   new_l = alpha*old_l + sum(exp(score-new_m))
-            //   out_acc = alpha*out_acc + exp(score-new_m) @ V
-            // The last expression is completed below by WMMA PV.
-            if (lane < WM) {
-                const int qr = q_local_start + lane;
-                const int qg = q_block_start + qr;
-                float s[WN];
-                float tile_max = -CUDART_INF_F;
+            // ALL 32 LANES PARTICIPATE IN SOFTMAX:
+            // 16 query rows x 2 lanes per row. Pair (2*r, 2*r+1)
+            // owns query row r. Each lane handles alternating key columns:
+            //   pair_lane=0 -> keys 0,2,4,...14
+            //   pair_lane=1 -> keys 1,3,5,...15
+            // Both lanes independently read their partial scores, then use
+            // __shfl_xor_sync(..., 1) to combine maxima and denominators.
+            // No inter-warp communication is necessary.
+            const int qr = q_local_start + row_in_warp;
+            const int qg = q_block_start + qr;
+            float scores_local[WN / 2];
+            float local_max = -CUDART_INF_F;
+            #pragma unroll
+            for (int j = 0; j < WN / 2; ++j) {
+                const int key_in_tile = 2 * j + pair_lane;
+                const int kg = kv_start + k_base + key_in_tile;
+                const bool valid = qg < row && (k_base + key_in_tile) < BLOCK_KV && kg < col && kg <= qg;
+                const float score = valid ? score_s[warp][row_in_warp][key_in_tile] * softmax_scale : -CUDART_INF_F;
+                scores_local[j] = score;
+                local_max = fmaxf(local_max, score);
+            }
 
-                // Loop Unrolling implemented
-                #pragma unroll
-                for (int j = 0; j < WN; ++j) {
-                    const int kg = kv_start + k_base + j;
-                    const bool valid = qg < row && (k_base + j) < BLOCK_KV && kg < col && kg <= qg;
-                    s[j] = valid ? score_s[warp][lane][j] * softmax_scale : -CUDART_INF_F;
-                    tile_max = fmaxf(tile_max, s[j]);
-                }
+            // XOR 1 exchanges values only between adjacent lanes:
+            // (0,1), (2,3), ..., (30,31). Both receive the row maximum.
+            const float peer_max = __shfl_xor_sync(0xffffffffu, local_max, 1);
+            const float tile_max = fmaxf(local_max, peer_max);
+            const float old_m = running_m[qr];
+            const float new_m = fmaxf(old_m, tile_max);
+            const float alpha = (old_m == -CUDART_INF_F || new_m == -CUDART_INF_F) ? 0.0f : expf(old_m - new_m);
 
-                const float old_m = running_m[qr];
-                const float new_m = fmaxf(old_m, tile_max);
-                // If all scores are masked, avoid exp(-inf - -inf) => NaN.
-                const float alpha = (old_m == -CUDART_INF_F || new_m == -CUDART_INF_F) ? 0.0f : expf(old_m - new_m);
-                float sum_p = 0.0f;
-                #pragma unroll
-                for (int j = 0; j < WN; ++j) {
-                    const float p = (s[j] == -CUDART_INF_F) ? 0.0f : expf(s[j] - new_m);
-                    sum_p += p;
-                    // WMMA PV takes FP16 operands; FP32 probabilities are rounded to FP16. This is a numerical approximation.
-                    prob_s[warp][lane][j] = __float2half_rn(p);
-                }
+            float partial_sum = 0.0f;
+            #pragma unroll
+            for (int j = 0; j < WN / 2; ++j) {
+                const int key_in_tile = 2 * j + pair_lane;
+                const float score = scores_local[j];
+                // Guard all-masked rows against exp(-inf - -inf).
+                const float p = (score == -CUDART_INF_F) ? 0.0f : expf(score - new_m);
+                partial_sum += p;
+                // Each element is written by exactly one lane.
+                // FP32 -> FP16 here is an approximation for WMMA PV.
+                prob_s[warp][row_in_warp][key_in_tile] = __float2half_rn(p);
+            }
+            const float peer_sum = __shfl_xor_sync(0xffffffffu, partial_sum, 1);
+            const float tile_sum = partial_sum + peer_sum;
+
+            // Both lanes now have the same row statistics; let the even lane write each row exactly once (avoid write/write races).
+            if (pair_lane == 0) {
                 alpha_s[qr] = alpha;
                 running_m[qr] = new_m;
-                running_l[qr] = alpha * running_l[qr] + sum_p;
+                running_l[qr] = alpha * running_l[qr] + tile_sum;
             }
-            __syncwarp(); // All probabilities and alpha values are ready.
+            __syncwarp(); // Probabilities and row statistics ready for WMMA PV.
 
             // PV: [16 query rows, 16 keys] @ [16 keys, 16 features].
             // Loop over HEAD_DIM in 16-column blocks. 
@@ -846,15 +858,14 @@ __global__ void flash_attention_wmma_fused(const half* __restrict__ Q,
 
                 // The running output is row-wise rescaled before adding PV.
                 // We cannot do this row-specific operation on an opaque WMMA accumulator fragment, so use an FP32 shared-memory buffer.
-                if (lane < WM) {
-                    const int qr = q_local_start + lane;
-                    const float alpha = alpha_s[qr];
-                    #pragma unroll
-                    for (int j = 0; j < WN; ++j) {
-                        const int d = d_out + j;
-                        out_acc[qr][d] = alpha * out_acc[qr][d]
-                                       + pv_s[warp][lane][j];
-                    }
+                // Two lanes per row also update the FP32 output accumulator.
+                // Even lane owns output columns 0,2,...14; odd lane 1,3,...15.
+                // Thus all 32 lanes work, and no two lanes write the same cell.
+                const float row_alpha = alpha_s[qr];
+                #pragma unroll
+                for (int j = pair_lane; j < WN; j += 2) {
+                    const int d = d_out + j;
+                    out_acc[qr][d] = row_alpha * out_acc[qr][d] + pv_s[warp][row_in_warp][j];
                 }
                 __syncwarp(); // Do not overwrite pv_s until readers finish.
             }
