@@ -759,6 +759,107 @@ __global__ void flash_attention_wmma_fused(const half* __restrict__ Q,
         }
         __syncthreads(); // All warps must see completed K/V loads.
 
+        // WMMA always computes a fixed 16x16 OUTPUT tile per warp.
+        // For each 16-key chunk, reduce QK^T over HEAD_DIM in steps of 16.
+        // Example HEAD_DIM=64 => four 16x16x16 MMA instructions per score tile.
+        for (int k_base = 0; k_base < BLOCK_KV; k_base += WN) {
+            wmma::fragment<wmma::accumulator, WM, WN, WK, float> scores;
+            wmma::fill_fragment(scores, 0.0f);
+
+            for (int d_base = 0; d_base < PAD_HEAD; d_base += WK) {
+                wmma::fragment<wmma::matrix_a, WM, WN, WK, half, wmma::row_major> q_frag;
+                wmma::fragment<wmma::matrix_b, WM, WN, WK, half, wmma::col_major> kt_frag;
+
+                // Q tile: [16 query rows, 16 feature columns].
+                // K^T tile: logically [16 feature rows, 16 key columns].
+                // K itself is stored [key, feature] row-major. Interpreting
+                // that SAME memory as column-major implements the transpose.
+                // Both ldm values are PAD_HEAD because adjacent ORIGINAL
+                // query/key rows are PAD_HEAD FP16 elements apart.
+                wmma::load_matrix_sync(q_frag, &q_s[q_local_start][d_base], PAD_HEAD);
+                wmma::load_matrix_sync(kt_frag, &k_s[k_base][d_base], PAD_HEAD);
+                wmma::mma_sync(scores, q_frag, kt_frag, scores);
+            }
+
+            // score fragment resides in distributed registers. 
+            // We cannot portably index scores as scores[row][key], so stage it in SMEM.
+            wmma::store_matrix_sync(&score_s[warp][0][0], scores, WN, wmma::mem_row_major);
+            __syncwarp();
+
+            // Lanes 0..15 each own one query row for SOFTMAX (not for MMA).
+            // Every row reads its 16 scores, applies scale+causal mask,
+            // and updates the online softmax state:
+            //   new_m = max(old_m, max(score))
+            //   alpha = exp(old_m - new_m)
+            //   new_l = alpha*old_l + sum(exp(score-new_m))
+            //   out_acc = alpha*out_acc + exp(score-new_m) @ V
+            // The last expression is completed below by WMMA PV.
+            if (lane < WM) {
+                const int qr = q_local_start + lane;
+                const int qg = q_block_start + qr;
+                float s[WN];
+                float tile_max = -CUDART_INF_F;
+
+                // Loop Unrolling implemented
+                #pragma unroll
+                for (int j = 0; j < WN; ++j) {
+                    const int kg = kv_start + k_base + j;
+                    const bool valid = qg < row && (k_base + j) < BLOCK_KV && kg < col && kg <= qg;
+                    s[j] = valid ? score_s[warp][lane][j] * softmax_scale : -CUDART_INF_F;
+                    tile_max = fmaxf(tile_max, s[j]);
+                }
+
+                const float old_m = running_m[qr];
+                const float new_m = fmaxf(old_m, tile_max);
+                // If all scores are masked, avoid exp(-inf - -inf) => NaN.
+                const float alpha = (old_m == -CUDART_INF_F || new_m == -CUDART_INF_F) ? 0.0f : expf(old_m - new_m);
+                float sum_p = 0.0f;
+                #pragma unroll
+                for (int j = 0; j < WN; ++j) {
+                    const float p = (s[j] == -CUDART_INF_F) ? 0.0f : expf(s[j] - new_m);
+                    sum_p += p;
+                    // WMMA PV takes FP16 operands; FP32 probabilities are rounded to FP16. This is a numerical approximation.
+                    prob_s[warp][lane][j] = __float2half_rn(p);
+                }
+                alpha_s[qr] = alpha;
+                running_m[qr] = new_m;
+                running_l[qr] = alpha * running_l[qr] + sum_p;
+            }
+            __syncwarp(); // All probabilities and alpha values are ready.
+
+            // PV: [16 query rows, 16 keys] @ [16 keys, 16 features].
+            // Loop over HEAD_DIM in 16-column blocks. 
+            // This is a DIFFERENT dimension from the d_base reduction loop used in QK^T.
+            for (int d_out = 0; d_out < PAD_HEAD; d_out += WN) {
+                wmma::fragment<wmma::matrix_a, WM, WN, WK, half, wmma::row_major> p_frag;
+                wmma::fragment<wmma::matrix_b, WM, WN, WK, half, wmma::row_major> v_frag;
+                wmma::fragment<wmma::accumulator, WM, WN, WK, float> pv_frag;
+                wmma::fill_fragment(pv_frag, 0.0f);
+
+                // P is a contiguous 16x16 row-major tile => ldm=16.
+                // V is stored [key, feature] with padded pitch PAD_HEAD.
+                wmma::load_matrix_sync(p_frag, &prob_s[warp][0][0], WN);
+                wmma::load_matrix_sync(v_frag, &v_s[k_base][d_out], PAD_HEAD);
+                wmma::mma_sync(pv_frag, p_frag, v_frag, pv_frag);
+                wmma::store_matrix_sync(&pv_s[warp][0][0], pv_frag, WN, wmma::mem_row_major);
+                __syncwarp();
+
+                // The running output is row-wise rescaled before adding PV.
+                // We cannot do this row-specific operation on an opaque WMMA accumulator fragment, so use an FP32 shared-memory buffer.
+                if (lane < WM) {
+                    const int qr = q_local_start + lane;
+                    const float alpha = alpha_s[qr];
+                    #pragma unroll
+                    for (int j = 0; j < WN; ++j) {
+                        const int d = d_out + j;
+                        out_acc[qr][d] = alpha * out_acc[qr][d]
+                                       + pv_s[warp][lane][j];
+                    }
+                }
+                __syncwarp(); // Do not overwrite pv_s until readers finish.
+            }
+            // The next 16-key chunk updates m, l and O again.
+        }
         __syncthreads(); // All warps finished reading K/V before replacement.
     }
 
