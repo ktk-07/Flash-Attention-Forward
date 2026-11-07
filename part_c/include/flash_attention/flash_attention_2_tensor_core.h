@@ -7,4 +7,7 @@ enum class TensorCoreVariant { Wmma, PtxMma };
 LaunchConfig launch_flash_attention_2_tensor_core(TensorCoreVariant variant, Shape shape,
                                                  const DevicePointers& buffers,
                                                  cudaStream_t stream = nullptr);
+LaunchConfig launch_flash_attention_2_tensor_core_configured(
+    TensorCoreVariant variant, Shape shape, const DevicePointers& buffers, int config,
+    cudaStream_t stream = nullptr, KernelResources* resources = nullptr);
 }

@@ -33,6 +33,9 @@ METRICS={
  'l1tex_util_pct':'l1tex__throughput.avg.pct_of_peak_sustained_active',
  'sm_throughput_pct':'sm__throughput.avg.pct_of_peak_sustained_elapsed',
  'tensor_active_pct':'sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active',
+ 'source_shared_wavefronts':'memory_l1_wavefronts_shared',
+ 'source_shared_ideal_wavefronts':'memory_l1_wavefronts_shared_ideal',
+ 'source_shared_excessive_wavefronts':'derived__memory_l1_wavefronts_shared_excessive',
  'shared_load_conflicts':'l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum',
  'shared_store_conflicts':'l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum',
  'shared_load_wavefronts':'l1tex__data_pipe_lsu_wavefronts_mem_shared_op_ld.sum',
@@ -93,6 +96,9 @@ for case in sorted((out/'cases').iterdir()):
     row['useful_flops_per_dram_byte']=row['useful_attention_flops']/dram if dram and row['dram_read_bytes'] is not None and row['dram_write_bytes'] is not None else None
     row['local_l1_sector_bytes']=32*(row['local_load_sectors']+row['local_store_sectors']) if row['local_load_sectors'] is not None and row['local_store_sectors'] is not None else None
     row['measured_scalar_fp32_flops']=2*row['ffma_count']+row['fadd_count']+row['fmul_count'] if all(row[x] is not None for x in ['ffma_count','fadd_count','fmul_count']) else None
+    actual,ideal,excess=(row[x] for x in ['source_shared_wavefronts','source_shared_ideal_wavefronts','source_shared_excessive_wavefronts'])
+    if None not in (actual,ideal,excess) and abs(actual-ideal-excess)>0.5:raise ValueError('Shared wavefront identity failed')
+    row['source_shared_wavefront_expansion']=actual/ideal if ideal else None
     samples.append(row)
     for name,value in data.items():
         if name not in names[:11]:long.append({**identity,'metric':name,'unit':unitmap[name],'raw_value':value,'numeric_value':number(value)})
@@ -165,11 +171,15 @@ lines+=['','## Warp-state evidence and bank conflicts','',
 for n in [256,4096]:
     for k in K:
         r=lookup[k,n];lines.append(f"| {n} | {k} | {fmt(r['state_mio_throttle_pct'])} | {fmt(r['state_short_scoreboard_pct'])} | {fmt(r['state_long_scoreboard_pct'])} | {fmt(r['state_barrier_pct'])} | {fmt(r['state_math_pipe_throttle_pct'])} | {fmt(r['shared_load_conflicts'])} / {fmt(r['shared_store_conflicts'])} |")
-lines+=['','## Arithmetic intensity and operation counts','',
+lines+=['','## Source shared-memory wavefronts','','Aggregate L1 bank-conflict counters can include arbitration. Diagnose layout conflicts using source-level actual minus ideal wavefronts; zero excess is no source-proven bank conflict. No-shared-memory kernels have no expansion ratio.','','| N | Kernel | Actual | Ideal | Excessive | Actual / ideal |','|---|---|---|---|---|---|']
+for n in [256,4096]:
+    for k in K:
+        r=lookup[k,n];lines.append(f"| {n} | {k} | {fmt(r['source_shared_wavefronts'])} | {fmt(r['source_shared_ideal_wavefronts'])} | {fmt(r['source_shared_excessive_wavefronts'])} | {fmt(r['source_shared_wavefront_expansion'])} |")
+lines+=['','NVIDIA explains arbitration in [shared-memory bank conflict metrics](https://forums.developer.nvidia.com/t/shared-memory-bank-conflicts-and-nsight-metric/115731/15).','','## Arithmetic intensity and operation counts','',
 'Useful attention work is `4*B*H*d*N*(N+1)/2` FLOPs (causal QK plus PV, excluding softmax). Dividing it by measured DRAM read+write bytes gives an algorithm-useful DRAM intensity. This includes the effects of caching and spills in measured traffic and does not count masked/padded work. It is not the executed Tensor Core FLOP count or a substitute for the appropriate hardware roofline in the raw report. Measured scalar FP32 operations are `2*FFMA + FADD + FMUL`; for Tensor Core kernels these exclude matrix operations. Compare intensity at the same memory level.','',
 '## Reading the results and choosing experiments','',
 '1. **Global-memory reuse:** compare `fa1` with `tiled/skip` at matching shapes. Shared Q/K/V staging and register reuse change the source-level access pattern; use DRAM and L1/local traffic plus issue metrics to determine which layer improved. A lower DRAM byte count by itself does not prove that bandwidth was limiting.','',
-'2. **MIO and shared memory:** MIO throttle means pressure on the MIO instruction path, which also serves special math and dynamic branching. Short scoreboard signals dependencies that can involve shared memory but is not proof of bank conflicts. Check actual shared conflict counts and wavefronts before proposing swizzling. Reducing redundant shared-memory operations/register reuse is a separate hypothesis from eliminating bank conflicts.','',
+'2. **MIO and shared memory:** MIO throttle means pressure on the MIO instruction path, which also serves special math and dynamic branching. Short scoreboard signals dependencies that can involve shared memory but is not proof of bank conflicts. Use source-level excessive wavefronts to diagnose layout conflicts; aggregate conflict counters alone are insufficient. Reducing redundant shared-memory operations/register reuse is a separate hypothesis from eliminating bank conflicts.','',
 '3. **Latency hiding:** achieved occupancy is the measured resident-warp fraction; theoretical occupancy is the launch/resource ceiling. Neither equals utilisation or eligible warps. Inspect the register/shared/block/warp limits and eligible warps together. Higher occupancy alone is not a performance objective.','',
 '4. **Local traffic:** local load/store sectors indicate thread-local memory accesses, including spilled or dynamically indexed arrays. They do not all reach DRAM. Correlate with compiler stack/local resources and SASS/source lines before attributing every local transaction to register spilling. Scalar/register-array indexing is a concrete candidate for compile-time unrolling/specialisation experiments.','',
 '5. **Divergence and predication:** uniform-branch percentage only describes branch behaviour. Predicated-off lanes can waste work even with 100% uniform branches. Compare active and predicated-on threads per warp, the causal/tail guards, and grid size. A causal mask does not automatically imply that divergence is the bottleneck.','',

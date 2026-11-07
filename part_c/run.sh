@@ -2,6 +2,23 @@
 # Run from any directory. Logs every command, its output and its exit code.
 # No Git operations. Needs CUDA GPU access, CMake, Python and Matplotlib.
 set -uo pipefail
+# Use the same entry point for the new bounded study; retain legacy positional CLI.
+if [ "${1:-}" = "--complete" ]; then
+    shift
+    complete_output="${1:-part_c/results/complete_$(date -u +%Y%m%dT%H%M%SZ)}"
+    complete_build="${2:-/tmp/part_c-evaluation-build}"
+    if [ -e "$complete_output" ]; then
+        printf 'Choose a fresh result directory: %s already exists.\n' "$complete_output" >&2
+        exit 2
+    fi
+    bash "$0" "$complete_output/regression" "$complete_build" || exit $?
+    PART_C_BUILD_DIR="$complete_build" bash "$(dirname "$0")/evaluate.sh" "$complete_output/main"
+    exit $?
+fi
+if [ "${1:-}" = "--study" ]; then
+    shift
+    exec bash "$(dirname "$0")/evaluate.sh" "$@"
+fi
 task_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$task_root"
 task_run="${1:-part_c/results/run_$(date -u +%Y%m%dT%H%M%SZ)}"
@@ -32,7 +49,7 @@ record nvcc_version nvcc --version
 record host_compiler c++ --version
 record configure cmake -S part_c -B "$task_build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=86 -DBUILD_TESTING=ON || exit 1
 record build cmake --build "$task_build" --parallel 2 || exit 1
-record source_hashes sha256sum part_c/src/extra/causal_flash_attn.cu part_c/src/flash_attention_1.cu part_c/src/flash_attention_2_cuda_core.cu part_c/src/flash_attention_2_tensor_core.cu part_c/include/flash_attention/*.h part_c/tests/kernel_runner.cpp "$task_build/part_c_runner"
+record source_hashes sha256sum part_c/src/flash_attention_1.cu part_c/src/flash_attention_2_cuda_core.cu part_c/src/flash_attention_2_tensor_core.cu part_c/include/flash_attention/*.h part_c/tests/*.cpp part_c/tests/*.h part_c/tests/kernel_bodies.json part_c/CMakeLists.txt "$task_build/part_c_runner"
 record correctness "$task_build/part_c_runner" --suite correctness --output "$task_run/correctness" || exit 1
 record benchmark "$task_build/part_c_runner" --suite benchmark --grid full --output "$task_run/benchmark" || exit 1
 for task_tool in memcheck racecheck synccheck initcheck; do

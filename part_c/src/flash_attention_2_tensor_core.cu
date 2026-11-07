@@ -530,30 +530,59 @@ __global__ void flash_attention_v2_tensor_core_ptx_mma_fully_fused(
 
 namespace part_c {
 namespace {
-template<int D>
-LaunchConfig launch_impl(TensorCoreVariant variant, Shape s, const DevicePointers& x, cudaStream_t stream) {
+
+template<class Kernel>
+void describe_kernel(Kernel kernel, int threads, KernelResources* info) {
+    if (!info) return; // Timing calls do not query resources.
+    cudaFuncAttributes attr{}; cudaDeviceProp device{}; int index=0, blocks=0;
+    auto verify=[](cudaError_t e) { if(e!=cudaSuccess) throw std::runtime_error(cudaGetErrorString(e)); };
+    verify(cudaGetDevice(&index)); verify(cudaGetDeviceProperties(&device,index));
+    verify(cudaFuncGetAttributes(&attr,kernel));
+    verify(cudaOccupancyMaxActiveBlocksPerMultiprocessor(&blocks,kernel,threads,0));
+    info->registers_per_thread=attr.numRegs;info->shared_bytes=attr.sharedSizeBytes;
+    info->local_bytes_per_thread=attr.localSizeBytes;info->active_blocks_per_sm=blocks;
+    info->occupancy_estimate_percent=100.0*blocks*threads/device.maxThreadsPerMultiProcessor;
+}
+
+template<int D, int BQ=32, int BK=32, int NW=2>
+LaunchConfig launch_impl(TensorCoreVariant variant, Shape s, const DevicePointers& x, cudaStream_t stream, KernelResources* resources) {
     const int sb=s.h*s.n*D, sh=s.n*D, ss=D;
     const float scale=1.0f/std::sqrt(float(D));
-    dim3 grid(s.b*s.h,(s.n+31)/32);
+    dim3 grid(s.b*s.h,(s.n+BQ-1)/BQ);
 #define QS sb,sh,ss,1
     if (variant==TensorCoreVariant::Wmma) {
-        flash_attention_wmma_fused<32,32,D,2><<<grid,64,0,stream>>>(x.hq,x.hk,x.hv,x.o,s.b,s.h,s.n,s.n,QS,QS,QS,QS,scale);
+        describe_kernel(flash_attention_wmma_fused<BQ,BK,D,NW>,NW*32,resources);
+        flash_attention_wmma_fused<BQ,BK,D,NW><<<grid,NW*32,0,stream>>>(x.hq,x.hk,x.hv,x.o,s.b,s.h,s.n,s.n,QS,QS,QS,QS,scale);
     } else if (variant==TensorCoreVariant::PtxMma) {
         if constexpr(D>=16 && D%16==0) {
-            flash_attention_v2_tensor_core_ptx_mma_fully_fused<32,32,D,2><<<grid,64,0,stream>>>(x.hq,x.hk,x.hv,x.o,s.b,s.h,s.n,s.n,QS,QS,QS,QS,scale);
+            describe_kernel(flash_attention_v2_tensor_core_ptx_mma_fully_fused<BQ,BK,D,NW>,NW*32,resources);
+        flash_attention_v2_tensor_core_ptx_mma_fully_fused<BQ,BK,D,NW><<<grid,NW*32,0,stream>>>(x.hq,x.hk,x.hv,x.o,s.b,s.h,s.n,s.n,QS,QS,QS,QS,scale);
         } else throw std::invalid_argument("unsupported PTX head dimension");
     } else throw std::invalid_argument("unknown Tensor Core variant");
 #undef QS
-    return {32,32,2,0,0};
+    return {BQ,BK,NW,0,0};
+}
+template<int D>
+LaunchConfig configured(TensorCoreVariant variant, Shape s, const DevicePointers& x, int config, cudaStream_t stream, KernelResources* info) {
+    switch(config) {
+    case 0:return launch_impl<D,32,32,2>(variant,s,x,stream,info);
+    case 1:return launch_impl<D,16,32,1>(variant,s,x,stream,info);
+    case 2:return launch_impl<D,32,16,2>(variant,s,x,stream,info);
+    case 3:return launch_impl<D,16,16,1>(variant,s,x,stream,info);
+    default:throw std::invalid_argument("unknown Tensor Core configuration");
+    }
 }
 }
-LaunchConfig launch_flash_attention_2_tensor_core(TensorCoreVariant variant, Shape s, const DevicePointers& x, cudaStream_t stream) {
-    switch (s.d) {
-#define PART_C_DIM(D) case D: return launch_impl<D>(variant, s, x, stream);
+LaunchConfig launch_flash_attention_2_tensor_core_configured(TensorCoreVariant variant, Shape s, const DevicePointers& x, int config, cudaStream_t stream, KernelResources* info) {
+    switch(s.d) {
+#define PART_C_DIM(D) case D:return configured<D>(variant,s,x,config,stream,info);
     PART_C_DIM(7) PART_C_DIM(16) PART_C_DIM(32) PART_C_DIM(33) PART_C_DIM(40)
     PART_C_DIM(64) PART_C_DIM(65) PART_C_DIM(96) PART_C_DIM(128)
 #undef PART_C_DIM
-    default: throw std::invalid_argument("head dimension not instantiated");
+    default:throw std::invalid_argument("head dimension not instantiated");
     }
+}
+LaunchConfig launch_flash_attention_2_tensor_core(TensorCoreVariant variant, Shape s, const DevicePointers& x, cudaStream_t stream) {
+    return launch_flash_attention_2_tensor_core_configured(variant,s,x,0,stream);
 }
 }

@@ -1,0 +1,24 @@
+[
+  {
+    "argv": [
+      "bash",
+      "part_c/run.sh",
+      "--study",
+      "part_c/results/bounded_evaluation"
+    ],
+    "expected_exit_code": 2,
+    "exit_code": 2,
+    "output": "Choose a fresh output directory: part_c/results/bounded_evaluation already contains a study.\n"
+  },
+  {
+    "argv": [
+      "bash",
+      "part_c/run.sh",
+      "--complete",
+      "part_c/results/bounded_evaluation"
+    ],
+    "expected_exit_code": 2,
+    "exit_code": 2,
+    "output": "Choose a fresh result directory: part_c/results/bounded_evaluation already exists.\n"
+  }
+]

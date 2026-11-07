@@ -1,0 +1,15 @@
+{
+  "selection_sha256": "b600b5542ea35d68648b68fce10b13af99d620f8cee047d9712f515196747317",
+  "binary_sha256": "5f50323f1b5f45ee1e2562ae301b2d3c6e4453e9168ada5f437d353b31468573",
+  "study_binary_match": true,
+  "launch_skip": 7,
+  "explanation": "one warm-module launch, one validation launch, five warmups, then first timed launch; profiler timings excluded from main study",
+  "repeats": 3,
+  "N": [
+    256,
+    4096
+  ],
+  "d": 64,
+  "cache_control": "all",
+  "clock_control": "none"
+}

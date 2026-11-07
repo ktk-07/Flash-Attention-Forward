@@ -1,4 +1,4 @@
-"""Check measured CSV completeness, statistics, and split-source provenance."""
+"""Check measured CSV completeness, statistics, and maintained kernel bodies."""
 import argparse
 import csv
 import hashlib
@@ -36,12 +36,10 @@ for r in summary:
         assert math.isclose(float(r[column]),quantile(values,pct),rel_tol=1e-12)
     assert math.isclose(float(r["iqr_ms"]),float(r["q3_ms"])-float(r["q1_ms"]),abs_tol=1e-12)
 root=Path(__file__).resolve().parents[1]
-manifest=json.loads((root/"docs/kernel_provenance/provenance.json").read_text())
-original=root/"src/extra/causal_flash_attn.cu"
-assert hashlib.sha256(original.read_bytes()).hexdigest()==manifest["smoke_test_sha256"], "Standalone development source differs from its recorded version"
-comments=manifest["original_kernel_comments"]
-parts="\n".join((root/"src"/n).read_text() for n in ["flash_attention_1.cu","flash_attention_2_cuda_core.cu","flash_attention_2_tensor_core.cu"])
-assert all(c in parts for c in comments), "An original kernel comment was lost"
-report={"correctness":dict(Counter(r["status"] for r in checks)),"benchmark_configurations":len(summary),"benchmark_samples":len(samples),"benchmark_validation":"three CPU-oracle query rows per batch/head; all outputs finite","preserved_original_kernel_comments":len(comments),"original_development_file_relocated_and_fixed":True,"statistics_recomputed":True}
+manifest=json.loads((root/"tests/kernel_bodies.json").read_text())
+for name,expected in manifest.items():
+    body=(root/"src"/name).read_text().split("\nnamespace part_c {",1)[0]
+    assert hashlib.sha256(body.encode()).hexdigest()==expected,"Kernel body differs from the recorded baseline"
+report={"correctness":dict(Counter(r["status"] for r in checks)),"benchmark_configurations":len(summary),"benchmark_samples":len(samples),"benchmark_validation":"three CPU-oracle query rows per batch/head; all outputs finite","kernel_bodies_unchanged":True,"statistics_recomputed":True}
 (a.run/"audit.json").write_text(json.dumps(report,indent=2)+"\n")
 print(json.dumps(report,indent=2))

@@ -1,0 +1,7 @@
+{
+  "gpu_case_exit_codes": "All 636 cases returned 0; see commands.jsonl.",
+  "initial_wrapper_exit_code": 127,
+  "reason": "Agent edited evaluate.sh while its child Python study was running. Bash resumed reading at the old file offset after the successful child finished.",
+  "correction": "Wrapper corrected and syntax checked; its study call is now exec. Saved measurements are reprocessed with pattern-aware grouping; initial source snapshot retained.",
+  "measurement_data_changed": false
+}

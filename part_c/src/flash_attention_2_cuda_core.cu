@@ -1247,11 +1247,25 @@ __global__ void casual_flash_attention_forward_gpu_optimised_for_cuda_core(float
 
 namespace part_c {
 namespace {
-template<int D>
-LaunchConfig launch_impl(CudaCoreVariant variant, Shape s, const DevicePointers& x, cudaStream_t stream) {
+
+template<class Kernel>
+void describe_kernel(Kernel kernel, int threads, KernelResources* info) {
+    if (!info) return; // Timing calls do not query resources.
+    cudaFuncAttributes attr{}; cudaDeviceProp device{}; int index=0, blocks=0;
+    auto verify=[](cudaError_t e) { if(e!=cudaSuccess) throw std::runtime_error(cudaGetErrorString(e)); };
+    verify(cudaGetDevice(&index)); verify(cudaGetDeviceProperties(&device,index));
+    verify(cudaFuncGetAttributes(&attr,kernel));
+    verify(cudaOccupancyMaxActiveBlocksPerMultiprocessor(&blocks,kernel,threads,0));
+    info->registers_per_thread=attr.numRegs;info->shared_bytes=attr.sharedSizeBytes;
+    info->local_bytes_per_thread=attr.localSizeBytes;info->active_blocks_per_sm=blocks;
+    info->occupancy_estimate_percent=100.0*blocks*threads/device.maxThreadsPerMultiProcessor;
+}
+
+template<int D, int BQ=32, int BK=32, int NW=4, int TQ=3, int TK=5>
+LaunchConfig launch_impl(CudaCoreVariant variant, Shape s, const DevicePointers& x, cudaStream_t stream, KernelResources* resources) {
     const int sb=s.h*s.n*D, sh=s.n*D, ss=D;
     const float scale=1.0f/std::sqrt(float(D));
-    dim3 grid(s.b*s.h,(s.n+31)/32);
+    dim3 grid(s.b*s.h,(s.n+BQ-1)/BQ);
     // Older functions take K strides as (feature, sequence).
 #define QS sb,sh,ss,1
 #define KS sb,sh,1,ss
@@ -1265,28 +1279,47 @@ LaunchConfig launch_impl(CudaCoreVariant variant, Shape s, const DevicePointers&
         return {4,32,4,1,1};
     }
     case CudaCoreVariant::Tiled:
-        flash_attention_v2_cuda_core_tiled<32,32,D,4,3,5><<<grid,128,0,stream>>>(x.q,x.k,x.v,x.o,s.n,s.n,s.b,s.h,QS,KS,QS,QS,scale);
+        describe_kernel(flash_attention_v2_cuda_core_tiled<BQ,BK,D,NW,TQ,TK>,NW*32,resources);
+        flash_attention_v2_cuda_core_tiled<BQ,BK,D,NW,TQ,TK><<<grid,NW*32,0,stream>>>(x.q,x.k,x.v,x.o,s.n,s.n,s.b,s.h,QS,KS,QS,QS,scale);
         break;
     case CudaCoreVariant::TileSkipping:
-        tile_skip::casual_flash_attention_forward_gpu_optimised_for_cuda_core<32,32,D,4,3,5><<<grid,128,0,stream>>>(x.q,x.k,x.v,x.o,s.n,s.n,s.b,s.h,QS,KS,QS,QS,scale);
+        describe_kernel(tile_skip::casual_flash_attention_forward_gpu_optimised_for_cuda_core<BQ,BK,D,NW,TQ,TK>,NW*32,resources);
+        tile_skip::casual_flash_attention_forward_gpu_optimised_for_cuda_core<BQ,BK,D,NW,TQ,TK><<<grid,NW*32,0,stream>>>(x.q,x.k,x.v,x.o,s.n,s.n,s.b,s.h,QS,KS,QS,QS,scale);
         break;
     case CudaCoreVariant::Vectorized:
-        vector_load::casual_flash_attention_forward_gpu_optimised_for_cuda_core<32,32,D,4,3,5><<<grid,128,0,stream>>>(x.q,x.k,x.v,x.o,s.n,s.n,s.b,s.h,QS,KS,QS,QS,scale);
+        describe_kernel(vector_load::casual_flash_attention_forward_gpu_optimised_for_cuda_core<BQ,BK,D,NW,TQ,TK>,NW*32,resources);
+        vector_load::casual_flash_attention_forward_gpu_optimised_for_cuda_core<BQ,BK,D,NW,TQ,TK><<<grid,NW*32,0,stream>>>(x.q,x.k,x.v,x.o,s.n,s.n,s.b,s.h,QS,KS,QS,QS,scale);
         break;
     default: throw std::invalid_argument("unknown CUDA-core variant");
     }
 #undef QS
 #undef KS
-    return {32,32,4,3,5};
+    return {BQ,BK,NW,TQ,TK};
+}
+template<int D>
+LaunchConfig configured(CudaCoreVariant variant, Shape s, const DevicePointers& x, int config, cudaStream_t stream, KernelResources* info) {
+    switch(config) {
+    case 0:return launch_impl<D,32,32,4,3,5>(variant,s,x,stream,info);
+    case 1:return launch_impl<D,32,32,4,2,4>(variant,s,x,stream,info);
+    case 2:return launch_impl<D,16,32,4,2,4>(variant,s,x,stream,info);
+    case 3:return launch_impl<D,32,16,4,2,4>(variant,s,x,stream,info);
+    case 4:return launch_impl<D,32,32,8,2,4>(variant,s,x,stream,info);
+    default:throw std::invalid_argument("unknown CUDA-core configuration");
+    }
 }
 }
-LaunchConfig launch_flash_attention_2_cuda_core(CudaCoreVariant variant, Shape s, const DevicePointers& x, cudaStream_t stream) {
-    switch (s.d) {
-#define PART_C_DIM(D) case D: return launch_impl<D>(variant, s, x, stream);
+LaunchConfig launch_flash_attention_2_cuda_core_configured(CudaCoreVariant variant, Shape s, const DevicePointers& x, int config, cudaStream_t stream, KernelResources* info) {
+    if(config!=0 && (variant==CudaCoreVariant::Scalar || variant==CudaCoreVariant::WarpPerQuery))
+        throw std::invalid_argument("scalar/warp baselines only support config 0");
+    switch(s.d) {
+#define PART_C_DIM(D) case D:return configured<D>(variant,s,x,config,stream,info);
     PART_C_DIM(7) PART_C_DIM(16) PART_C_DIM(32) PART_C_DIM(33) PART_C_DIM(40)
     PART_C_DIM(64) PART_C_DIM(65) PART_C_DIM(96) PART_C_DIM(128)
 #undef PART_C_DIM
-    default: throw std::invalid_argument("head dimension not instantiated");
+    default:throw std::invalid_argument("head dimension not instantiated");
     }
+}
+LaunchConfig launch_flash_attention_2_cuda_core(CudaCoreVariant variant, Shape s, const DevicePointers& x, cudaStream_t stream) {
+    return launch_flash_attention_2_cuda_core_configured(variant,s,x,0,stream);
 }
 }

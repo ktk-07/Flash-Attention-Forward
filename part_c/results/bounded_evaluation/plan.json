@@ -1,0 +1,93 @@
+{
+  "seed": 5206,
+  "generator": "Part A SplitMix64, Q then K then V",
+  "mode": "causal",
+  "layout": "BHNd contiguous",
+  "warmups": 5,
+  "repeats": 20,
+  "core_configs": [
+    [
+      32,
+      32,
+      4,
+      3,
+      5
+    ],
+    [
+      32,
+      32,
+      4,
+      2,
+      4
+    ],
+    [
+      16,
+      32,
+      4,
+      2,
+      4
+    ],
+    [
+      32,
+      16,
+      4,
+      2,
+      4
+    ],
+    [
+      32,
+      32,
+      8,
+      2,
+      4
+    ]
+  ],
+  "tensor_configs": [
+    [
+      32,
+      32,
+      2
+    ],
+    [
+      16,
+      32,
+      1
+    ],
+    [
+      32,
+      16,
+      2
+    ],
+    [
+      16,
+      16,
+      1
+    ]
+  ],
+  "tuning_N": [
+    256,
+    1024
+  ],
+  "main_N": [
+    256,
+    512,
+    1024,
+    2048,
+    4096
+  ],
+  "d": [
+    32,
+    64,
+    128
+  ],
+  "selection": "per variant and d: geometric mean of median latency over tuning N; tie by config index; freeze before main",
+  "family_selection": "skip vs vector; wmma vs ptx, using tuning only; not an exhaustive kernel/config search",
+  "correctness": "FP64 causal oracle; full small cases; 3 query rows/head on large cases plus all-output finite checks",
+  "memory": "isolated process; explicit live Q/K/V/O ledger; cudaMemGetInfo before/after allocation and first launch is an observed delta, not true peak",
+  "timing": "CUDA events around forward launch only; no allocation/copy/reference/resource queries; unprofiled; sequential cases; default clocks/cache",
+  "limitations": [
+    "Two tuning lengths also occur in main grid; 512/2048/4096 held out from config selection.",
+    "No speedup comparison with historical Part A measurements from a different GPU.",
+    "FP16 Tensor Core and FP32 CUDA Core are different precision paths."
+  ]
+}

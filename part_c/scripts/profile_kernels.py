@@ -22,7 +22,7 @@ os.chdir(ROOT)
 out=a.output.resolve();build=a.build.resolve()
 if out.exists() and not a.resume: p.error('output already exists; use a fresh directory or --resume')
 out.mkdir(parents=True,exist_ok=True);(out/'logs').mkdir(exist_ok=True)
-sources=[Path('part_c/CMakeLists.txt'),Path('part_c/tests/kernel_runner.cpp'),Path('part_c/profile.sh')]
+sources=[Path('part_c/CMakeLists.txt'),Path('part_c/tests/kernel_runner.cpp'),Path('part_c/tests/test_support.cpp'),Path('part_c/tests/test_support.h'),Path('part_c/profile.sh')]
 sources+=sorted(Path('part_c/include/flash_attention').glob('*.h'))
 sources+=[Path('part_c/src')/f for f in ['flash_attention_1.cu','flash_attention_2_cuda_core.cu','flash_attention_2_tensor_core.cu']]
 sources += [Path('part_c/scripts')/f for f in ['profile_kernels.py','analyze_profiles.py']]

@@ -1,0 +1,6 @@
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 186566 (/tmp/part_c-evaluation-build/part_c_evaluation)
+==PROF== Profiling "flash_attention_v2_tensor_cor..." - 0 (1/1): 0%....50%....100% - 38 passes
+ptx cfg=2 256x64 benchmark PASS
+==PROF== Disconnected from process 186566
+==PROF== Report: /home/buntr/Projects/Flash-Attention-CUDA/part_c/results/bounded_evaluation/profiling/cases/ptx_c2_n256_r1/profile.ncu-rep

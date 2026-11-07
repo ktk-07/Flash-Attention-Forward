@@ -3,6 +3,7 @@
 #include "flash_attention/flash_attention_2_cuda_core.h"
 #include "flash_attention/flash_attention_2_tensor_core.h"
 #include <cuda_runtime.h>
+#include "test_support.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -18,95 +19,6 @@
 #include <string>
 
 namespace fs = std::filesystem;
-void check(cudaError_t e) {
-    if(e != cudaSuccess) throw std::runtime_error(cudaGetErrorString(e));
-}
-struct Shape { int b,h,n,d; size_t size() const { return size_t(b)*h*n*d; } };
-const std::vector<std::string> kernels={"fa1","scalar","warp","tiled","skip","vector","wmma","ptx"};
-bool tensor(const std::string& id) { return id=="wmma" || id=="ptx"; }
-struct Buffers {
-    float *q=nullptr,*k=nullptr,*v=nullptr,*o=nullptr;
-    half *hq=nullptr,*hk=nullptr,*hv=nullptr;
-    Buffers(size_t n) {
-        check(cudaMalloc(&q,n*4)); check(cudaMalloc(&k,n*4));
-        check(cudaMalloc(&v,n*4)); check(cudaMalloc(&o,n*4));
-        check(cudaMalloc(&hq,n*2)); check(cudaMalloc(&hk,n*2)); check(cudaMalloc(&hv,n*2));
-    }
-    ~Buffers() { cudaFree(q);cudaFree(k);cudaFree(v);cudaFree(o);cudaFree(hq);cudaFree(hk);cudaFree(hv); }
-    Buffers(const Buffers&)=delete;
-};
-struct Input {
-    std::vector<float> q,k,v,rq,rk,rv;
-    std::vector<half> hq,hk,hv;
-    Input(Shape s,const std::string& pattern) : q(s.size()),k(s.size()),v(s.size()),rq(s.size()),rk(s.size()),rv(s.size()),hq(s.size()),hk(s.size()),hv(s.size()) {
-        std::mt19937 gen(5206); std::uniform_real_distribution<float> dist(-1.f,1.f);
-        for(size_t i=0;i<s.size();++i) {
-            q[i]=dist(gen);k[i]=dist(gen);v[i]=dist(gen);
-            if(pattern=="uniform") q[i]=k[i]=0;
-            if(pattern=="constant_v") v[i]=0.375f;
-            if(pattern=="rising") { q[i]=1.f; k[i]=float((i/s.d)%s.n)*0.125f; }
-            if(pattern=="stress") { q[i]*=16; k[i]*=16; }
-            hq[i]=__float2half(q[i]); hk[i]=__float2half(k[i]); hv[i]=__float2half(v[i]);
-            rq[i]=__half2float(hq[i]); rk[i]=__half2float(hk[i]); rv[i]=__half2float(hv[i]);
-        }
-    }
-    void upload(Buffers& b) const {
-        const size_t n=q.size();
-        check(cudaMemcpy(b.q,q.data(),n*4,cudaMemcpyHostToDevice));check(cudaMemcpy(b.k,k.data(),n*4,cudaMemcpyHostToDevice));check(cudaMemcpy(b.v,v.data(),n*4,cudaMemcpyHostToDevice));
-        check(cudaMemcpy(b.hq,hq.data(),n*2,cudaMemcpyHostToDevice));check(cudaMemcpy(b.hk,hk.data(),n*2,cudaMemcpyHostToDevice));check(cudaMemcpy(b.hv,hv.data(),n*2,cudaMemcpyHostToDevice));
-    }
-};
-
-// FP64 dot products, stable softmax and output accumulation; no GPU reference.
-// Full output for correctness; three query rows per head for benchmark checks.
-std::vector<double> reference(Shape s,const std::vector<float>& q,const std::vector<float>& k,const std::vector<float>& v,bool sampled) {
-    std::vector<double> out(s.size(),std::numeric_limits<double>::quiet_NaN());
-    for(int bh=0;bh<s.b*s.h;++bh) for(int i=0;i<s.n;++i) {
-        if(sampled && i!=0 && i!=s.n/2 && i!=s.n-1) continue;
-        size_t base=size_t(bh)*s.n*s.d; std::vector<double> scores(i+1); double m=-INFINITY;
-        for(int j=0;j<=i;++j) {
-            double dot=0;for(int d=0;d<s.d;++d) dot+=double(q[base+size_t(i)*s.d+d])*k[base+size_t(j)*s.d+d];
-            scores[j]=dot/std::sqrt(double(s.d));m=std::max(m,scores[j]);
-        }
-        double sum=0; for(auto& x:scores) {x=std::exp(x-m);sum+=x;}
-        for(int d=0;d<s.d;++d) { double acc=0;for(int j=0;j<=i;++j) acc+=scores[j]*double(v[base+size_t(j)*s.d+d]);out[base+size_t(i)*s.d+d]=acc/sum; }
-    }
-    return out;
-}
-struct Errors { double absolute=0,relative=0;size_t failures=0,checked=0,nonfinite=0; };
-Errors compare(const std::vector<float>& a,const std::vector<double>& r,double atol,double rtol) {
-    Errors e;
-    for(size_t i=0;i<a.size();++i) {
-        // Check all device outputs for finiteness, including unsampled rows.
-        if(!std::isfinite(a[i])) {++e.nonfinite;++e.failures; e.absolute=e.relative=INFINITY;continue;}
-        if(std::isnan(r[i])) continue;
-        ++e.checked;double diff=std::abs(double(a[i])-r[i]);
-        e.absolute=std::max(e.absolute,diff);e.relative=std::max(e.relative,diff/std::max(1e-12,std::abs(r[i])));
-        if(diff>atol+rtol*std::abs(r[i])) ++e.failures;
-    }
-    return e;
-}
-
-using Launch = part_c::LaunchConfig;
-Launch dispatch(const std::string& id, Shape s, Buffers& x) {
-    const part_c::Shape shape{s.b,s.h,s.n,s.d};
-    const part_c::DevicePointers buffers{x.q,x.k,x.v,x.o,x.hq,x.hk,x.hv};
-    Launch result{};
-    using C = part_c::CudaCoreVariant;
-    using T = part_c::TensorCoreVariant;
-    if(id=="fa1") result=part_c::launch_flash_attention_1(shape,buffers);
-    else if(id=="scalar") result=part_c::launch_flash_attention_2_cuda_core(C::Scalar,shape,buffers);
-    else if(id=="warp") result=part_c::launch_flash_attention_2_cuda_core(C::WarpPerQuery,shape,buffers);
-    else if(id=="tiled") result=part_c::launch_flash_attention_2_cuda_core(C::Tiled,shape,buffers);
-    else if(id=="skip") result=part_c::launch_flash_attention_2_cuda_core(C::TileSkipping,shape,buffers);
-    else if(id=="vector") result=part_c::launch_flash_attention_2_cuda_core(C::Vectorized,shape,buffers);
-    else if(id=="wmma") result=part_c::launch_flash_attention_2_tensor_core(T::Wmma,shape,buffers);
-    else if(id=="ptx") result=part_c::launch_flash_attention_2_tensor_core(T::PtxMma,shape,buffers);
-    else throw std::invalid_argument("unknown kernel");
-    check(cudaGetLastError());
-    return result;
-}
-double quantile(const std::vector<double>& x,double p) { double z=p*(x.size()-1);size_t l=size_t(z),h=std::min(l+1,x.size()-1);return x[l]+(z-l)*(x[h]-x[l]); }
 
 int main(int argc,char** argv) {
     std::string suite="correctness",only="all",grid="full";fs::path output="part_c/results/local";

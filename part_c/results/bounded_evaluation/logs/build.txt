@@ -1,0 +1,67 @@
+[  7%] Building CUDA object CMakeFiles/part_c_attention.dir/src/flash_attention_1.cu.o
+[ 15%] Building CUDA object CMakeFiles/part_c_attention.dir/src/flash_attention_2_cuda_core.cu.o
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(173): warning #68-D: integer conversion resulted in a change of sign
+          float remote_val = __shfl_down_sync(FULL_MASK, val, offset);
+                                              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(178): warning #68-D: integer conversion resulted in a change of sign
+      return __shfl_sync(FULL_MASK, val, srclane, width);
+                         ^
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(185): warning #68-D: integer conversion resulted in a change of sign
+          float remote_val = __shfl_down_sync(FULL_MASK, val, offset);
+                                              ^
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(190): warning #68-D: integer conversion resulted in a change of sign
+      return __shfl_sync(FULL_MASK, val, srclane, width);
+                         ^
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(173): warning #68-D: integer conversion resulted in a change of sign
+          float remote_val = __shfl_down_sync(FULL_MASK, val, offset);
+                                              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(178): warning #68-D: integer conversion resulted in a change of sign
+      return __shfl_sync(FULL_MASK, val, srclane, width);
+                         ^
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(185): warning #68-D: integer conversion resulted in a change of sign
+          float remote_val = __shfl_down_sync(FULL_MASK, val, offset);
+                                              ^
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(190): warning #68-D: integer conversion resulted in a change of sign
+      return __shfl_sync(FULL_MASK, val, srclane, width);
+                         ^
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(408): warning #177-D: variable "NUM_KEY_GROUPS" was declared but never referenced
+      constexpr int NUM_KEY_GROUPS = (BLOCK_KV + WARP_SIZE - 1) / WARP_SIZE;
+                    ^
+          detected during:
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::launch_impl<D,BQ,BK,NW,TQ,TK>(part_c::CudaCoreVariant, part_c::Shape, const part_c::DevicePointers &, cudaStream_t, part_c::KernelResources *) [with D=7, BQ=32, BK=32, NW=4, TQ=3, TK=5]" at line 1302
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::configured<D>(part_c::CudaCoreVariant, part_c::Shape, const part_c::DevicePointers &, int, cudaStream_t, part_c::KernelResources *) [with D=7]" at line 1316
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(693): warning #177-D: variable "NUM_KEY_GROUPS" was declared but never referenced
+      constexpr int NUM_KEY_GROUPS = (BLOCK_KV + WARP_SIZE - 1) / WARP_SIZE;
+                    ^
+          detected during:
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::launch_impl<D,BQ,BK,NW,TQ,TK>(part_c::CudaCoreVariant, part_c::Shape, const part_c::DevicePointers &, cudaStream_t, part_c::KernelResources *) [with D=7, BQ=32, BK=32, NW=4, TQ=3, TK=5]" at line 1302
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::configured<D>(part_c::CudaCoreVariant, part_c::Shape, const part_c::DevicePointers &, int, cudaStream_t, part_c::KernelResources *) [with D=7]" at line 1316
+
+[ 23%] Building CUDA object CMakeFiles/part_c_attention.dir/src/flash_attention_2_tensor_core.cu.o
+[ 30%] Linking CUDA static library libpart_c_attention.a
+[ 30%] Built target part_c_attention
+[ 38%] Building CXX object CMakeFiles/part_c_runner.dir/tests/kernel_runner.cpp.o
+[ 46%] Building CXX object CMakeFiles/part_c_evaluation.dir/tests/evaluation_runner.cpp.o
+[ 53%] Building CXX object CMakeFiles/part_c_evaluation.dir/tests/test_support.cpp.o
+[ 61%] Building CXX object CMakeFiles/part_c_runner.dir/tests/test_support.cpp.o
+[ 69%] Linking CXX executable part_c_evaluation
+[ 69%] Built target part_c_evaluation
+[ 76%] Building CXX object CMakeFiles/part_c_input_contract.dir/tests/input_contract_test.cpp.o
+[ 84%] Linking CXX executable part_c_runner
+[ 92%] Building CXX object CMakeFiles/part_c_input_contract.dir/tests/test_support.cpp.o
+[ 92%] Built target part_c_runner
+[100%] Linking CXX executable part_c_input_contract
+[100%] Built target part_c_input_contract

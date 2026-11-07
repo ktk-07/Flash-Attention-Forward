@@ -1,0 +1,12 @@
+{
+  "purpose": "Supplement measurement-time Part C snapshot with read-only Part A contract-test headers; recorded after the initial study snapshot. Part A is not executed.",
+  "captured_utc": "2026-11-07T16:07:55.213867+00:00",
+  "sha256": {
+    "part_a/common/input_generation.hpp": "88b71625804fb69654fc40075016760189a0f62486a0ccc670ff7b71d424e456",
+    "part_a/common/attention_types.hpp": "390275e399ab5d45582c47f176e253efb71a92d1d09e65cc716fb4689f9e35eb"
+  },
+  "command": [
+    "/tmp/part_c-evaluation-build/part_c_input_contract"
+  ],
+  "exit_code": 0
+}

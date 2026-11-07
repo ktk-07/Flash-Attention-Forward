@@ -66,3 +66,19 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Python analysis environments and bytecode
+.venv/
+__pycache__/
+*.py[cod]
+
+# Private planning, scratch files and development history
+/extra/
+/part_c/src/extra/
+
+# Large profiler binaries are supplied separately with recorded checksums
+*.ncu-rep
+*.ncu-repz
+
+# Superseded profiling interpretations (current analysis stays visible)
+/part_c/results/nsight_analysis/extra/

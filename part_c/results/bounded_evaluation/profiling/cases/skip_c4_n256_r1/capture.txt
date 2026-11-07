@@ -1,0 +1,6 @@
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 184765 (/tmp/part_c-evaluation-build/part_c_evaluation)
+==PROF== Profiling "casual_flash_attention_forwar..." - 0 (1/1): 0%....50%....100% - 37 passes
+skip cfg=4 256x64 benchmark PASS
+==PROF== Disconnected from process 184765
+==PROF== Report: /home/buntr/Projects/Flash-Attention-CUDA/part_c/results/bounded_evaluation/profiling/cases/skip_c4_n256_r1/profile.ncu-rep

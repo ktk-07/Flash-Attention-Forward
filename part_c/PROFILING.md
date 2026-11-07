@@ -64,7 +64,7 @@ Use a new directory for a new experiment. `--resume` skips completed captures on
 
 1. **Profiler versus benchmark timing:** counter replay and instrumentation can alter execution. Nsight uses `--cache-control all` for controlled cache flushing and `--clock-control none` because clocks are unmanaged here. Keep measured frequencies/repetition ranges, and use the ordinary CUDA-event dataset for reported speedups. Warm-cache benchmark behaviour and cold-cache profiling traffic are different experimental conditions.
 2. **Occupancy:** distinguish the theoretical launch/resource ceiling, achieved resident warps, eligible warps, and issue rate. Occupancy is not GPU utilisation, and a higher value alone does not establish an improvement.
-3. **MIO:** MIO throttle can involve shared-memory instructions, special math, and dynamic branching. Short-scoreboard dependencies do not prove bank conflicts. Check conflict/wavefront counters and source/SASS before deciding to swizzle or change operand reuse.
+3. **MIO:** MIO throttle can involve shared-memory instructions, special math, and dynamic branching. Short-scoreboard dependencies do not prove bank conflicts. Use source-level actual minus ideal shared wavefronts to diagnose layout conflicts. Aggregate L1 conflict counters can include arbitration. The historical tiled/skip/vector captures have zero source-level excess; WMMA/PTX/warp have positive excess.
 4. **Divergence:** branch uniformity is different from useful lane activity. Predicated-off threads and masked work can exist even when branches are uniform.
 5. **Local memory:** local sectors can come from spills or dynamically indexed thread-local arrays. They are not allocated workspace and do not all reach DRAM. Inspect actual instructions and compiler resources before assigning a cause.
 6. **Arithmetic intensity:** useful attention work is `4*B*H*d*N*(N+1)/2` FLOPs, excluding softmax. Dividing by measured DRAM bytes gives a specifically labelled algorithm-useful DRAM intensity. It is not executed Tensor Core FLOPs. A shared-memory/MIO bottleneck requires analysis at that level, rather than simply assuming that higher DRAM intensity fixes it.
@@ -74,3 +74,17 @@ Use a new directory for a new experiment. `--resume` skips completed captures on
 Reproducibility means retained code, conditions, commands, raw observations and deterministic processing of those observations. It does not mean identical GPU timings, PC samples, timestamps or PDF creation metadata across independent runs.
 
 Definitions: NVIDIA [Nsight Compute Profiling Guide](https://docs.nvidia.com/nsight-compute/ProfilingGuide/) and [Compute Triage Guide](https://docs.nvidia.com/nsight-compute/ComputeTriage/).
+
+The saved analysis includes source shared actual/ideal/excessive wavefronts. Historical fixed-default profiles do not describe newly tuned configurations.
+
+## Profiling frozen configurations
+
+The bounded study profiles its frozen d=64 family winners separately from the historical eight-kernel defaults:
+
+```bash
+bash part_c/profile.sh --frozen part_c/results/my_bounded_study
+# Offline regeneration from captured CSVs:
+python3 part_c/scripts/profile_frozen.py part_c/results/my_bounded_study --analyze-only
+```
+
+This uses the same evaluation binary hash recorded by the study, one module-warmup launch, one validation launch, five warmups, then `--launch-skip 7 --launch-count 1` to capture the first timed launch. All timings produced under Nsight are excluded from the unprofiled study. Three independent captures at N=256/4096 produce twelve raw reports and source-level actual/ideal/excessive shared wavefronts. The input sequence is the new Part A-compatible stream; historical profiles retain their older stream. Avoid treating cross-study counter differences as a precision-controlled or input-controlled ablation.
