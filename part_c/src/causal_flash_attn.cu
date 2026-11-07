@@ -1001,14 +1001,10 @@ __global__ void flash_attention_v2_tensor_core_ptx_mma_fully_fused(
     int stride_vb, int stride_vn, int stride_vs, int stride_vh,
     int stride_ob, int stride_on, int stride_os, int stride_oh,
     float softmax_scale) {
-    static_assert(BLOCK_Q == 16 * NUM_WARPS,
-                  "One warp owns 16 query rows; BLOCK_Q=16*NUM_WARPS");
-    static_assert(BLOCK_KV >= 16 && BLOCK_KV % 16 == 0,
-                  "KV tiles are processed in 16-key chunks");
-    static_assert(HEAD_DIM >= 16 && HEAD_DIM % 16 == 0,
-                  "This first PTX version supports H divisible by 16");
-    static_assert(NUM_WARPS >= 1 && NUM_WARPS <= 8,
-                  "Use 1..8 warps per CTA");
+    static_assert(BLOCK_Q == 16 * NUM_WARPS, "One warp owns 16 query rows; BLOCK_Q=16*NUM_WARPS");
+    static_assert(BLOCK_KV >= 16 && BLOCK_KV % 16 == 0, "KV tiles are processed in 16-key chunks");
+    static_assert(HEAD_DIM >= 16 && HEAD_DIM % 16 == 0, "This first PTX version supports H divisible by 16");
+    static_assert(NUM_WARPS >= 1 && NUM_WARPS <= 8, "Use 1..8 warps per CTA");
 
     constexpr int WARP_SIZE = 32;
     constexpr int MMA_M = 16, MMA_N = 8, MMA_K = 16;
@@ -1048,9 +1044,7 @@ __global__ void flash_attention_v2_tensor_core_ptx_mma_fully_fused(
         const int qr = idx / HEAD_DIM;
         const int d = idx % HEAD_DIM;
         const int qg = query_block_start + qr;
-        q_shared[qr][d] = (qg < row)
-            ? Q[q_head_offset + size_t(qg) * stride_qs + size_t(d) * stride_qh]
-            : __float2half(0.0f);
+        q_shared[qr][d] = (qg < row) ? Q[q_head_offset + size_t(qg) * stride_qs + size_t(d) * stride_qh] : __float2half(0.0f);
     }
     __syncthreads();
 
@@ -1084,11 +1078,9 @@ __global__ void flash_attention_v2_tensor_core_ptx_mma_fully_fused(
             const int d = idx % HEAD_DIM;
             const int kg = key_block_start + kr;
             k_shared[kr][d] = (kg < col)
-                ? K[k_head_offset + size_t(kg) * stride_ks + size_t(d) * stride_kh]
-                : __float2half(0.0f);
+                ? K[k_head_offset + size_t(kg) * stride_ks + size_t(d) * stride_kh] : __float2half(0.0f);
             v_shared[kr][d] = (kg < col)
-                ? V[v_head_offset + size_t(kg) * stride_vs + size_t(d) * stride_vh]
-                : __float2half(0.0f);
+                ? V[v_head_offset + size_t(kg) * stride_vs + size_t(d) * stride_vh] : __float2half(0.0f);
         }
         __syncthreads();  // Q/K/V ready before Tensor Core loads.
 
@@ -1106,14 +1098,10 @@ __global__ void flash_attention_v2_tensor_core_ptx_mma_fully_fused(
                 uint32_t a[4], b0[2], b1[2];
                 const int d0 = d_base + 2 * lane_in_group;
                 const int d1 = d0 + 8;
-                a[0] = fa_pack_half2(q_shared[query_row_0][d0],
-                                     q_shared[query_row_0][d0 + 1]);
-                a[1] = fa_pack_half2(q_shared[query_row_0][d1],
-                                     q_shared[query_row_0][d1 + 1]);
-                a[2] = fa_pack_half2(q_shared[query_row_1][d0],
-                                     q_shared[query_row_1][d0 + 1]);
-                a[3] = fa_pack_half2(q_shared[query_row_1][d1],
-                                     q_shared[query_row_1][d1 + 1]);
+                a[0] = fa_pack_half2(q_shared[query_row_0][d0], q_shared[query_row_0][d0 + 1]);
+                a[1] = fa_pack_half2(q_shared[query_row_0][d1], q_shared[query_row_0][d1 + 1]);
+                a[2] = fa_pack_half2(q_shared[query_row_1][d0], q_shared[query_row_1][d0 + 1]);
+                a[3] = fa_pack_half2(q_shared[query_row_1][d1], q_shared[query_row_1][d1 + 1]);
 
                 const int k0 = key_local_start + lane_group;
                 const int k1 = k0 + 8;
@@ -1136,10 +1124,8 @@ __global__ void flash_attention_v2_tensor_core_ptx_mma_fully_fused(
             for (int j = 0; j < 4; ++j) {
                 const int key_offset = (j / 2) * 8 + 2 * lane_in_group + (j % 2);
                 const int kg = key_block_start + key_local_start + key_offset;
-                s0[j] = (query_global_0 < row && kg < col && kg <= query_global_0)
-                    ? s0[j] * softmax_scale : -CUDART_INF_F;
-                s1[j] = (query_global_1 < row && kg < col && kg <= query_global_1)
-                    ? s1[j] * softmax_scale : -CUDART_INF_F;
+                s0[j] = (query_global_0 < row && kg < col && kg <= query_global_0) ? s0[j] * softmax_scale : -CUDART_INF_F;
+                s1[j] = (query_global_1 < row && kg < col && kg <= query_global_1) ? s1[j] * softmax_scale : -CUDART_INF_F;
                 partial_max_0 = fmaxf(partial_max_0, s0[j]);
                 partial_max_1 = fmaxf(partial_max_1, s1[j]);
             }
@@ -1148,20 +1134,14 @@ __global__ void flash_attention_v2_tensor_core_ptx_mma_fully_fused(
             // [4..7], ... . XOR 1 and XOR 2 never cross group boundaries.
             #pragma unroll
             for (int mask = 1; mask <= 2; mask *= 2) {
-                partial_max_0 = fmaxf(partial_max_0,
-                    __shfl_xor_sync(0xffffffffu, partial_max_0, mask));
-                partial_max_1 = fmaxf(partial_max_1,
-                    __shfl_xor_sync(0xffffffffu, partial_max_1, mask));
+                partial_max_0 = fmaxf(partial_max_0, __shfl_xor_sync(0xffffffffu, partial_max_0, mask));
+                partial_max_1 = fmaxf(partial_max_1, __shfl_xor_sync(0xffffffffu, partial_max_1, mask));
             }
             const float new_max_0 = fmaxf(running_max_0, partial_max_0);
             const float new_max_1 = fmaxf(running_max_1, partial_max_1);
             // All-masked rows: alpha=0 and P=0; avoid exp(-inf - -inf).
-            const float alpha_0 = (running_max_0 == -CUDART_INF_F ||
-                                   new_max_0 == -CUDART_INF_F)
-                                    ? 0.f : expf(running_max_0 - new_max_0);
-            const float alpha_1 = (running_max_1 == -CUDART_INF_F ||
-                                   new_max_1 == -CUDART_INF_F)
-                                    ? 0.f : expf(running_max_1 - new_max_1);
+            const float alpha_0 = (running_max_0 == -CUDART_INF_F || new_max_0 == -CUDART_INF_F) ? 0.f : expf(running_max_0 - new_max_0);
+            const float alpha_1 = (running_max_1 == -CUDART_INF_F || new_max_1 == -CUDART_INF_F) ? 0.f : expf(running_max_1 - new_max_1);
             float partial_sum_0 = 0.f, partial_sum_1 = 0.f;
             #pragma unroll
             for (int j = 0; j < 4; ++j) {
@@ -1197,19 +1177,13 @@ __global__ void flash_attention_v2_tensor_core_ptx_mma_fully_fused(
                 uint32_t a[4], b[2];
                 const int k0 = 2 * lane_in_group;
                 const int k1 = k0 + 8;
-                a[0] = fa_pack_half2(prob_shared[warp_id][lane_group][k0],
-                                     prob_shared[warp_id][lane_group][k0 + 1]);
-                a[1] = fa_pack_half2(prob_shared[warp_id][lane_group][k1],
-                                     prob_shared[warp_id][lane_group][k1 + 1]);
-                a[2] = fa_pack_half2(prob_shared[warp_id][lane_group + 8][k0],
-                                     prob_shared[warp_id][lane_group + 8][k0 + 1]);
-                a[3] = fa_pack_half2(prob_shared[warp_id][lane_group + 8][k1],
-                                     prob_shared[warp_id][lane_group + 8][k1 + 1]);
+                a[0] = fa_pack_half2(prob_shared[warp_id][lane_group][k0], prob_shared[warp_id][lane_group][k0 + 1]);
+                a[1] = fa_pack_half2(prob_shared[warp_id][lane_group][k1], prob_shared[warp_id][lane_group][k1 + 1]);
+                a[2] = fa_pack_half2(prob_shared[warp_id][lane_group + 8][k0], prob_shared[warp_id][lane_group + 8][k0 + 1]);
+                a[3] = fa_pack_half2(prob_shared[warp_id][lane_group + 8][k1], prob_shared[warp_id][lane_group + 8][k1 + 1]);
                 const int feature = d_out + lane_group;
-                b[0] = fa_pack_half2(v_shared[key_local_start + k0][feature],
-                                     v_shared[key_local_start + k0 + 1][feature]);
-                b[1] = fa_pack_half2(v_shared[key_local_start + k1][feature],
-                                     v_shared[key_local_start + k1 + 1][feature]);
+                b[0] = fa_pack_half2(v_shared[key_local_start + k0][feature], v_shared[key_local_start + k0 + 1][feature]);
+                b[1] = fa_pack_half2(v_shared[key_local_start + k1][feature], v_shared[key_local_start + k1 + 1][feature]);
                 float* c = output_accumulator[output_tile_idx];
                 c[0] *= alpha_0; c[1] *= alpha_0;
                 c[2] *= alpha_1; c[3] *= alpha_1;
