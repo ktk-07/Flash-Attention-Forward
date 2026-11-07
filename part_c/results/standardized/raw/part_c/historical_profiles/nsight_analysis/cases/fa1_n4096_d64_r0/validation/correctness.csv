@@ -1,0 +1,2 @@
+kernel,precision,output_precision,accumulator_precision,B,H,N,d,pattern,block_q,block_kv,warps,thread_q,thread_k,reference_scope,atol,rtol,max_absolute,max_relative,checked_elements,nonfinite,failures,status
+fa1,FP32,FP32,FP32,4,8,4096,64,random,32,32,1,1,1,sampled_queries,0.0001,0.0001,9.1066319610200175e-08,0.0012587993255324824,6144,0,0,PASS

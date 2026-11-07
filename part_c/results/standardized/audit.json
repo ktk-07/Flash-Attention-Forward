@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "schema_version": 1,
+  "rows": {
+    "correctness": 636,
+    "samples": 6360,
+    "summary": 318,
+    "resources": 318,
+    "profiles": 14616,
+    "memory": 30,
+    "work": 318
+  },
+  "statistics_recomputed": true,
+  "timing_validation_joins_verified": true,
+  "effective_input_fingerprints_present": true,
+  "native_cases": 636,
+  "profile_captures": 12,
+  "profile_csv_hashes_verified": true,
+  "verified_binary_profile_reports": 12,
+  "missing_binary_profile_reports": [],
+  "native_values_retained": true,
+  "fused_stage_timings_unavailable": true,
+  "shared_cpu_reference_linked": false,
+  "final_abc_integration_complete": false,
+  "external_native_files_missing": [],
+  "native_inventory_verified": true,
+  "schema_headers_fixed": true
+}

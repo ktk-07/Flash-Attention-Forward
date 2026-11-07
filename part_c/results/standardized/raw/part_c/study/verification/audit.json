@@ -1,0 +1,8 @@
+{
+  "default_regression_passes": 380,
+  "explicit_unsupported": 4,
+  "sanitizer_runs": 8,
+  "sanitizer_failures": 0,
+  "kernel_bodies_unchanged": true,
+  "scope": "B1 H1 N33 d64 frozen family winners; representative, not exhaustive sanitizer coverage"
+}

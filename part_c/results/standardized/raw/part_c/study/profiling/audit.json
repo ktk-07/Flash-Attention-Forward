@@ -1,0 +1,18 @@
+{
+  "validated_captures": 12,
+  "all_pass": true,
+  "raw_report_sha256": {
+    "cases/skip_c4_n256_r0/profile.ncu-rep": "4cecc4647c7fe52f5eff0c265d0d4b3b1eea23638f457350bc697919e1fbb7fd",
+    "cases/ptx_c2_n4096_r2/profile.ncu-rep": "e0fc1fabd03dd9a3290ecc640a16f6c74822c9d4f26f7a06030df9a38801bfb7",
+    "cases/ptx_c2_n4096_r0/profile.ncu-rep": "c4a0f8b7804c3a7a8957ff0296edd3b4b0562fe71c1275ef186ed622ec6a9c11",
+    "cases/skip_c4_n4096_r0/profile.ncu-rep": "f87a0f5af86ebd48f13a87e75559732352eef0eb0393b657ab6c9e812944e626",
+    "cases/ptx_c2_n256_r0/profile.ncu-rep": "8858ce93797e127f86ff31e34fbd246a58ab8adcafbd374f675bc78aa9d1739d",
+    "cases/ptx_c2_n256_r2/profile.ncu-rep": "0aa769580586a2197e99feb62c912707c75401aed55129ffeefd0d032c4d7fee",
+    "cases/skip_c4_n256_r1/profile.ncu-rep": "a5c4b4a12352e2737ffb721fde36e8dce4bd032bcf955c90641f878fc0c552ca",
+    "cases/ptx_c2_n4096_r1/profile.ncu-rep": "ca20abd1c4488ee0da81ad7af1e018ba45a86c20f97bafad1d30e2a134c62bf3",
+    "cases/ptx_c2_n256_r1/profile.ncu-rep": "686c0f1ae29fb91e8c0240878e709799c5e72d65744643ed3fd88b03c0e73f18",
+    "cases/skip_c4_n4096_r2/profile.ncu-rep": "8e1c70cfa865e34320ffcbf5237574c919e3ab24dac88ba90ca857c791c67e1e",
+    "cases/skip_c4_n4096_r1/profile.ncu-rep": "9700868d5a054ffa77c7f9cc32caee4328bcd3a38a0064ccf4c8c30f7e330757",
+    "cases/skip_c4_n256_r2/profile.ncu-rep": "1deda7371760f5079cfb8a57c72d9ecafe45e121958d1eb1367c4d623c13b1fb"
+  }
+}

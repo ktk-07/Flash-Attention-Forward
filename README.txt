@@ -41,7 +41,36 @@ Unchecked A rows stay UNCHECKED. Cross-part speedup plots are withheld while
 shared-oracle, fingerprints and full validation are pending; see README.md
 Section 6 and aggregation_audit.json. This command does not modify old results.
 
-3. ONE-COMMAND PART C RUN
+3. STANDARDIZED PART C REPORT
+
+Use the new named wrapper for Part A-based public tables while retaining the
+complete native study and profiling evidence:
+
+bash part_c/run.sh --output results/my_c_run --build /tmp/part_c-build --arch 86
+
+It runs numerical/sanitizer checks, tuning, benchmark/memory studies, frozen
+Nsight captures, native plots, standardized export and extra profiler charts.
+Use --dry-run to inspect commands; --no-profile explicitly marks a partial run.
+
+To export saved results without any GPU run, choose a fresh destination:
+
+bash part_c/run.sh --export part_c/results/bounded_evaluation --output part_c/results/my_report --supplementary-profile part_c/results/nsight_analysis
+
+The supplied saved-data export is part_c/results/standardized/. All original
+MIO/scoreboard data, raw counters, reports, source/SASS and individual plots
+remain in raw/ and supplementary/. Nothing is discarded for lacking a shared
+column. Missing external .ncu-rep files are recorded with expected hashes;
+CSV-only export/plotting still works. Restore binaries for full report audits.
+
+Regenerate its public CSVs/plots from copied raw data (CPU only):
+
+bash part_c/run.sh --analyze-only part_c/results/my_report
+
+CPU-only schema/export tests:
+
+python3 -m unittest discover -s part_c/tests -p 'test_export_results.py' -v
+
+4. NATIVE-FORMAT PART C COMPATIBILITY RUN
 
 Use a NEW result directory. This runs the default regression and benchmark,
 four sanitizer tools, legacy checks, then all candidate correctness checks,
@@ -58,7 +87,7 @@ command logs and per-case PASS/FAIL records to monitor progress. A failed
 correctness gate stops the study rather than entering a failed timing row in
 plots. Existing result folders are retained.
 
-4. RUN JUST THE NEW STUDY
+5. RUN JUST THE NEW STUDY
 
 bash part_c/run.sh --study part_c/results/my_bounded_study
 
@@ -69,7 +98,7 @@ PART_C_BUILD_DIR=/tmp/another-c-build bash part_c/run.sh --study part_c/results/
 The grid is B=4,H=8,N=256/512/1024/2048/4096,d=32/64/128. Tune only at
 N=256/1024 before freezing. Twenty timed samples follow five warmups.
 
-5. OPTIONAL FROZEN-WINNER SAFETY CHECKS AND PROFILING
+6. OPTIONAL FROZEN-WINNER SAFETY CHECKS AND PROFILING
 
 After the study completes, run sequentially:
 
@@ -85,7 +114,7 @@ profiler coverage. Profiling output is separate from unprofiled timing.
 For another build directory, use PART_C_BUILD_DIR for evaluate.sh and append
 --build /path/to/build to profile.sh --frozen.
 
-6. READ AND REGENERATE RESULTS
+7. READ AND REGENERATE RESULTS
 
 Study files:
   plan.json                predefined grid, candidates and measurement policy
@@ -122,9 +151,9 @@ python3 part_c/scripts/interpret_profiles.py part_c/results/nsight_analysis
 python3 part_c/scripts/audit_profiles.py part_c/results/nsight_analysis
 
 The default --complete command generates benchmarks and plots, but optional
-Nsight captures and additional frozen-winner sanitizers are Step 5.
+Nsight captures and additional frozen-winner sanitizers are Step 6.
 
-7. OTHER RUNNERS AND LIMITATIONS
+8. OTHER RUNNERS AND LIMITATIONS
 
 Part A: see part_a/README.md for its independent CMake/CLI commands. Its saved
 RTX 5060 Ti results cannot be used as speedup denominators for Part C's laptop

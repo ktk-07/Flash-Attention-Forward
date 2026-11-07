@@ -1,0 +1,74 @@
+{
+  "variants": {
+    "skip": {
+      "32": {
+        "config": 2,
+        "geomean_ms": 1.116454403529869
+      },
+      "64": {
+        "config": 4,
+        "geomean_ms": 1.831952927446469
+      },
+      "128": {
+        "config": 4,
+        "geomean_ms": 2.939185902496713
+      }
+    },
+    "vector": {
+      "32": {
+        "config": 2,
+        "geomean_ms": 1.18012877933465
+      },
+      "64": {
+        "config": 2,
+        "geomean_ms": 1.9575919954813858
+      },
+      "128": {
+        "config": 4,
+        "geomean_ms": 2.8993124195071185
+      }
+    },
+    "wmma": {
+      "32": {
+        "config": 2,
+        "geomean_ms": 0.3922949114724829
+      },
+      "64": {
+        "config": 2,
+        "geomean_ms": 0.963466567792324
+      },
+      "128": {
+        "config": 2,
+        "geomean_ms": 2.5304845184735343
+      }
+    },
+    "ptx": {
+      "32": {
+        "config": 2,
+        "geomean_ms": 0.1653885804665171
+      },
+      "64": {
+        "config": 2,
+        "geomean_ms": 0.4319459630134675
+      },
+      "128": {
+        "config": 2,
+        "geomean_ms": 0.9739525387099297
+      }
+    }
+  },
+  "families": {
+    "cuda_core": {
+      "32": "skip",
+      "64": "skip",
+      "128": "vector"
+    },
+    "tensor_core": {
+      "32": "ptx",
+      "64": "ptx",
+      "128": "ptx"
+    }
+  },
+  "frozen_utc": "2026-11-07T15:56:50Z",
+  "plan_sha256": "184fe861ad232ae5a1927435df69a0ef2b8a1925f49f04c78a8e77e1e05f8603"
+}

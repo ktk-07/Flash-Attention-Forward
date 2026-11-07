@@ -2,6 +2,18 @@
 # Run from any directory. Logs every command, its output and its exit code.
 # No Git operations. Needs CUDA GPU access, CMake, Python and Matplotlib.
 set -uo pipefail
+# Named CLI publishes the standardized report; legacy positional workflows stay available.
+case "${1:-}" in
+    --export)
+        shift
+        if [ "$#" -eq 0 ]; then printf 'Usage: run.sh --export STUDY --output BUNDLE\n' >&2; exit 2; fi
+        native_study="$1"; shift
+        exec python3 "$(dirname "$0")/scripts/export_results.py" --study "$native_study" "$@"
+        ;;
+    ""|--output|--build|--arch|--device|--dry-run|--no-profile|--supplementary-profile|--analyze-only|--help|-h)
+        exec python3 "$(dirname "$0")/scripts/run_standard.py" "$@"
+        ;;
+esac
 # Use the same entry point for the new bounded study; retain legacy positional CLI.
 if [ "${1:-}" = "--complete" ]; then
     shift

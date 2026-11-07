@@ -15,7 +15,9 @@ part_c/
     flash_attention_2_tensor_core.cu
   tests/                        # C++ runners, reference and regression checks
     kernel_bodies.json          # baseline hashes used by verification
-  scripts/                      # CSV processing, plots, audits and profiling
+  scripts/                      # native analysis plus Part A-format export
+    export_results.py            # lossless standardized report adapter
+    run_standard.py              # named standalone workflow
   CMakeLists.txt
   run.sh                        # regression, --study and --complete workflows
   evaluate.sh                   # bounded study / frozen-winner verification
@@ -46,7 +48,50 @@ FA1/FA2 names identify educational implementations, not equivalence to official 
 
 Instantiated head dimensions are 7,16,32,33,40,64,65,96,128. PTX requires d>=16 divisible by 16; unsupported cases are explicit skips. WMMA pads internally. Tensor configurations require BQ=16×warps and BK divisible by 16.
 
-## Build and run
+## Standardized report output, with all native details retained
+
+Part C now exports the agreed Part A-based CSV headers through the shared `scripts/results_schema.py` module. This changes report interfaces, not kernel algorithms. The native study, all Nsight/NCU counter exports, MIO/scoreboard samples, source/SASS insights, configuration history and existing plots are retained byte for byte under `raw/part_c/`.
+
+```bash
+# CPU-only conversion of the saved study, including older source/SASS evidence.
+# Choose a fresh destination; this does not rerun GPU measurements.
+bash part_c/run.sh --export part_c/results/bounded_evaluation \
+  --output part_c/results/my_report \
+  --supplementary-profile part_c/results/nsight_analysis
+
+# Fresh standalone run: correctness, sanitizers, bounded study, frozen-winner
+# profiling, native plots, standardized CSVs and extra profiler charts.
+bash part_c/run.sh --output results/my_c_run --build /tmp/part_c-build --arch 86
+
+# Preview that workflow without running CUDA or creating results.
+bash part_c/run.sh --output results/my_c_run --arch 86 --dry-run
+
+# Regenerate public tables and all exported plots from the copied raw data.
+bash part_c/run.sh --analyze-only part_c/results/my_report
+```
+
+No-argument `bash part_c/run.sh` now selects the standardized standalone workflow. `--device` selects one physical index/UUID; by default it honors the first existing `CUDA_VISIBLE_DEVICES` entry. Full named runs require Nsight Compute and Compute Sanitizer. `--no-profile` is an explicitly labelled partial run without fresh profiler evidence, not fabricated zero counters. Existing positional, `--study` and `--complete` interfaces remain native-format compatibility workflows.
+
+The published [saved-data export](results/standardized/ANALYSIS.md) is a format adaptation of the existing measurements, not a new GPU experiment. It contains:
+
+- Fixed-header `correctness.csv`, `samples.csv`, `summary.csv`, `resources.csv`, `memory.csv`, `profiles.csv` and `work.csv`.
+- Part A names such as `variant`, `forward_median_ms`, `forward_q1_ms`, `warmup` and `precision`, with explicit precision/fingerprint/validation metadata added.
+- All 6,360 unprofiled samples and 318 timing cases; the 60 frozen per-variant main cases use `experiment=proposal`. Default progression, tuning and matched-load experiments remain distinctly labelled.
+- All raw metrics from the twelve matching frozen-winner captures, plus derived MIO/short/long-scoreboard percentages. Instrumented durations remain profiler metrics and never enter forward samples.
+- Seven original study figures in `plots/part_c/`, plus six extra profiler figure pairs under `supplementary/part_c/plots/` and an evidence index.
+- The complete native study and optional historical profiling datasets, including source/SASS, reports, logs, CSVs, snapshots and all supplied `.ncu-rep` files. Historical counters are supplementary and are not relabelled as counters for tuned configs or the common input stream.
+
+Fused QK/softmax/PV timings and unmeasured setup time stay blank. Raw missing Nsight counters stay explicitly unavailable. Per-thread resource estimates are distinct from measured occupancy, source shared excess is distinct from aggregate arbitration counts, and warp-state percentages are not runtime fractions. Shared-memory/local traffic is not allocated storage.
+
+The exporter verifies native case hashes and metadata, fingerprints, sample/summary statistics, O-validation joins, profiler CSV hashes, supplied binary report hashes and byte-identical evidence copies. `.ncu-rep` files may be supplied separately; when absent, saved CSV evidence still exports and the missing binaries/expected checksums are explicit. Shared Part A CPU-oracle linkage and complete A/B/C integration remain separate pending work.
+
+CPU-only adapter regression tests:
+
+```bash
+python3 -m unittest discover -s part_c/tests -p 'test_export_results.py' -v
+```
+
+## Native-format compatibility workflows
 
 Use Linux/Bash, CMake >=3.18, C++17, CUDA, Python and the pinned analysis packages. The recorded machine uses an RTX 3070 Ti Laptop (SM86), CUDA 12.6 and Nsight Compute 2024.3. Run commands from the repository root with a fresh output directory.
 

@@ -2,6 +2,7 @@
 
 | Dataset | Purpose | Start here |
 |---|---|---|
+| `standardized/` | Part A-format export with the native study, all counters, supplementary history and extra charts retained | [ANALYSIS.md](standardized/ANALYSIS.md) |
 | `bounded_evaluation/` | Main common-input tuning, frozen benchmark, matched-load and memory study | [REPORT.md](bounded_evaluation/REPORT.md) |
 | `bounded_evaluation/profiling/` | Fresh hardware counters for frozen d=64 winners | [REPORT.md](bounded_evaluation/profiling/REPORT.md) |
 | `layout_validation/` | Earlier default-configuration regression, benchmark and sanitizer evidence | [README.md](layout_validation/README.md) |
@@ -13,7 +14,7 @@ Development attempts and capability probes are archived locally outside this res
 
 ## What to retain for submission
 
-Keep the datasets cited by the report. The main recommended bundle is `bounded_evaluation/`: raw case/combined CSVs, plans and frozen selections, source/analysis manifests and snapshots, audits, report and figures. Retain `verification/` for numerical/sanitizer evidence and `profiling/` for the fresh winner counters. This supports reproduction; summary CSVs and plots alone are insufficient.
+Keep the datasets cited by the report. The self-contained Part A-format bundle is `standardized/`; it contains the native study and optional historical evidence under `raw/`. Keep its public CSVs, audit/config metadata, figures, supplementary insights and processing source. If committing that bundle, the duplicated original directories need not be committed again unless another report link requires them. The original native main bundle is `bounded_evaluation/`: raw case/combined CSVs, plans and frozen selections, source/analysis manifests and snapshots, audits, report and figures. Retain `verification/` for numerical/sanitizer evidence and `profiling/` for the fresh winner counters. This supports reproduction; summary CSVs and plots alone are insufficient.
 
 `layout_validation/` is optional older default-workflow evidence. Keep `nsight_analysis/` if the report uses its eight-kernel/source-SASS findings; otherwise it is supplementary. Local debug/probe runs and planning notes are outside this result index in ignored development archives. Large `.ncu-rep` binaries need not be committed; supply them separately with their recorded hashes when required for a full profiling audit. Ignore rules do not untrack previously tracked files.
 

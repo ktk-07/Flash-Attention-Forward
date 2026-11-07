@@ -28,7 +28,7 @@ def main():
     binary=a.build.resolve()/'part_c_evaluation'
     sources={}
     for path in sorted((ROOT/'part_c').rglob('*')):
-        if path.is_file() and 'results' not in path.parts and 'extra' not in path.relative_to(ROOT/'part_c').parts and path.suffix in {'.cu','.cpp','.h','.py','.sh','.txt','.md','.json'}:
+        if path.is_file() and not path.resolve().is_relative_to(out) and 'results' not in path.parts and 'extra' not in path.relative_to(ROOT/'part_c').parts and path.suffix in {'.cu','.cpp','.h','.py','.sh','.txt','.md','.json'}:
             rel=path.relative_to(ROOT);target=out/'source_snapshot'/rel;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(path.read_bytes());sources[str(rel)]=digest(path)
     # Contract-test headers are read-only Part A dependencies, not a Part A run.
     for name in ['part_a/common/input_generation.hpp','part_a/common/attention_types.hpp']:

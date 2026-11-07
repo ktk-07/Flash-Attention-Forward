@@ -1,0 +1,17 @@
+{
+  "script_sha256": "19c0f6b9878e466d655bf2517f73e3a18b5d295edf9ffd09e465a6010f704e8a",
+  "raw_csv_sha256": {
+    "cases/ptx_c2_n256_r0/raw.csv": "1d74ced8056141a6805e7cd2fd28e2ee3cbb95f8fbee1baa5725d37108dae936",
+    "cases/ptx_c2_n256_r1/raw.csv": "34b55106da2e1a57963c63ba264eedb533eefce0898d386749eba651f6384d34",
+    "cases/ptx_c2_n256_r2/raw.csv": "3a663443d90736fc7dbee2e447beeab1d4741cd2b7619cd7df34f69a5e25acbb",
+    "cases/ptx_c2_n4096_r0/raw.csv": "eb06fcc2f66bfd7cc7cc24128c71862140a020f3757e82c3b858503da30dede0",
+    "cases/ptx_c2_n4096_r1/raw.csv": "4a574b826f026fcbb40435634bf21e4f12d8b1a253127790e05d03a59258ff3d",
+    "cases/ptx_c2_n4096_r2/raw.csv": "f666c3dbb87927eab44d37d60eba45a749f565190f450ab0ae88bb223df9d9c1",
+    "cases/skip_c4_n256_r0/raw.csv": "5b48b8817652901cface2484bb74df3c4f306c5cd4239b1f05f23ec0d4ac0b35",
+    "cases/skip_c4_n256_r1/raw.csv": "4817d704d4fc5ce6340cd2354980ca1d5f24de00b4d10ecd66c830f142ff37f1",
+    "cases/skip_c4_n256_r2/raw.csv": "842c51879feaa28ae8073cb25800f43d8dd5f12d5c052cd5aadce0a6a526da60",
+    "cases/skip_c4_n4096_r0/raw.csv": "8bc3d7e4c213fc42c5942817b3b662f3ee32e80294be5ce97fb26f82cc56a4da",
+    "cases/skip_c4_n4096_r1/raw.csv": "e2489999253aae0da074979089a8b6c82525461a6628efda88683468d4c6d15b",
+    "cases/skip_c4_n4096_r2/raw.csv": "e37e5dcb8d11f08a2f78ab1ce08e3586f28dda379a6f229ff0fc8f7c80732ce4"
+  }
+}

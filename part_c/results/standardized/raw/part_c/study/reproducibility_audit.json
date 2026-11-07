@@ -1,0 +1,59 @@
+{
+  "passed": true,
+  "case_count": 636,
+  "raw_rows": 6678,
+  "raw_and_combined_rows_identical": true,
+  "validation_before_tuning_before_main": true,
+  "measurement_source_snapshots_verified": true,
+  "offline_csv_markdown_png_pdf_regeneration_identical": true,
+  "processed_sha256": {
+    "REPORT.md": "3bd6ee297291a45b6f3cf258b8b27c53497e1470ebc11884b2707722bf634392",
+    "audit.json": "06fe22ce177d39b0125abc1314c772d53aa89f51c05eff2fbd29482c47f1204d",
+    "comparison.csv": "68d93861d3eafdd2d9f5027c2b51cdb17f66925cf2a8495e823acf3bbbad3f90",
+    "figures/cuda_core_progression.pdf": "e1f83e3cef11fb65f5767630f89453d07709d8915e7b1e062efa740e24c26cc8",
+    "figures/cuda_core_progression.png": "0839218ed2375e31a8994f537c1fcb6bb34cdd8e1b3716ff0a269a471efaec35",
+    "figures/device_memory.pdf": "e07e3e6b052ec1e2c6370f2c010c1ac1b57e6092c5abf1b05e845ea7ade01dbd",
+    "figures/device_memory.png": "493e6fcfb50eff3cee61ce73908978c51a83c4e0d28ed30c05c0838437ad2a88",
+    "figures/frozen_family_comparison.pdf": "d2c0a3946443f8892286c8351a1f0e1ef74b80ed3604735c09c954e6c0b9841c",
+    "figures/frozen_family_comparison.png": "1eec4ec81bc0acb0239691c67e5cd5732be9ce3d5236841fae7a2711f4a69b2a",
+    "figures/frozen_tuning_speedup.pdf": "815268dfb551a76930753241660a8524a129ed956e81719d6e18b3dc514055f9",
+    "figures/frozen_tuning_speedup.png": "9316459b3d5c08ea2881a05d1f94ff3983f23c197eb9017ee9d6284a1b8968df",
+    "figures/matched_vector_load.pdf": "14b04473953e76780c5fbeccc3bb9fc43bb94a94ba490ff45bc322820691d673",
+    "figures/matched_vector_load.png": "e2aa8d0fa40041ebd10abb330666e836f97973e5d7d08d1f2c2527ca782d8c08",
+    "figures/tensor_core_progression.pdf": "296e624280fed66ac17eb9fcd2227e3f85e7530f7d1c4ed029e3a38bf4af3d29",
+    "figures/tensor_core_progression.png": "cdf315912bdba3b2dd73c53ed87d5908be9813f2dda2ec687051269c5ee916ce",
+    "figures/tuning_heatmap.pdf": "9413b5bcef2284a0b71126828886e70a379bd36551cb9f7b8f05bbaf99b9222b",
+    "figures/tuning_heatmap.png": "1e0a367914ab81e1ec6751c616004611f449f786f92058e303a28a28f6c5264d",
+    "matched_ablation.csv": "5f35a7a227fb4891da436a67ba656888ff2a65629402acdfa527fd2bcbc9b392",
+    "profiling/REPORT.md": "fd9c84dec7aebfac5fd8511cd9169d59b0253044c21bbf8bc1d9490af11058cc",
+    "profiling/metrics.csv": "3de8d9ef1ed82bad3320d50dc142e34d83f884d27fe202628975ac5f6dddb5b4",
+    "summary.csv": "ca041de96cd0b9d2b173bbf9918a01b439971f1560c34f7f18ce15ae17372a74"
+  },
+  "rerun_commands": [
+    {
+      "argv": [
+        "/home/buntr/anaconda3/bin/python3",
+        "/home/buntr/Projects/Flash-Attention-CUDA/part_c/scripts/evaluate.py",
+        "--build",
+        "/tmp/unused-build",
+        "--output",
+        "part_c/results/bounded_evaluation",
+        "--analyze-only"
+      ],
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "argv": [
+        "/home/buntr/anaconda3/bin/python3",
+        "/home/buntr/Projects/Flash-Attention-CUDA/part_c/scripts/profile_frozen.py",
+        "part_c/results/bounded_evaluation",
+        "--analyze-only"
+      ],
+      "exit_code": 0,
+      "output": "part_c/results/bounded_evaluation/profiling/REPORT.md\n"
+    }
+  ],
+  "profiling_raw_reports_verified": true,
+  "known_initial_wrapper_error": "execution_notes.json"
+}
