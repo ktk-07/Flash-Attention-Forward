@@ -22,4 +22,4 @@ printf '\n' >> "$output/logs/build_commands.txt"
 cmake --build "$build" -j 2 2>&1 | tee "$output/logs/build.txt"
 "$build/part_c_input_contract" | tee "$output/logs/input_contract.txt"
 # Replace the shell so later edits cannot resume a stale script-file offset.
-exec python3 part_c/scripts/evaluate.py --build "$build" --output "$output"
+exec python3 part_c/scripts/evaluate.py --build "$build" --output "$output" --grid "${ATTENTION_GRID:-full}"

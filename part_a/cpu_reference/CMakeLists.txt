@@ -1,0 +1,8 @@
+if(NOT TARGET attention_reference)
+  add_library(attention_reference STATIC attention_reference.cpp sampled_reference.cpp)
+  target_include_directories(attention_reference PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../common)
+  target_compile_features(attention_reference PUBLIC cxx_std_17)
+  target_compile_definitions(attention_reference PUBLIC NOMINMAX)
+  add_executable(attention_reference_test ../tests/reference_test.cpp)
+  target_link_libraries(attention_reference_test PRIVATE attention_reference)
+endif()

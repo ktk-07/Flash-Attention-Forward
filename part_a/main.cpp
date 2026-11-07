@@ -23,7 +23,7 @@ using namespace attention;
 namespace {
 struct Options {
     Shape shape{1,1,2,2};
-    std::string grid="representative", mode="both", variants;
+    std::string grid="representative", mode="both", variants, pattern="random";
     std::filesystem::path output;
     KernelConfig config{};
     // seed and timing settings
@@ -59,6 +59,7 @@ Options parse(int argc,char** argv) {
         } else if(arg=="--grid") o.grid=next();
         else if(arg=="--mode") o.mode=next();
         else if(arg=="--variants") o.variants=next();
+        else if(arg=="--pattern") o.pattern=next();
         else if(arg=="--output") o.output=next();
         else if(arg=="--profile-only") o.profile=true;
         else if(arg=="--tile" || arg=="--softmax-threads") {
@@ -80,7 +81,7 @@ Options parse(int argc,char** argv) {
         else if(o.grid=="tuning") o.variants="optimized";
         else o.variants="main";
     }
-    if(o.variants=="tensorcore" && (o.config.tile!=16 || o.grid=="tuning" || o.grid=="ablation"))
+    if(o.variants=="tensorcore" && (o.config.tile!=16 || o.grid=="ablation"))
         throw std::invalid_argument("Tensor Core uses tile 16 and a separate FP16 experiment");
     return o;
 }
@@ -102,6 +103,7 @@ std::vector<Variant> variants(const Options& o) {
 }
 
 std::vector<KernelConfig> configurations(const Options& o) {
+    if(o.variants=="tensorcore" && (o.grid=="correctness" || o.grid=="tuning")) return {{16,128},{16,256}};
     if(o.variants!="tensorcore" && (o.grid=="correctness" || o.grid=="tuning"))
         return {{8,256},{16,256},{32,256},{16,128}};
     return {o.config};
@@ -251,9 +253,11 @@ void correctness(const Options& o) {
     const auto tol=tolerance(o);
     auto out=file(o.output/"correctness.csv");
     const std::string prefix=o.grid+","+(o.variants=="tensorcore"?"FP16,":"FP32,");
-    out<<"experiment,precision,B,H,N,d,mode,variant,tile,softmax_threads,stage,atol,rtol,max_absolute,max_relative,failures,status\n";
+    out<<"experiment,precision,B,H,N,d,mode,variant,tile,softmax_threads,stage,atol,rtol,max_absolute,max_relative,failures,status,checked_elements,nonfinite,input_digest,effective_input_digest,pattern,reference_scope,reference_backend\n";
     for(auto shape:shapes(o)) {
-        auto input=synthetic_input(shape,o.seed); DeviceBuffers<T> b; prepare(b,input);
+        auto input=synthetic_input(shape,o.seed);apply_pattern(input,o.pattern);
+        const auto original_digest=input_fingerprint(input);DeviceBuffers<T> b; prepare(b,input);
+        const auto effective_digest=input_fingerprint(input);
         for(bool causal:modes(o)) {
             const auto expected=reference(input,causal);
             for(auto v:variants(o)) for(auto c:configurations(o)) {
@@ -266,7 +270,7 @@ void correctness(const Options& o) {
                 const char* names[]={"S","P","O"};
                 for(int i=0;i<3;++i) {
                     const auto r=compare(download(device[i],host[i]->size()),*host[i],tol.absolute,tol.relative,i==0);
-                    out<<prefix<<identity(shape,causal,v,c)<<','<<names[i]<<','<<tol.absolute<<','<<tol.relative<<','<<r.max_absolute<<','<<r.max_relative<<','<<r.failures<<','<<(r.passed()?"PASS":"FAIL")<<'\n';
+                    out<<prefix<<identity(shape,causal,v,c)<<','<<names[i]<<','<<tol.absolute<<','<<tol.relative<<','<<r.max_absolute<<','<<r.max_relative<<','<<r.failures<<','<<(r.passed()?"PASS":"FAIL")<<','<<r.checked<<','<<r.nonfinite<<','<<original_digest<<','<<effective_digest<<','<<o.pattern<<",full,part_a_shared_fp64\n";
                     out.flush();
                     if(!r.passed()) throw std::runtime_error("CPU/GPU mismatch in "+std::string(names[i]));
                 }
@@ -344,24 +348,26 @@ void gpu_run(const Options& o) {
         summary=file(o.output/"summary.csv");
         samples=file(o.output/"samples.csv");
     }
-    if(!o.profile) samples<<head<<",repeat,forward_ms,qk_ms,softmax_ms,pv_ms\n";
-    if(!o.profile) summary<<head<<",atol,rtol,max_absolute,max_relative,warmup,repeats,forward_median_ms,forward_q1_ms,forward_q3_ms,forward_iqr_ms,qk_median_ms,qk_iqr_ms,softmax_median_ms,softmax_iqr_ms,pv_median_ms,pv_iqr_ms,sequences_per_second,speedup_vs_naive,peak_workspace_allocated_bytes,setup_host_ms\n";
+    if(!o.profile) samples<<head<<",repeat,forward_ms,qk_ms,softmax_ms,pv_ms,input_digest,effective_input_digest,pattern\n";
+    if(!o.profile) summary<<head<<",atol,rtol,max_absolute,max_relative,warmup,repeats,forward_median_ms,forward_q1_ms,forward_q3_ms,forward_iqr_ms,qk_median_ms,qk_iqr_ms,softmax_median_ms,softmax_iqr_ms,pv_median_ms,pv_iqr_ms,sequences_per_second,speedup_vs_naive,peak_workspace_allocated_bytes,setup_host_ms,input_digest,effective_input_digest,pattern,reference_scope,checked_elements,nonfinite,failures,status,reference_backend\n";
     if(resource.is_open()) resource<<head<<",stage,blocks,threads,registers_per_thread,shared_bytes,local_bytes_per_thread,active_blocks_per_sm,theoretical_occupancy_percent\n";
     for(auto shape:shapes(o)) {
-        auto input=synthetic_input(shape,o.seed); DeviceBuffers<T> b; prepare(b,input);
-        const bool representative=shape.d==64 && (shape.N==256 || shape.N==2048);
-        const bool validate=!o.profile && (o.grid=="representative" || representative);
+        auto input=synthetic_input(shape,o.seed);apply_pattern(input,o.pattern);
+        const auto original_digest=input_fingerprint(input);DeviceBuffers<T> b; prepare(b,input);
+        const auto effective_digest=input_fingerprint(input);
+        const bool validate=!o.profile;
+        const bool sampled=shape.N>97;
         for(bool causal:selected_modes) {
-            Result expected;
-            if(validate) expected=reference(input,causal);
+            std::vector<double> expected;
+            if(validate) expected=reference_output(input,causal,sampled);
 
             std::map<std::string,double> naive;
             for(auto v:selected) for(auto c:configs) {
-                if(resource.is_open() && (o.grid=="tuning" || representative)) resources<T>(resource,shape,causal,v,c,prefix);
+                if(resource.is_open()) resources<T>(resource,shape,causal,v,c,prefix);
                 forward(b,shape,causal,v,c);
                 ErrorReport error;
                 if(validate) {
-                    error=compare(download(b.o,b.elements),expected.output,tol.absolute,tol.relative);
+                    error=compare(download(b.o,b.elements),expected,tol.absolute,tol.relative,false,sampled);
                     if(!error.passed()) throw std::runtime_error("Output mismatch: "+identity(shape,causal,v,c));
                 }
 
@@ -375,7 +381,7 @@ void gpu_run(const Options& o) {
                     auto t=measure(b,shape,causal,v,c); for(int i=0;i<4;++i) times[i].push_back(t[i]);
                     samples<<prefix<<identity(shape,causal,v,c)<<','<<repeat;
                     for(double ms:t) samples<<','<<ms;
-                    samples<<'\n';
+                    samples<<','<<original_digest<<','<<effective_digest<<','<<o.pattern<<'\n';
                 }
 
                 // median and IQR
@@ -390,7 +396,7 @@ void gpu_run(const Options& o) {
                     <<f.median<<','<<f.q1<<','<<f.q3<<','<<f.iqr()<<','<<q.median<<','<<q.iqr()<<','<<s.median<<','<<s.iqr()<<','<<p.median<<','<<p.iqr()<<','
                     <<1000.0*shape.B/f.median<<',';
                 if(naive.count(key)) summary<<naive[key]/f.median;
-                summary<<','<<b.bytes<<','<<b.setup_ms<<'\n'; summary.flush(); samples.flush();
+                summary<<','<<b.bytes<<','<<b.setup_ms<<','<<original_digest<<','<<effective_digest<<','<<o.pattern<<','<<(sampled?"sampled_queries":"full")<<','<<error.checked<<','<<error.nonfinite<<','<<error.failures<<",PASS,part_a_shared_fp64\n"; summary.flush(); samples.flush();
                 std::cout<<identity(shape,causal,v,c)<<" median_ms="<<f.median<<" IQR_ms="<<f.iqr()<<'\n';
             }
         }

@@ -49,7 +49,7 @@ int main(int argc,char** argv) {
         env<<"cuda_device_status="<<cudaGetErrorString(device_status)<<"\ndevice_count="<<device_count<<'\n';env.flush();
         check(device_status);if(!device_count)throw std::runtime_error("no CUDA device");
         cudaDeviceProp prop{};check(cudaGetDeviceProperties(&prop,0));int runtime,driver;check(cudaRuntimeGetVersion(&runtime));check(cudaDriverGetVersion(&driver));
-        env<<"gpu="<<prop.name<<"\ncompute_capability="<<prop.major<<'.'<<prop.minor<<"\nruntime="<<runtime<<"\ndriver_api="<<driver<<"\ncompiler="<<PART_C_CUDA_COMPILER_VERSION<<"\nseed=5206\ninput_generator=std::mt19937 uniform_real_distribution[-1,1]\nmode=causal\nwarmups=5\nrepeats="<<(suite=="profile"?1:20)<<"\nsuite="<<suite<<"\ngrid="<<grid<<"\nconfiguration=fixed educational defaults; no tuning/winner selection performed\nbenchmark_reference=queries 0,N/2,N-1 in every batch/head; all outputs checked finite\nrelative_error_denominator=max(abs(reference),1e-12)\n";
+        env<<"gpu="<<prop.name<<"\ncompute_capability="<<prop.major<<'.'<<prop.minor<<"\nruntime="<<runtime<<"\ndriver_api="<<driver<<"\ncompiler="<<PART_C_CUDA_COMPILER_VERSION<<"\nseed=5206\ninput_generator=shared splitmix64-fp32-v1\nmode=causal\nwarmups=5\nrepeats="<<(suite=="profile"?1:20)<<"\nsuite="<<suite<<"\ngrid="<<grid<<"\nconfiguration=fixed educational defaults; no tuning/winner selection performed\nbenchmark_reference=queries 0,N/2,N-1 in every batch/head; all outputs checked finite\nrelative_error_denominator=max(abs(reference),1e-12)\n";
         std::ofstream results(output/"correctness.csv"),samples(output/"samples.csv"),summary(output/"summary.csv");
         for(auto* f:{&results,&samples,&summary}) *f<<std::setprecision(17);
         std::string header="kernel,precision,output_precision,accumulator_precision,B,H,N,d,pattern,block_q,block_kv,warps,thread_q,thread_k";
@@ -74,7 +74,7 @@ int main(int argc,char** argv) {
             std::vector<std::string> patterns={"random"};
             if(suite=="correctness" && s.d==64 && s.n==97)patterns={"random","uniform","constant_v","rising","stress"};
             for(const auto& pattern:patterns) {
-                Input input(s,pattern);Buffers buffers(s.size());input.upload(buffers);
+                Input input(s,pattern,true);Buffers buffers(s.size());input.upload(buffers);
                 const bool sampled=suite=="benchmark" || suite=="profile";
                 auto fp=reference(s,input.q,input.k,input.v,sampled),hp=reference(s,input.rq,input.rk,input.rv,sampled);
                 for(const auto& id:kernels) {

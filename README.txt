@@ -1,15 +1,8 @@
 CEG5206 TEAM PROJECT — FLASHATTENTION FORWARD
 Reproduction instructions
 
-Run from the repository root on Linux/Bash with a CUDA GPU. These are the
-available Part C commands and root A/C orchestration. Final shared-oracle
-integration and the Part B adapter are not implemented.
-Part B's final source must be supplied before a complete A/B/C run is possible.
-The current tested GPU is SM86 (RTX 3070 Ti Laptop). Adjust the CMake architecture
-for another supported GPU. CUDA Toolkit, a C++17 compiler, CMake >=3.18,
-Compute Sanitizer and Nsight Compute must be installed separately.
-
-1. OPEN AND PREPARE
+1. SETUP (Linux/Bash, NVIDIA GPU SM80+, CUDA Toolkit, CMake >=3.18,
+C++17 compiler, Python, Compute Sanitizer and Nsight Compute)
 
 cd /path/to/Flash-Attention-CUDA
 python3 -m venv .venv
@@ -18,149 +11,76 @@ python3 -m pip install -r part_c/requirements-analysis.txt
 nvidia-smi
 nvcc --version
 
-Inputs are generated internally. No dataset download is needed. New bounded
-studies use Part A's SplitMix64 sequence, seed 5206. Do not change it when making
-common-input comparisons. Historical Part C regression uses mt19937.
+No external dataset is needed. A/C use the same SplitMix64 generator, seed 5206,
+row-major BHNd tensors and shared FP64 oracle. See README.md Sections 3 and 6.
 
-2. ROOT A/C RUNNER
+2. CHECK THE AVAILABLE A/C INTEGRATION
 
-Inspect commands without running CUDA or creating results:
+bash run.sh --parts a,c --arch 86 --output results/preview --dry-run
+bash run.sh --parts a,c --grid smoke --output results/ac_smoke
 
-bash run_all.sh --parts a,c --arch 86 --output results/my_run --dry-run
+Dry-run creates no files and executes no commands. Smoke uses small shapes,
+correctness, sanitizers, tuning, timings and plots; it omits profiling and is not
+final report evidence. Use fresh output directories for each execution.
 
-Run the existing A/C workflows sequentially on one GPU:
+3. FULL AVAILABLE A/C EXPERIMENT
 
-bash run_all.sh --parts a,c --arch 86 --output results/my_run
+bash run.sh --parts a,c --output results/ac_full
 
-Use a fresh output directory. Add --build-root /tmp/my-builds to override builds.
-The default --parts all fails before building because Part B is not present.
-The runner records commands/environment, freezes A's existing FP32 tuning,
-collects normalized CSVs at results/my_run/, and puts per-part figures under
-plots/part_a/ and plots/part_c/. Part A runs both dense and causal modes.
-Unchecked A rows stay UNCHECKED. Cross-part speedup plots are withheld while
-shared-oracle, fingerprints and full validation are pending; see README.md
-Section 6 and aggregation_audit.json. This command does not modify old results.
+Default architecture is detected from the selected GPU. Override with --arch 86
+or another supported SM. --device 0 (or a GPU UUID) selects one physical GPU.
+--build-root /tmp/attention-builds selects build storage. Jobs run sequentially.
+Full runs include fresh Nsight profiling. --no-profile explicitly skips it and
+records missing counter evidence. Avoid competing GPU workloads.
 
-3. STANDARDIZED PART C REPORT
+4. COMPLETE EXAMINER RUN (AFTER PART B IS SUPPLIED)
 
-Use the new named wrapper for Part A-based public tables while retaining the
-complete native study and profiling evidence:
+bash run.sh --output results/final_submission
 
-bash part_c/run.sh --output results/my_c_run --build /tmp/part_c-build --arch 86
+The default requests A/B/C and currently stops before creating output because
+Part B is absent. README.md Section 6 contains the exact B implementation and
+adapter instructions. Do not treat an A/C subset as a complete submission.
+run_all.sh is an alias for run.sh, using the identical workflow.
 
-It runs numerical/sanitizer checks, tuning, benchmark/memory studies, frozen
-Nsight captures, native plots, standardized export and extra profiler charts.
-Use --dry-run to inspect commands; --no-profile explicitly marks a partial run.
+5. INDEPENDENT PARTS
 
-To export saved results without any GPU run, choose a fresh destination:
+bash part_a/run.sh --output results/a_only
+bash part_c/run.sh --output results/c_only
 
-bash part_c/run.sh --export part_c/results/bounded_evaluation --output part_c/results/my_report --supplementary-profile part_c/results/nsight_analysis
+After B implements the shared interface:
+bash part_b/run.sh --output results/b_only
 
-The supplied saved-data export is part_c/results/standardized/. All original
-MIO/scoreboard data, raw counters, reports, source/SASS and individual plots
-remain in raw/ and supplementary/. Nothing is discarded for lacking a shared
-column. Missing external .ncu-rep files are recorded with expected hashes;
-CSV-only export/plotting still works. Restore binaries for full report audits.
+Individual runners accept --build DIR, --arch, --device, --grid full|smoke,
+--no-profile, --dry-run and --analyze-only BUNDLE. Part C's older positional,
+--study and --complete commands are retained; see part_c/README.md.
 
-Regenerate its public CSVs/plots from copied raw data (CPU only):
+6. OFFLINE ANALYSIS (NO GPU REQUIRED)
 
-bash part_c/run.sh --analyze-only part_c/results/my_report
+bash run.sh --analyze-only results/ac_full
+bash part_a/run.sh --analyze-only results/a_only
+bash part_c/run.sh --analyze-only results/c_only
 
-CPU-only schema/export tests:
+Root analysis validates hashes/child tables and regenerates canonical aggregate
+CSVs, applicable combined plots, per-part common plots and their CSV data.
+Individual analysis re-extracts native records. Part C regenerates its native
+and supplementary charts too. Binary Nsight reports are optional for CSV-only
+charts; preserve supplied checksums and raw CSVs.
 
-python3 -m unittest discover -s part_c/tests -p 'test_export_results.py' -v
+7. READ RESULTS
 
-4. NATIVE-FORMAT PART C COMPATIBILITY RUN
+results/<run>/ contains standardized correctness.csv, samples.csv, summary.csv,
+resources.csv, profiles.csv, memory.csv and work.csv. comparison.csv records
+matched cross-part ratios and numerical contracts. See ANALYSIS.md,
+figure_index.json, audit.json and aggregation_audit.json before citing results.
+parts/part_a/ and parts/part_c/ retain complete standalone bundles including
+native data, commands, logs, configuration selections and additional evidence.
+Main figures are in plots/part_a/, plots/part_c/ and plots/combined/, PNG/PDF.
+Additional C profiler evidence remains in supplementary/part_c/ and its child
+bundle. Historical results in part_a/results/ and part_c/results/ are preserved;
+never divide historical timings collected on different GPUs.
 
-Use a NEW result directory. This runs the default regression and benchmark,
-four sanitizer tools, legacy checks, then all candidate correctness checks,
-bounded tuning, frozen main evaluation, matched scalar/vector loading,
-isolated memory cases, CSV audit and PNG/PDF figures:
-
-bash part_c/run.sh --complete part_c/results/my_complete_run /tmp/part_c-evaluation-build
-
-Default workflow outputs: part_c/results/my_complete_run/regression/
-Bounded-study outputs:    part_c/results/my_complete_run/main/
-
-Do not run GPU benchmarks concurrently. Runtime depends on the GPU; use the
-command logs and per-case PASS/FAIL records to monitor progress. A failed
-correctness gate stops the study rather than entering a failed timing row in
-plots. Existing result folders are retained.
-
-5. RUN JUST THE NEW STUDY
-
-bash part_c/run.sh --study part_c/results/my_bounded_study
-
-The default build is /tmp/part_c-evaluation-build. Override it with:
-
-PART_C_BUILD_DIR=/tmp/another-c-build bash part_c/run.sh --study part_c/results/another_study
-
-The grid is B=4,H=8,N=256/512/1024/2048/4096,d=32/64/128. Tune only at
-N=256/1024 before freezing. Twenty timed samples follow five warmups.
-
-6. OPTIONAL FROZEN-WINNER SAFETY CHECKS AND PROFILING
-
-After the study completes, run sequentially:
-
-bash part_c/evaluate.sh --verify part_c/results/my_bounded_study
-bash part_c/profile.sh --frozen part_c/results/my_bounded_study
-
-These use /tmp/part_c-evaluation-build. The safety checks repeat the 380-pass
-default regression and run four sanitizer tools on each frozen d=64 family
-winner at B1,H1,N33. Profiling uses three independent captures per winner at
-N256/4096,d64. These are representative checks, not exhaustive sanitizer or
-profiler coverage. Profiling output is separate from unprofiled timing.
-
-For another build directory, use PART_C_BUILD_DIR for evaluate.sh and append
---build /path/to/build to profile.sh --frozen.
-
-7. READ AND REGENERATE RESULTS
-
-Study files:
-  plan.json                predefined grid, candidates and measurement policy
-  frozen_selection.json    tuning choices saved before main evaluation
-  manifest.json            measurement source/binary hashes and snapshots
-  commands.jsonl           exact case commands, outputs and exit codes
-  cases/*.csv              raw per-case measurements and numerical checks
-  measurements.csv         combined raw rows
-  summary.csv              medians, quartiles, throughput and resources
-  comparison.csv           frozen core versus tensor results
-  matched_ablation.csv     same-configuration scalar/vector comparison
-  audit.json               completeness/correctness/input/allocation checks
-  REPORT.md                measured findings and limitations
-  figures/*.png,*.pdf      report figures
-  profiling/               optional fresh frozen-winner captures
-  verification/      optional regression/sanitizer logs
-
-Regenerate figures and tables from the supplied study without a GPU:
-
-python3 part_c/scripts/evaluate.py --build /tmp/part_c-evaluation-build --output part_c/results/bounded_evaluation --analyze-only
-
-The integrity audits additionally require the checksummed .ncu-rep files. If
-supplied separately, restore them to the recorded profiling/cases/ paths first.
-Figure/table regeneration itself uses saved CSVs only.
-
-Audit raw rows, snapshots and byte-identical offline figure regeneration:
-
-python3 part_c/scripts/audit_evaluation.py part_c/results/bounded_evaluation
-
-Regenerate historical default-profile findings without a GPU:
-
-python3 part_c/scripts/analyze_profiles.py part_c/results/nsight_analysis
-python3 part_c/scripts/interpret_profiles.py part_c/results/nsight_analysis
-python3 part_c/scripts/audit_profiles.py part_c/results/nsight_analysis
-
-The default --complete command generates benchmarks and plots, but optional
-Nsight captures and additional frozen-winner sanitizers are Step 6.
-
-8. OTHER RUNNERS AND LIMITATIONS
-
-Part A: see part_a/README.md for its independent CMake/CLI commands. Its saved
-RTX 5060 Ti results cannot be used as speedup denominators for Part C's laptop
-GPU timings. The current work does not modify or execute Part A.
-
-See README.md for the project structure and numerical/memory conventions,
-part_c/README.md for kernel-specific details, part_c/PROFILING.md for metrics,
-and README.md Section 6 for the planned common A/B/C runner.
-
-No command above commits, merges or pushes Git changes.
+Twenty repetitions describe within-case spread. Large numerical checks sample
+three query rows/head plus all-output finiteness; small suites check full O.
+FP16 A and C have different accumulation/output contracts, labelled explicitly.
+The final report, video, references, contribution statement and common-machine
+A/B/C full run are still team submission work. No runner performs Git actions.

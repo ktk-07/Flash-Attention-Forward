@@ -2,7 +2,7 @@
 
 Part C implements causal attention with online softmax, progressing from scalar CUDA kernels to cooperative warps, register tiling, vector loads, WMMA and PTX MMA. All kernels compute a complete forward pass without materialising the full score/probability matrices in device memory.
 
-For shared setup and submission reproduction, see [../README.md](../README.md) and [../README.txt](../README.txt). Part A/B integration is still pending.
+For shared setup and submission reproduction, see [../README.md](../README.md) and [../README.txt](../README.txt). A/C integration is implemented by Kyaw Tun Khine; Part B remains pending.
 
 ## Source layout
 
@@ -70,6 +70,8 @@ bash part_c/run.sh --output results/my_c_run --arch 86 --dry-run
 bash part_c/run.sh --analyze-only part_c/results/my_report
 ```
 
+`--grid smoke` selects small reporting/tuning shapes and omits profiling; correctness and sanitizers still run. `--arch auto` detects the GPU architecture by default.
+
 No-argument `bash part_c/run.sh` now selects the standardized standalone workflow. `--device` selects one physical index/UUID; by default it honors the first existing `CUDA_VISIBLE_DEVICES` entry. Full named runs require Nsight Compute and Compute Sanitizer. `--no-profile` is an explicitly labelled partial run without fresh profiler evidence, not fabricated zero counters. Existing positional, `--study` and `--complete` interfaces remain native-format compatibility workflows.
 
 The published [saved-data export](results/standardized/ANALYSIS.md) is a format adaptation of the existing measurements, not a new GPU experiment. It contains:
@@ -83,7 +85,7 @@ The published [saved-data export](results/standardized/ANALYSIS.md) is a format 
 
 Fused QK/softmax/PV timings and unmeasured setup time stay blank. Raw missing Nsight counters stay explicitly unavailable. Per-thread resource estimates are distinct from measured occupancy, source shared excess is distinct from aggregate arbitration counts, and warp-state percentages are not runtime fractions. Shared-memory/local traffic is not allocated storage.
 
-The exporter verifies native case hashes and metadata, fingerprints, sample/summary statistics, O-validation joins, profiler CSV hashes, supplied binary report hashes and byte-identical evidence copies. `.ncu-rep` files may be supplied separately; when absent, saved CSV evidence still exports and the missing binaries/expected checksums are explicit. Shared Part A CPU-oracle linkage and complete A/B/C integration remain separate pending work.
+The exporter verifies native case hashes and metadata, fingerprints, sample/summary statistics, O-validation joins, profiler CSV hashes, supplied binary report hashes and byte-identical evidence copies. `.ncu-rep` files may be supplied separately; when absent, saved CSV evidence still exports and the missing binaries/expected checksums are explicit. New runs link the shared Part A CPU reference directly. Historical exports retain their original oracle provenance. Part B and the final common-machine A/B/C experiment remain pending.
 
 CPU-only adapter regression tests:
 
@@ -132,7 +134,7 @@ An independent CPU FP64 reference computes stable causal softmax. Small cases ch
 
 FP32 uses atol=rtol=1e-4. Tensor Core paths use atol=0.002, rtol=0.02 against the FP64 oracle on the same FP16-rounded inputs. Original FP32 and rounded input fingerprints are saved. Relative error divides by max(abs(reference),1e-12).
 
-The new study uses Part A's SplitMix64 sequence, seed 5206, filling Q then K then V. `part_c_input_contract` verifies bitwise equality with Part A. Historical default regression/profile inputs retain the older mt19937 stream.
+The new study uses Part A's SplitMix64 sequence, seed 5206, filling Q then K then V. `part_c_input_contract` verifies bitwise equality with Part A. Historical saved regression/profile inputs retain the older mt19937 stream. Newly executed regression and study runners both use the shared generator and FP64 oracle library.
 
 The bounded search tests five configurations for each of `skip/vector` and four for each of `wmma/ptx`. All candidates pass small-case checks before tuning at B=4,H=8,N=256/1024,d=32/64/128. Per-variant/per-d configurations and family selections are saved before the main grid. Family selection covers skip/vector and WMMA/PTX, not an exhaustive search of all kernels. N=512/2048/4096 is held out from selection.
 

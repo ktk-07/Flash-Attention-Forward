@@ -1,4 +1,5 @@
 #include "test_support.h"
+#include "input_generation.hpp"
 #include "flash_attention/flash_attention_1.h"
 #include "flash_attention/flash_attention_2_cuda_core.h"
 #include "flash_attention/flash_attention_2_tensor_core.h"
@@ -26,25 +27,14 @@ void Buffers::release() noexcept { cudaFree(q);cudaFree(k);cudaFree(v);cudaFree(
 Buffers::~Buffers() { release(); }
 Input::Input(Shape s,const std::string& pattern,bool canonical):q(s.size()),k(s.size()),v(s.size()),rq(s.size()),rk(s.size()),rv(s.size()),hq(s.size()),hk(s.size()),hv(s.size()) {
     if(canonical) {
-        // Bit-for-bit equivalent to Part A synthetic_input, including Q/K/V order.
-        std::uint64_t state=5206;
-        for(auto* data:{&q,&k,&v}) for(float& value:*data) {
-            std::uint64_t z=(state+=UINT64_C(0x9e3779b97f4a7c15));
-            z=(z^(z>>30))*UINT64_C(0xbf58476d1ce4e5b9);
-            z=(z^(z>>27))*UINT64_C(0x94d049bb133111eb);z^=z>>31;
-            const auto integer=static_cast<std::int32_t>(z>>40)-8388608;
-            value=static_cast<float>(integer)/8388608.0f;
-        }
+        attention::fill_synthetic_input({std::size_t(s.b),std::size_t(s.h),std::size_t(s.n),std::size_t(s.d)},q,k,v,5206);
     } else {
         // Preserve the historical standalone input stream.
         std::mt19937 gen(5206);std::uniform_real_distribution<float> dist(-1.f,1.f);
-        for(std::size_t i=0;i<s.size();++i) { q[i]=dist(gen);k[i]=dist(gen);v[i]=dist(gen); }
+        for(auto* values:{&q,&k,&v}) for(auto& value:*values) value=dist(gen);
     }
+    attention::apply_pattern({std::size_t(s.b),std::size_t(s.h),std::size_t(s.n),std::size_t(s.d)},q,k,v,pattern);
     for(std::size_t i=0;i<s.size();++i) {
-        if(pattern=="uniform") q[i]=k[i]=0;
-        if(pattern=="constant_v") v[i]=0.375f;
-        if(pattern=="rising") { q[i]=1.f;k[i]=float((i/s.d)%s.n)*0.125f; }
-        if(pattern=="stress") { q[i]*=16;k[i]*=16; }
         hq[i]=__float2half(q[i]);hk[i]=__float2half(k[i]);hv[i]=__float2half(v[i]);
         rq[i]=__half2float(hq[i]);rk[i]=__half2float(hk[i]);rv[i]=__half2float(hv[i]);
     }
@@ -55,26 +45,12 @@ void Input::upload(Buffers& b) const {
     if(b.hq) {check(cudaMemcpy(b.hq,hq.data(),n*2,cudaMemcpyHostToDevice));check(cudaMemcpy(b.hk,hk.data(),n*2,cudaMemcpyHostToDevice));check(cudaMemcpy(b.hv,hv.data(),n*2,cudaMemcpyHostToDevice));}
 }
 std::string input_digest(const Input& in,bool rounded) {
-    std::uint64_t hash=UINT64_C(14695981039346656037);
-    for(const auto* data:(rounded?std::vector<const std::vector<float>*>{&in.rq,&in.rk,&in.rv}:std::vector<const std::vector<float>*>{&in.q,&in.k,&in.v}))
-        for(float value:*data) {std::uint32_t bits;std::memcpy(&bits,&value,4);for(int i=0;i<4;++i){hash^=(bits>>(8*i))&255u;hash*=UINT64_C(1099511628211);}}
-    std::ostringstream out;out<<std::hex<<std::setfill('0')<<std::setw(16)<<hash;return out.str();
+    return rounded?attention::input_fingerprint(in.rq,in.rk,in.rv):attention::input_fingerprint(in.q,in.k,in.v);
 }
 // FP64 dot products, stable softmax and output accumulation; no GPU reference.
 // Full output for correctness; three query rows per head for benchmark checks.
 std::vector<double> reference(Shape s,const std::vector<float>& q,const std::vector<float>& k,const std::vector<float>& v,bool sampled) {
-    std::vector<double> out(s.size(),std::numeric_limits<double>::quiet_NaN());
-    for(int bh=0;bh<s.b*s.h;++bh) for(int i=0;i<s.n;++i) {
-        if(sampled && i!=0 && i!=s.n/2 && i!=s.n-1) continue;
-        size_t base=size_t(bh)*s.n*s.d; std::vector<double> scores(i+1); double m=-INFINITY;
-        for(int j=0;j<=i;++j) {
-            double dot=0;for(int d=0;d<s.d;++d) dot+=double(q[base+size_t(i)*s.d+d])*k[base+size_t(j)*s.d+d];
-            scores[j]=dot/std::sqrt(double(s.d));m=std::max(m,scores[j]);
-        }
-        double sum=0; for(auto& x:scores) {x=std::exp(x-m);sum+=x;}
-        for(int d=0;d<s.d;++d) { double acc=0;for(int j=0;j<=i;++j) acc+=scores[j]*double(v[base+size_t(j)*s.d+d]);out[base+size_t(i)*s.d+d]=acc/sum; }
-    }
-    return out;
+    return attention::reference_output({std::size_t(s.b),std::size_t(s.h),std::size_t(s.n),std::size_t(s.d)},q,k,v,true,sampled);
 }
 
 Errors compare(const std::vector<float>& a,const std::vector<double>& r,double atol,double rtol) {

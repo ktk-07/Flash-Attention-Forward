@@ -10,7 +10,7 @@ case "${1:-}" in
         native_study="$1"; shift
         exec python3 "$(dirname "$0")/scripts/export_results.py" --study "$native_study" "$@"
         ;;
-    ""|--output|--build|--arch|--device|--dry-run|--no-profile|--supplementary-profile|--analyze-only|--help|-h)
+    ""|--output|--build|--arch|--device|--grid|--dry-run|--no-profile|--supplementary-profile|--analyze-only|--help|-h)
         exec python3 "$(dirname "$0")/scripts/run_standard.py" "$@"
         ;;
 esac

@@ -24,6 +24,14 @@ struct KernelResources {
 };
 // FP64 reference
 Result reference(const Input& input, bool causal=false);
+// Output-only FP64 oracle; unsampled output rows are NaN sentinels.
+std::vector<double> reference_output(Shape shape, const std::vector<float>& q,
+    const std::vector<float>& k, const std::vector<float>& v, bool causal, bool sampled);
+inline std::vector<double> reference_output(const Input& input, bool causal, bool sampled) {
+    return reference_output(input.shape,input.q,input.k,input.v,causal,sampled);
+}
+std::vector<std::size_t> reference_query_rows(std::size_t n);
+
 namespace detail {
 
 // GPU entry points
