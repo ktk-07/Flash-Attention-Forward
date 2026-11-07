@@ -1,0 +1,1 @@
+bash part_c/profile.sh --output part_c/results/nsight_analysis --build /tmp/part_c-profile-build --repeats 3

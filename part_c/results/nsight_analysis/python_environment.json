@@ -1,0 +1,5 @@
+{
+  "python": "3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 20:50:58) [GCC 12.3.0]",
+  "matplotlib": "3.10.8",
+  "numpy": "1.26.4"
+}

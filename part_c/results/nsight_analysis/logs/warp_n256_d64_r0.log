@@ -1,0 +1,7 @@
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 131947 (/tmp/part_c-profile-build/part_c_runner)
+warp B=4 H=8 N=256 d=64 random PASS max_abs=9.03643e-08
+==PROF== Profiling "flash_attention_v2_warp_per_q..." - 0 (1/1): 0%....50%....100% - 37 passes
+PASS=1 FAIL=0 UNSUPPORTED=0
+==PROF== Disconnected from process 131947
+==PROF== Report: /home/buntr/Projects/Flash-Attention-CUDA/part_c/results/nsight_analysis/cases/warp_n256_d64_r0/profile.ncu-rep

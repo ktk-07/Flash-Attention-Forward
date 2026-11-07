@@ -1,0 +1,9 @@
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 138919 (/tmp/part_c-profile-build/part_c_runner)
+tiled B=4 H=8 N=4096 d=64 random PASS max_abs=8.37254e-08
+==PROF== Profiling "flash_attention_v2_cuda_core_..." - 0 (1/1): 0%
+==WARNING== Launching the workload is taking more time than expected. If this continues to hang, terminate the profile and re-try by profiling the range of all related launches using '--replay-mode range'. See https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html#replay for more details.
+....50%....100% - 38 passes
+PASS=1 FAIL=0 UNSUPPORTED=0
+==PROF== Disconnected from process 138919
+==PROF== Report: /home/buntr/Projects/Flash-Attention-CUDA/part_c/results/nsight_analysis/cases/tiled_n4096_d64_r1/profile.ncu-rep

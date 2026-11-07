@@ -1,0 +1,7 @@
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 131768 (/tmp/part_c-profile-build/part_c_runner)
+scalar B=4 H=8 N=256 d=64 random PASS max_abs=1.05265e-07
+==PROF== Profiling "flash_attention_v2_scalar_bas..." - 0 (1/1): 0%....50%....100% - 37 passes
+PASS=1 FAIL=0 UNSUPPORTED=0
+==PROF== Disconnected from process 131768
+==PROF== Report: /home/buntr/Projects/Flash-Attention-CUDA/part_c/results/nsight_analysis/cases/scalar_n256_d64_r2/profile.ncu-rep

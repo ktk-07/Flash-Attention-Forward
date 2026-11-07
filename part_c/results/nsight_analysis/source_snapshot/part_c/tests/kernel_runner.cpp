@@ -1,0 +1,206 @@
+// Standalone Part C validation and measurement. No Part A or PyTorch dependency.
+#include "flash_attention/flash_attention_1.h"
+#include "flash_attention/flash_attention_2_cuda_core.h"
+#include "flash_attention/flash_attention_2_tensor_core.h"
+#include <cuda_runtime.h>
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <iostream>
+#include <limits>
+#include <vector>
+#include <fstream>
+#include <filesystem>
+#include <iomanip>
+#include <random>
+#include <chrono>
+#include <stdexcept>
+#include <string>
+
+namespace fs = std::filesystem;
+void check(cudaError_t e) {
+    if(e != cudaSuccess) throw std::runtime_error(cudaGetErrorString(e));
+}
+struct Shape { int b,h,n,d; size_t size() const { return size_t(b)*h*n*d; } };
+const std::vector<std::string> kernels={"fa1","scalar","warp","tiled","skip","vector","wmma","ptx"};
+bool tensor(const std::string& id) { return id=="wmma" || id=="ptx"; }
+struct Buffers {
+    float *q=nullptr,*k=nullptr,*v=nullptr,*o=nullptr;
+    half *hq=nullptr,*hk=nullptr,*hv=nullptr;
+    Buffers(size_t n) {
+        check(cudaMalloc(&q,n*4)); check(cudaMalloc(&k,n*4));
+        check(cudaMalloc(&v,n*4)); check(cudaMalloc(&o,n*4));
+        check(cudaMalloc(&hq,n*2)); check(cudaMalloc(&hk,n*2)); check(cudaMalloc(&hv,n*2));
+    }
+    ~Buffers() { cudaFree(q);cudaFree(k);cudaFree(v);cudaFree(o);cudaFree(hq);cudaFree(hk);cudaFree(hv); }
+    Buffers(const Buffers&)=delete;
+};
+struct Input {
+    std::vector<float> q,k,v,rq,rk,rv;
+    std::vector<half> hq,hk,hv;
+    Input(Shape s,const std::string& pattern) : q(s.size()),k(s.size()),v(s.size()),rq(s.size()),rk(s.size()),rv(s.size()),hq(s.size()),hk(s.size()),hv(s.size()) {
+        std::mt19937 gen(5206); std::uniform_real_distribution<float> dist(-1.f,1.f);
+        for(size_t i=0;i<s.size();++i) {
+            q[i]=dist(gen);k[i]=dist(gen);v[i]=dist(gen);
+            if(pattern=="uniform") q[i]=k[i]=0;
+            if(pattern=="constant_v") v[i]=0.375f;
+            if(pattern=="rising") { q[i]=1.f; k[i]=float((i/s.d)%s.n)*0.125f; }
+            if(pattern=="stress") { q[i]*=16; k[i]*=16; }
+            hq[i]=__float2half(q[i]); hk[i]=__float2half(k[i]); hv[i]=__float2half(v[i]);
+            rq[i]=__half2float(hq[i]); rk[i]=__half2float(hk[i]); rv[i]=__half2float(hv[i]);
+        }
+    }
+    void upload(Buffers& b) const {
+        const size_t n=q.size();
+        check(cudaMemcpy(b.q,q.data(),n*4,cudaMemcpyHostToDevice));check(cudaMemcpy(b.k,k.data(),n*4,cudaMemcpyHostToDevice));check(cudaMemcpy(b.v,v.data(),n*4,cudaMemcpyHostToDevice));
+        check(cudaMemcpy(b.hq,hq.data(),n*2,cudaMemcpyHostToDevice));check(cudaMemcpy(b.hk,hk.data(),n*2,cudaMemcpyHostToDevice));check(cudaMemcpy(b.hv,hv.data(),n*2,cudaMemcpyHostToDevice));
+    }
+};
+
+// FP64 dot products, stable softmax and output accumulation; no GPU reference.
+// Full output for correctness; three query rows per head for benchmark checks.
+std::vector<double> reference(Shape s,const std::vector<float>& q,const std::vector<float>& k,const std::vector<float>& v,bool sampled) {
+    std::vector<double> out(s.size(),std::numeric_limits<double>::quiet_NaN());
+    for(int bh=0;bh<s.b*s.h;++bh) for(int i=0;i<s.n;++i) {
+        if(sampled && i!=0 && i!=s.n/2 && i!=s.n-1) continue;
+        size_t base=size_t(bh)*s.n*s.d; std::vector<double> scores(i+1); double m=-INFINITY;
+        for(int j=0;j<=i;++j) {
+            double dot=0;for(int d=0;d<s.d;++d) dot+=double(q[base+size_t(i)*s.d+d])*k[base+size_t(j)*s.d+d];
+            scores[j]=dot/std::sqrt(double(s.d));m=std::max(m,scores[j]);
+        }
+        double sum=0; for(auto& x:scores) {x=std::exp(x-m);sum+=x;}
+        for(int d=0;d<s.d;++d) { double acc=0;for(int j=0;j<=i;++j) acc+=scores[j]*double(v[base+size_t(j)*s.d+d]);out[base+size_t(i)*s.d+d]=acc/sum; }
+    }
+    return out;
+}
+struct Errors { double absolute=0,relative=0;size_t failures=0,checked=0,nonfinite=0; };
+Errors compare(const std::vector<float>& a,const std::vector<double>& r,double atol,double rtol) {
+    Errors e;
+    for(size_t i=0;i<a.size();++i) {
+        // Check all device outputs for finiteness, including unsampled rows.
+        if(!std::isfinite(a[i])) {++e.nonfinite;++e.failures; e.absolute=e.relative=INFINITY;continue;}
+        if(std::isnan(r[i])) continue;
+        ++e.checked;double diff=std::abs(double(a[i])-r[i]);
+        e.absolute=std::max(e.absolute,diff);e.relative=std::max(e.relative,diff/std::max(1e-12,std::abs(r[i])));
+        if(diff>atol+rtol*std::abs(r[i])) ++e.failures;
+    }
+    return e;
+}
+
+using Launch = part_c::LaunchConfig;
+Launch dispatch(const std::string& id, Shape s, Buffers& x) {
+    const part_c::Shape shape{s.b,s.h,s.n,s.d};
+    const part_c::DevicePointers buffers{x.q,x.k,x.v,x.o,x.hq,x.hk,x.hv};
+    Launch result{};
+    using C = part_c::CudaCoreVariant;
+    using T = part_c::TensorCoreVariant;
+    if(id=="fa1") result=part_c::launch_flash_attention_1(shape,buffers);
+    else if(id=="scalar") result=part_c::launch_flash_attention_2_cuda_core(C::Scalar,shape,buffers);
+    else if(id=="warp") result=part_c::launch_flash_attention_2_cuda_core(C::WarpPerQuery,shape,buffers);
+    else if(id=="tiled") result=part_c::launch_flash_attention_2_cuda_core(C::Tiled,shape,buffers);
+    else if(id=="skip") result=part_c::launch_flash_attention_2_cuda_core(C::TileSkipping,shape,buffers);
+    else if(id=="vector") result=part_c::launch_flash_attention_2_cuda_core(C::Vectorized,shape,buffers);
+    else if(id=="wmma") result=part_c::launch_flash_attention_2_tensor_core(T::Wmma,shape,buffers);
+    else if(id=="ptx") result=part_c::launch_flash_attention_2_tensor_core(T::PtxMma,shape,buffers);
+    else throw std::invalid_argument("unknown kernel");
+    check(cudaGetLastError());
+    return result;
+}
+double quantile(const std::vector<double>& x,double p) { double z=p*(x.size()-1);size_t l=size_t(z),h=std::min(l+1,x.size()-1);return x[l]+(z-l)*(x[h]-x[l]); }
+
+int main(int argc,char** argv) {
+    std::string suite="correctness",only="all",grid="full";fs::path output="part_c/results/local";
+    Shape profile_shape{4,8,256,64};
+    bool custom_shape=false;
+    try {
+        for(int i=1;i<argc;++i) {
+            std::string arg=argv[i];
+            if(arg=="--help") {std::cout<<"--suite correctness|benchmark|smoke|profile --kernel all|fa1|scalar|warp|tiled|skip|vector|wmma|ptx --grid full|representative --output DIR [--shape B H N d (profile only)]\n";return 0;}
+            if(arg=="--shape") {
+                if(i+4>=argc) throw std::invalid_argument("--shape requires B H N d");
+                profile_shape={std::stoi(argv[i+1]),std::stoi(argv[i+2]),std::stoi(argv[i+3]),std::stoi(argv[i+4])};
+                if(profile_shape.b<=0 || profile_shape.h<=0 || profile_shape.n<=0 || profile_shape.d<=0)
+                    throw std::invalid_argument("shape dimensions must be positive");
+                i+=4;custom_shape=true;continue;
+            }
+            if(i+1==argc) throw std::runtime_error("missing option value");std::string val=argv[++i];
+            if(arg=="--suite")suite=val;else if(arg=="--kernel")only=val;else if(arg=="--output")output=val;else if(arg=="--grid")grid=val;else throw std::runtime_error("unknown option");
+        }
+        if(suite!="correctness" && suite!="benchmark" && suite!="smoke" && suite!="profile") throw std::runtime_error("invalid suite");
+        if(custom_shape && suite!="profile") throw std::invalid_argument("--shape is supported only for profile");
+        if(suite=="profile" && only=="all") throw std::invalid_argument("profile requires one --kernel");
+        if(only!="all" && std::find(kernels.begin(),kernels.end(),only)==kernels.end()) throw std::runtime_error("invalid kernel");
+        if(grid!="full" && grid!="representative") throw std::runtime_error("invalid grid");
+        fs::create_directories(output);
+        std::ofstream env(output/"environment.txt");
+        int device_count=0;auto device_status=cudaGetDeviceCount(&device_count);
+        env<<"cuda_device_status="<<cudaGetErrorString(device_status)<<"\ndevice_count="<<device_count<<'\n';env.flush();
+        check(device_status);if(!device_count)throw std::runtime_error("no CUDA device");
+        cudaDeviceProp prop{};check(cudaGetDeviceProperties(&prop,0));int runtime,driver;check(cudaRuntimeGetVersion(&runtime));check(cudaDriverGetVersion(&driver));
+        env<<"gpu="<<prop.name<<"\ncompute_capability="<<prop.major<<'.'<<prop.minor<<"\nruntime="<<runtime<<"\ndriver_api="<<driver<<"\ncompiler="<<PART_C_CUDA_COMPILER_VERSION<<"\nseed=5206\ninput_generator=std::mt19937 uniform_real_distribution[-1,1]\nmode=causal\nwarmups=5\nrepeats="<<(suite=="profile"?1:20)<<"\nsuite="<<suite<<"\ngrid="<<grid<<"\nconfiguration=fixed educational defaults; no tuning/winner selection performed\nbenchmark_reference=queries 0,N/2,N-1 in every batch/head; all outputs checked finite\nrelative_error_denominator=max(abs(reference),1e-12)\n";
+        std::ofstream results(output/"correctness.csv"),samples(output/"samples.csv"),summary(output/"summary.csv");
+        for(auto* f:{&results,&samples,&summary}) *f<<std::setprecision(17);
+        std::string header="kernel,precision,output_precision,accumulator_precision,B,H,N,d,pattern,block_q,block_kv,warps,thread_q,thread_k";
+        results<<header<<",reference_scope,atol,rtol,max_absolute,max_relative,checked_elements,nonfinite,failures,status\n";
+        samples<<header<<",repeat,forward_ms\n";
+        summary<<header<<",warmups,repeats,median_ms,q1_ms,q3_ms,iqr_ms,sequences_per_second,logical_device_bytes,harness_allocated_bytes,reference_scope,status\n";
+        std::vector<Shape> shapes;
+        if(suite=="profile") shapes.push_back(profile_shape);
+        else if(suite=="benchmark") {
+            for(int d:{32,64,128}) for(int n:{256,512,1024,2048,4096}) {
+                if(grid=="representative" && (d!=64 || (n!=256 && n!=1024 && n!=4096)))continue;
+                shapes.push_back({4,8,n,d});
+            }
+        } else if(suite=="smoke") shapes={{1,1,33,64}};
+        else {
+            for(int d:{32,64,128}) for(int n:{1,15,16,17,31,32,33,63,64,65,97}) shapes.push_back({1,1,n,d});
+            for(int d:{7,16,33,40,65,96}) shapes.push_back({2,3,65,d});
+            shapes.push_back({2,3,97,64});
+        }
+        int bad=0,passed=0,skipped=0;
+        for(Shape s:shapes) {
+            std::vector<std::string> patterns={"random"};
+            if(suite=="correctness" && s.d==64 && s.n==97)patterns={"random","uniform","constant_v","rising","stress"};
+            for(const auto& pattern:patterns) {
+                Input input(s,pattern);Buffers buffers(s.size());input.upload(buffers);
+                const bool sampled=suite=="benchmark" || suite=="profile";
+                auto fp=reference(s,input.q,input.k,input.v,sampled),hp=reference(s,input.rq,input.rk,input.rv,sampled);
+                for(const auto& id:kernels) {
+                    if(only!="all" && only!=id)continue;
+                    bool tc=tensor(id);double atol=tc?0.002:0.0001,rtol=tc?0.02:0.0001;
+                    if(id=="ptx" && (s.d<16 || s.d%16)) {
+                        results<<id<<",FP16,FP32,FP32,"<<s.b<<','<<s.h<<','<<s.n<<','<<s.d<<','<<pattern<<",32,32,2,0,0,"<<(sampled?"sampled_queries":"full")<<','<<atol<<','<<rtol<<",,,0,0,0,UNSUPPORTED\n";++skipped;continue;
+                    }
+                    check(cudaMemset(buffers.o,0xff,s.size()*4)); // Missing stores must not pass as allocator leftovers.
+                    auto cfg=dispatch(id,s,buffers);check(cudaDeviceSynchronize());
+                    std::vector<float> actual(s.size());check(cudaMemcpy(actual.data(),buffers.o,s.size()*4,cudaMemcpyDeviceToHost));
+                    Errors e=compare(actual,tc?hp:fp,atol,rtol);
+                    auto identity=[&](std::ostream& f) {f<<id<<','<<(tc?"FP16":"FP32")<<",FP32,FP32,"<<s.b<<','<<s.h<<','<<s.n<<','<<s.d<<','<<pattern<<','<<cfg.bq<<','<<cfg.bk<<','<<cfg.warps<<','<<cfg.tq<<','<<cfg.tk;};
+                    identity(results);results<<','<<(sampled?"sampled_queries":"full")<<','<<atol<<','<<rtol<<','<<e.absolute<<','<<e.relative<<','<<e.checked<<','<<e.nonfinite<<','<<e.failures<<','<<(e.failures?"FAIL":"PASS")<<'\n';results.flush();
+                    std::cout<<id<<" B="<<s.b<<" H="<<s.h<<" N="<<s.n<<" d="<<s.d<<" "<<pattern<<" "<<(e.failures?"FAIL":"PASS")<<" max_abs="<<e.absolute<<std::endl;
+                    if(e.failures) {++bad;continue;} ++passed;
+                    if(suite=="profile") {
+                        // One validation launch above, five warmups, then one target.
+                        // ncu --launch-skip 6 --launch-count 1 selects only the target.
+                        for(int w=0;w<5;++w) dispatch(id,s,buffers);
+                        check(cudaDeviceSynchronize());
+                        dispatch(id,s,buffers);check(cudaDeviceSynchronize());
+                        continue;
+                    }
+                    if(suite!="benchmark")continue;
+                    for(int w=0;w<5;++w)dispatch(id,s,buffers);check(cudaDeviceSynchronize());
+                    cudaEvent_t begin,end;check(cudaEventCreate(&begin));check(cudaEventCreate(&end));std::vector<double> times;
+                    for(int rep=0;rep<20;++rep) {
+                        check(cudaEventRecord(begin));dispatch(id,s,buffers);check(cudaEventRecord(end));check(cudaEventSynchronize(end));float ms;check(cudaEventElapsedTime(&ms,begin,end));
+                        times.push_back(ms);identity(samples);samples<<','<<rep<<','<<ms<<'\n';
+                    }
+                    check(cudaEventDestroy(begin));check(cudaEventDestroy(end));std::sort(times.begin(),times.end());
+                    double med=quantile(times,.5),q1=quantile(times,.25),q3=quantile(times,.75);
+                    identity(summary);summary<<",5,20,"<<med<<','<<q1<<','<<q3<<','<<q3-q1<<','<<1000*s.b/med<<','<<s.size()*(tc?10:16)<<','<<s.size()*22<<",sampled_queries,PASS\n";summary.flush();samples.flush();
+                }
+            }
+        }
+        std::cout<<"PASS="<<passed<<" FAIL="<<bad<<" UNSUPPORTED="<<skipped<<std::endl;
+        return bad?2:0;
+    } catch(const std::exception& e) {std::cerr<<"ERROR: "<<e.what()<<std::endl;return 1;}
+}

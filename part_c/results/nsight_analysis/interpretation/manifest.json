@@ -1,0 +1,8 @@
+{
+  "script_sha256": "b32da57be9e6228947fcc44139e64fbae65423065705b36e90673792d95f1fa0",
+  "input_sha256": {
+    "metric_summary.csv": "a5ab939445cae378451c06d0a53b680fa95cbc8253824bd7c67d8f9c16a4b842",
+    "all_metrics.csv": "e4d2e470bc5ed70404ff45a47870ce5e307939533c0de7fd7ce7fa2ce429cf97",
+    "source_analysis/hotspots.csv": "6fc9fa685df259e0aca97b18d4387654e431019c136b9ee265dce721f212f7f0"
+  }
+}
