@@ -747,6 +747,32 @@ __global__ void flash_attention_v2_cuda_core_tiled(float* Q,
     }
 }
 
+// Keep learning kernels available on suitable targets; the default smoke test uses CUDA cores.
+#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 700
+namespace wmma = nvcuda::wmma;
+__device__ __forceinline__ uint32_t fa_pack_half2(half low, half high) {
+    return static_cast<uint32_t>(__half_as_ushort(low)) |
+           (static_cast<uint32_t>(__half_as_ushort(high)) << 16);
+}
+
+// Four FP32 accumulator registers are read/updated in-place by one Tensor
+// Core instruction. Unlike WMMA, the register-to-matrix mapping is explicit.
+__device__ __forceinline__ void fa_mma_m16n8k16(
+    float (&c)[4], const uint32_t (&a)[4], const uint32_t (&b)[2]) {
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 800
+    asm volatile(
+        "mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 "
+        "{%0, %1, %2, %3}, {%4, %5, %6, %7}, {%8, %9}, "
+        "{%0, %1, %2, %3};\n"
+        : "+f"(c[0]), "+f"(c[1]), "+f"(c[2]), "+f"(c[3])
+        : "r"(a[0]), "r"(a[1]), "r"(a[2]), "r"(a[3]),
+          "r"(b[0]), "r"(b[1]));
+#else
+    // Host pass never executes this device function; architecture guard
+    // avoids assembling an unsupported instruction for pre-Ampere GPUs.
+#endif
+}
+
 // FULLY FUSED WMMA FLASHATTENTION 
 // Original FP32 CUDA-core kernels above are preserved as separate variants.
 // IMPORTANT: requires BLOCK_Q == 16*NUM_WARPS; use blockDim=32*NUM_WARPS. The original [B,N,S,H] tensor strides are in ELEMENTS (not bytes).
@@ -788,6 +814,8 @@ __global__ void flash_attention_wmma_fused(const half* __restrict__ Q,
     const int head = blockIdx.x % N;
     const int q_block_start = blockIdx.y * BLOCK_Q;
     const int q_local_start = warp * WM;
+    const int row_in_warp = lane / 2;
+    const int pair_lane = lane % 2;
 
     // These offsets select ONE logical [sequence, head_dim] 2D matrix out of the [B,N,S,H] 4D tensor. 
     // They are NOT WMMA leading dimensions.
@@ -932,6 +960,7 @@ __global__ void flash_attention_wmma_fused(const half* __restrict__ Q,
             }
             const float peer_sum = __shfl_xor_sync(0xffffffffu, partial_sum, 1);
             const float tile_sum = partial_sum + peer_sum;
+            __syncwarp(); // Finish shared running_m reads before updating it.
 
             // Both lanes now have the same row statistics; let the even lane write each row exactly once (avoid write/write races).
             if (pair_lane == 0) {
@@ -1099,8 +1128,8 @@ __global__ void flash_attention_v2_tensor_core_ptx_mma_fully_fused(
                 const int d0 = d_base + 2 * lane_in_group;
                 const int d1 = d0 + 8;
                 a[0] = fa_pack_half2(q_shared[query_row_0][d0], q_shared[query_row_0][d0 + 1]);
-                a[1] = fa_pack_half2(q_shared[query_row_0][d1], q_shared[query_row_0][d1 + 1]);
-                a[2] = fa_pack_half2(q_shared[query_row_1][d0], q_shared[query_row_1][d0 + 1]);
+                a[2] = fa_pack_half2(q_shared[query_row_0][d1], q_shared[query_row_0][d1 + 1]);
+                a[1] = fa_pack_half2(q_shared[query_row_1][d0], q_shared[query_row_1][d0 + 1]);
                 a[3] = fa_pack_half2(q_shared[query_row_1][d1], q_shared[query_row_1][d1 + 1]);
 
                 const int k0 = key_local_start + lane_group;
@@ -1178,8 +1207,8 @@ __global__ void flash_attention_v2_tensor_core_ptx_mma_fully_fused(
                 const int k0 = 2 * lane_in_group;
                 const int k1 = k0 + 8;
                 a[0] = fa_pack_half2(prob_shared[warp_id][lane_group][k0], prob_shared[warp_id][lane_group][k0 + 1]);
-                a[1] = fa_pack_half2(prob_shared[warp_id][lane_group][k1], prob_shared[warp_id][lane_group][k1 + 1]);
-                a[2] = fa_pack_half2(prob_shared[warp_id][lane_group + 8][k0], prob_shared[warp_id][lane_group + 8][k0 + 1]);
+                a[2] = fa_pack_half2(prob_shared[warp_id][lane_group][k1], prob_shared[warp_id][lane_group][k1 + 1]);
+                a[1] = fa_pack_half2(prob_shared[warp_id][lane_group + 8][k0], prob_shared[warp_id][lane_group + 8][k0 + 1]);
                 a[3] = fa_pack_half2(prob_shared[warp_id][lane_group + 8][k1], prob_shared[warp_id][lane_group + 8][k1 + 1]);
                 const int feature = d_out + lane_group;
                 b[0] = fa_pack_half2(v_shared[key_local_start + k0][feature], v_shared[key_local_start + k0 + 1][feature]);
@@ -1216,56 +1245,101 @@ __global__ void flash_attention_v2_tensor_core_ptx_mma_fully_fused(
 }
 
 
-int main(){
-    
-    std::cout << "Hello! Writing Cuda Kernels Now!" << std::endl;
-    float *Q,*K_transposed,*V,*O;
-    // B x N x S x H
-    // B is batch_size
-    // N is number of heads
-    // S is the sequence length
-    // H is the head_dimension
+#endif // Tensor Core learning kernels
 
-    int B, N, S, H;
-    int stride_qb, stride_qn, stride_qs, stride_qh;
-    int stride_kb, stride_kn, stride_kh, stride_ks;
-    int stride_vb, stride_vn, stride_vs, stride_vh;
-    int stride_ob, stride_on, stride_oqs, stride_oh;
+// Original main() planning comments, retained from the coding version:
+// B x N x S x H
+// B is batch_size
+// N is number of heads
+// S is the sequence length
+// H is the head_dimension
+// Copy from data from host to device
+// Determining the Grid Size
+// Determining Block Size
+// 1 Warp 32 threads
+// 1 thread block 1024 threads
+// BLOCK_Q - B_r in the paper
+// BLOCK_KV - B_c in the paper
+// BLOCK_INNER_DIM - I would just set it to the min (head dimension)
+// 
+// Determining grid and block dimension size
+// Can be done in the same way as triton
+// 1 element in the grid dimension is 1 block
+// Ceil of Block
+// 1 thread block handles 
+//int num_of_threads_per_block_by_user = 128;
+//int num_of_threads_per_block = std::min(1024,num_of_threads_per_block_by_user);
+//dim3 blockDimension(num_of_threads_per_block);
 
-    int row, col, inner_dim;
-
-    // Copy from data from host to device
-    // Determining the Grid Size
-    // Determining Block Size
-    // 1 Warp 32 threads
-    // 1 thread block 1024 threads
-
-
-    // BLOCK_Q - B_r in the paper
-    // BLOCK_KV - B_c in the paper
-    // BLOCK_INNER_DIM - I would just set it to the min (head dimension)
-
-    int BLOCK_Q, BLOCK_KV, BLOCK_INNER_DIM;
-    BLOCK_Q = 32;
-    BLOCK_KV = 32;
-    BLOCK_INNER_DIM = H; // 
-
-    // Determining grid and block dimension size
-    // Can be done in the same way as triton
-    // 1 element in the grid dimension is 1 block
-
-    int TILE_R, TILE_C;
-    TILE_R = (S + BLOCK_Q + 1) % S; // Ceil of Block
-    dim3 gridDimension(B*N, TILE_R);
-
-    // 1 thread block handles 
-    //int num_of_threads_per_block_by_user = 128;
-    //int num_of_threads_per_block = std::min(1024,num_of_threads_per_block_by_user);
-    //dim3 blockDimension(num_of_threads_per_block);
-
-    dim3 blockDimension(BLOCK_Q);
-
-
-
-    return 0;
+// Minimal standalone check: nvcc causal_flash_attn.cu -o ./test && ./test
+#include <stdexcept>
+static void smoke_check(cudaError_t error) {
+    if (error != cudaSuccess) throw std::runtime_error(cudaGetErrorString(error));
+}
+int main() {
+    float *dq=nullptr, *dk=nullptr, *dv=nullptr, *out=nullptr;
+    try {
+        constexpr int S=33, D=32, BQ=32, BK=32;
+        const int count=S*D, sb=S*D, sh=S*D, ss=D;
+        const size_t bytes=count*sizeof(float);
+        const float scale=1.0f/std::sqrt(float(D));
+        std::vector<float> q(count),k(count),v(count),actual(count);
+        for(int i=0;i<count;++i) {
+            q[i]=0.5f*std::sin(float(i)*0.17f);
+            k[i]=0.5f*std::cos(float(i)*0.11f);
+            v[i]=std::sin(float(i)*0.07f);
+        }
+        // Independent FP64 causal attention, including stable row softmax.
+        std::vector<double> expected(count);
+        for(int row=0;row<S;++row) {
+            std::vector<double> scores(row+1);
+            double maximum=-INFINITY,denominator=0.0;
+            for(int key=0;key<=row;++key) {
+                double dot=0;for(int d=0;d<D;++d)dot+=double(q[row*D+d])*k[key*D+d];
+                scores[key]=dot/std::sqrt(double(D));maximum=std::max(maximum,scores[key]);
+            }
+            for(double& x:scores) {x=std::exp(x-maximum);denominator+=x;}
+            for(int d=0;d<D;++d) {
+                double sum=0;for(int key=0;key<=row;++key)sum+=scores[key]*double(v[key*D+d]);
+                expected[row*D+d]=sum/denominator;
+            }
+        }
+        smoke_check(cudaMalloc(&dq,bytes));smoke_check(cudaMalloc(&dk,bytes));
+        smoke_check(cudaMalloc(&dv,bytes));smoke_check(cudaMalloc(&out,bytes));
+        smoke_check(cudaMemcpy(dq,q.data(),bytes,cudaMemcpyHostToDevice));
+        smoke_check(cudaMemcpy(dk,k.data(),bytes,cudaMemcpyHostToDevice));
+        smoke_check(cudaMemcpy(dv,v.data(),bytes,cudaMemcpyHostToDevice));
+        const char* names[]={"FA1-style scalar","FA2 scalar","FA2 warp-per-query","FA2 register-tiled"};
+        bool passed=true;
+        std::cout<<"Minimal causal attention: B=1 H=1 N=33 d=32\n";
+        for(int variant=0;variant<4;++variant) {
+            smoke_check(cudaMemset(out,0xff,bytes)); // Detect missing stores.
+            dim3 grid(1,(S+BQ-1)/BQ);
+#define QS sb,sh,ss,1
+#define KS sb,sh,1,ss
+            if(variant==0) flash_attention_v1_baseline<BQ,BK,D><<<grid,BQ>>>(dq,dk,dv,out,S,S,1,1,QS,QS,QS,QS,scale);
+            else if(variant==1) flash_attention_v2_scalar_baseline<BQ,BK,D><<<grid,BQ>>>(dq,dk,dv,out,S,S,1,1,QS,KS,QS,QS,scale);
+            else if(variant==2) {
+                dim3 warp_grid(1,(S+3)/4);
+                flash_attention_v2_warp_per_query<4,BK,D><<<warp_grid,128>>>(dq,dk,dv,out,S,S,1,1,QS,KS,QS,QS,scale);
+            } else flash_attention_v2_cuda_core_tiled<BQ,BK,D,4,3,5><<<grid,128>>>(dq,dk,dv,out,S,S,1,1,QS,KS,QS,QS,scale);
+#undef QS
+#undef KS
+            smoke_check(cudaGetLastError());smoke_check(cudaDeviceSynchronize());
+            smoke_check(cudaMemcpy(actual.data(),out,bytes,cudaMemcpyDeviceToHost));
+            double max_error=0;int failures=0;
+            for(int i=0;i<count;++i) {
+                const double error=std::abs(double(actual[i])-expected[i]);
+                if(!std::isfinite(actual[i])) {++failures;max_error=INFINITY;}
+                else {max_error=std::max(max_error,error);if(error>1e-4+1e-4*std::abs(expected[i]))++failures;}
+            }
+            passed=passed && failures==0;
+            std::cout<<names[variant]<<": "<<(failures?"FAIL":"PASS")<<" (max absolute error="<<max_error<<")\n";
+        }
+        cudaFree(dq);cudaFree(dk);cudaFree(dv);cudaFree(out);
+        return passed?0:2;
+    } catch(const std::exception& error) {
+        cudaFree(dq);cudaFree(dk);cudaFree(dv);cudaFree(out);
+        std::cerr<<"ERROR: "<<error.what()<<"\n";return 1;
+    }
 }
