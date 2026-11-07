@@ -52,6 +52,31 @@ Stall percentages below use each state's samples divided by the sum of the all-s
 | 4096 | wmma | 0.599 | 31.7 | 42.8 | 0.648 | 1.37 | 1.17e+09 / 5.76e+08 |
 | 4096 | ptx | 1.68 | 11.6 | 55.7 | 0.946 | 1.53 | 3.42e+08 / 9.2e+06 |
 
+## Source shared-memory wavefronts
+
+Aggregate L1 bank-conflict counters can include arbitration. Diagnose layout conflicts using source-level actual minus ideal wavefronts; zero excess is no source-proven bank conflict. No-shared-memory kernels have no expansion ratio.
+
+| N | Kernel | Actual | Ideal | Excessive | Actual / ideal |
+|---|---|---|---|---|---|
+| 256 | fa1 | 0 | 0 | 0 | unavailable |
+| 256 | scalar | 0 | 0 | 0 | unavailable |
+| 256 | warp | 2.31e+07 | 8.45e+06 | 1.47e+07 | 2.74 |
+| 256 | tiled | 3.49e+06 | 3.49e+06 | 0 | 1 |
+| 256 | skip | 3.49e+06 | 3.49e+06 | 0 | 1 |
+| 256 | vector | 3.49e+06 | 3.49e+06 | 0 | 1 |
+| 256 | wmma | 8.85e+06 | 1.25e+06 | 7.6e+06 | 7.09 |
+| 256 | ptx | 2.04e+06 | 5.14e+05 | 1.53e+06 | 3.98 |
+| 4096 | fa1 | 0 | 0 | 0 | unavailable |
+| 4096 | scalar | 0 | 0 | 0 | unavailable |
+| 4096 | warp | 5.91e+09 | 2.15e+09 | 3.76e+09 | 2.75 |
+| 4096 | tiled | 7.97e+08 | 7.97e+08 | 0 | 1 |
+| 4096 | skip | 7.97e+08 | 7.97e+08 | 0 | 1 |
+| 4096 | vector | 7.97e+08 | 7.97e+08 | 0 | 1 |
+| 4096 | wmma | 2.02e+09 | 2.73e+08 | 1.75e+09 | 7.42 |
+| 4096 | ptx | 4.65e+08 | 1.14e+08 | 3.51e+08 | 4.07 |
+
+NVIDIA explains arbitration in [shared-memory bank conflict metrics](https://forums.developer.nvidia.com/t/shared-memory-bank-conflicts-and-nsight-metric/115731/15).
+
 ## Arithmetic intensity and operation counts
 
 Useful attention work is `4*B*H*d*N*(N+1)/2` FLOPs (causal QK plus PV, excluding softmax). Dividing it by measured DRAM read+write bytes gives an algorithm-useful DRAM intensity. This includes the effects of caching and spills in measured traffic and does not count masked/padded work. It is not the executed Tensor Core FLOP count or a substitute for the appropriate hardware roofline in the raw report. Measured scalar FP32 operations are `2*FFMA + FADD + FMUL`; for Tensor Core kernels these exclude matrix operations. Compare intensity at the same memory level.
@@ -60,7 +85,7 @@ Useful attention work is `4*B*H*d*N*(N+1)/2` FLOPs (causal QK plus PV, excluding
 
 1. **Global-memory reuse:** compare `fa1` with `tiled/skip` at matching shapes. Shared Q/K/V staging and register reuse change the source-level access pattern; use DRAM and L1/local traffic plus issue metrics to determine which layer improved. A lower DRAM byte count by itself does not prove that bandwidth was limiting.
 
-2. **MIO and shared memory:** MIO throttle means pressure on the MIO instruction path, which also serves special math and dynamic branching. Short scoreboard signals dependencies that can involve shared memory but is not proof of bank conflicts. Check actual shared conflict counts and wavefronts before proposing swizzling. Reducing redundant shared-memory operations/register reuse is a separate hypothesis from eliminating bank conflicts.
+2. **MIO and shared memory:** MIO throttle means pressure on the MIO instruction path, which also serves special math and dynamic branching. Short scoreboard signals dependencies that can involve shared memory but is not proof of bank conflicts. Use source-level excessive wavefronts to diagnose layout conflicts; aggregate conflict counters alone are insufficient. Reducing redundant shared-memory operations/register reuse is a separate hypothesis from eliminating bank conflicts.
 
 3. **Latency hiding:** achieved occupancy is the measured resident-warp fraction; theoretical occupancy is the launch/resource ceiling. Neither equals utilisation or eligible warps. Inspect the register/shared/block/warp limits and eligible warps together. Higher occupancy alone is not a performance objective.
 
@@ -81,7 +106,7 @@ These are observation-driven experiment candidates, not proven causes or promise
 ```bash
 bash part_c/profile.sh --output part_c/results/my_profile --build /tmp/part_c-profile-build --repeats 3
 # Regenerate all tables, plots and this report without accessing the GPU:
-python3 part_c/scripts/analyze_profiles.py /home/buntr/Projects/Flash-Attention-CUDA/part_c/results/nsight_analysis
+python3 part_c/scripts/analyze_profiles.py part_c/results/nsight_analysis
 ```
 
 Use a fresh output directory. `--resume` requires matching source hashes and the same plan. Build/runtime/tool versions and GPU state are in `logs/`; exact argv, working directory, UTC times and exit codes are in `commands.jsonl`. Source snapshots are under `source_snapshot/`. The initial capability probe is separate and is not used as a representative workload.

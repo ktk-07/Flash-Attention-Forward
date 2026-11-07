@@ -54,6 +54,32 @@ Individual runners accept --build DIR, --arch, --device, --grid full|smoke,
 --no-profile, --dry-run and --analyze-only BUNDLE. Part C's older positional,
 --study and --complete commands are retained; see part_c/README.md.
 
+You can also enter a part directory. Starting from the repository root, choose
+one block (these are alternatives to the root-level commands above):
+
+cd part_a
+bash run.sh --output ../results/a_only
+
+Or, separately starting from the repository root:
+cd part_c
+bash run.sh --output ../results/c_only
+
+Output paths are relative to your invoking directory. Use a fresh output name;
+do not run both alternatives into the same existing directory. Add --grid smoke
+for a small check. Full runs are the default. Keep the repository intact because
+the runners share the CPU reference source; B is not required for A or C.
+
+View one standalone run from the repository root:
+- results/a_only/ or results/c_only/: audit.json, run_status.json, ANALYSIS.md,
+  summary.csv (latency/errors/throughput), correctness.csv and samples.csv.
+- plots/part_a/ or plots/part_c/ inside that bundle: PNG/PDF figures and plot data.
+- resources.csv, profiles.csv, memory.csv, work.csv: detailed evidence.
+- raw/part_a/ or raw/part_c/, commands.jsonl and logs/: native records/commands.
+- C additionally retains supplementary/part_c/ and plots/README.md.
+Open CSVs with a CSV viewer and PNG/PDF figures with a normal image/PDF viewer.
+For a combined root run, inspect its parts/part_a/ or parts/part_c/ child bundle,
+or its top-level plots/part_a/ and plots/part_c/ folders. No rerun is needed.
+
 6. OFFLINE ANALYSIS (NO GPU REQUIRED)
 
 bash run.sh --analyze-only results/ac_full

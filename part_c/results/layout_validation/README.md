@@ -37,4 +37,4 @@ Or from inside `part_c/`, run `./run.sh` for a timestamped results directory and
 bash part_c/scripts/run_all.sh part_c/results/layout_validation /tmp/part_c-layout-build
 ```
 
-[commands.log](commands.log) records build/test/benchmark/sanitizer/Python commands and exit codes. [logs/](logs/) contains stdout/stderr and source/binary hashes. [audit.json](audit.json) contains verification counts. The previous [local-validation dataset](../local_validation/RESULTS.md) is retained unchanged as historical measurement evidence; only its documentation links were updated for the new source layout.
+[commands.log](commands.log) records build/test/benchmark/sanitizer/Python commands and exit codes. [logs/](logs/) contains stdout/stderr and source/binary hashes. [audit.json](audit.json) contains verification counts. Earlier local development attempts are archived outside the submission results. This dataset remains the retained default-layout validation record.

@@ -34,7 +34,7 @@ WMMA uses 25.38 KiB shared memory per block versus PTX's 13.00 KiB. Their theore
 
 WMMA has 31.74% short-scoreboard samples versus PTX's 11.58%, and 3.21 times as many shared-load wavefronts. Tensor-pipeline active-cycle utilisation is 2.12% versus 6.25%. Both still have substantial headroom; none of these individual ratios is a measured causal speedup.
 
-Shared load conflicts divided by shared load wavefronts are 88.43% for WMMA and 82.65% for PTX, compared with 14.30% for `skip`. This counter ratio is not a percentage of kernel runtime. It motivates a controlled padding/swizzle experiment, especially for the Tensor Core layouts.
+Source-level actual/ideal shared wavefront expansion is 7.418x for WMMA, 4.067x for PTX, and 2.749x for warp-per-query. These have positive excessive wavefronts and motivate controlled layout experiments. Tiled, skip and vector have 0 excessive wavefronts: there is no source-proven bank conflict in these CUDA-core layouts. Aggregate L1 conflict counters include arbitration and do not justify swizzling them. None of these ratios is a percentage of runtime.
 
 ## 6. Source locations support targeted experiments
 
@@ -61,7 +61,7 @@ At the large shape, branch uniformity is 99.51% in the baseline, 100.00% in `ski
 1. **CUDA-core local state and reductions:** specialise/unroll small array indexing where useful, inspect LDL/STL and register allocation, and reduce repeated warp reductions or row-statistic work where mathematically valid. Monitor shared/register occupancy limits after every change.
 2. **Tensor Core shared layouts:** try one controlled padding or swizzle variant, verifying both writes and reads plus fragment operand mapping. Recheck bank conflicts and ordinary timings.
 3. **PTX input pipeline:** evaluate asynchronous copies/double buffering only with a concrete load/compute schedule. Account for extra shared memory and its occupancy cost.
-4. **Bounded launch/tile tuning:** vary warps/query/KV tile sizes under a predefined search. The current measurements use fixed educational launch configurations; the current winner is not a proven global optimum.
+4. **Bounded launch/tile tuning:** vary warps/query/KV tile sizes under a predefined search. These historical profiles use fixed educational launch configurations; the separate bounded evaluation studies other configurations and must not inherit these counters.
 5. **Alternative vector loader:** test cooperative loading across rows rather than silently replacing the existing baseline.
 
 Each experiment needs numerical validation, sanitizer checks where memory/synchronisation changes, ordinary repeated CUDA-event timing, and a fresh profiling directory. The current workflow analyses kernels; it does not implement these optimisations. No new speedup is claimed here.

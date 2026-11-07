@@ -167,6 +167,57 @@ bash run.sh --output results/final_submission
 
 Part C's older positional, `--study` and `--complete` workflows remain supported; see [part_c/README.md](part_c/README.md). Keep their native outputs for additional studies. Do not mix their historical measurements into a new common-machine run.
 
+### Examiner: run and inspect one part independently
+
+Part A and Part C already have standalone runners. Neither requires Part B or another part's GPU executable/results. They do use the shared CPU reference source in this repository, so keep the repository intact and complete the environment setup in Section 2 first.
+
+From the **repository root**, run whichever part you want:
+
+```bash
+bash part_a/run.sh --output results/a_only
+bash part_c/run.sh --output results/c_only
+```
+
+Alternatively, enter the individual directory. Run the following blocks separately, each starting from the repository root:
+
+```bash
+cd part_a
+bash run.sh --output ../results/a_only
+```
+
+```bash
+cd part_c
+bash run.sh --output ../results/c_only
+```
+
+These are equivalent ways to run the same standalone workflows; do not execute both alternatives into the same output directory. Output paths are resolved relative to the directory where you invoke the command. Choose a fresh name for each run. Add `--grid smoke` for a small pipeline check; full is the default and includes profiling. Add `--no-profile` only when you explicitly intend to omit fresh counter evidence.
+
+After a standalone run, open the files below using a text/CSV viewer and an image/PDF viewer. No web server is required.
+
+| What to inspect | Part A standalone | Part C standalone |
+|---|---|---|
+| Validation and run completion | `results/a_only/audit.json`, `run_status.json` | `results/c_only/audit.json`, `run_status.json` |
+| Timing/error/throughput summary | `results/a_only/summary.csv` | `results/c_only/summary.csv` |
+| Individual timings and numerical checks | `results/a_only/samples.csv`, `correctness.csv` | `results/c_only/samples.csv`, `correctness.csv` |
+| Resource, profiler, memory and work tables | `resources.csv`, `profiles.csv`, `memory.csv`, `work.csv` under `results/a_only/` | Same four tables under `results/c_only/` |
+| Main figures and plotted data | `results/a_only/plots/part_a/` | `results/c_only/plots/part_c/` |
+| Findings and figure navigation | `results/a_only/ANALYSIS.md`, `figure_index.json` | `results/c_only/ANALYSIS.md`, `plots/README.md` |
+| Native evidence and additional studies | `results/a_only/raw/part_a/` | `results/c_only/raw/part_c/`, `supplementary/part_c/` |
+| Commands and diagnostic output | `results/a_only/commands.jsonl`, `logs/` | `results/c_only/commands.jsonl`, `logs/` |
+
+Paths in this table are relative to the repository root. Saved historical results in `part_a/results/` and `part_c/results/` are separate from these new output bundles. Check validation scope, GPU identity and precision labels before using a value in the report.
+
+To regenerate an individual's saved figures/tables without executing GPU kernels, run from the repository root:
+
+```bash
+bash part_a/run.sh --analyze-only results/a_only
+bash part_c/run.sh --analyze-only results/c_only
+```
+
+For a **root combined run**, individual bundles instead live under `results/<run_id>/parts/part_a/` and `parts/part_c/`, with the same internal structure. Root also publishes per-part report figures at `results/<run_id>/plots/part_a/` and `plots/part_c/`, plus combined figures at `plots/combined/`. To inspect one part from that run, open its child bundle; no rerun is necessary.
+
+Part B must provide the equivalent standalone commands and result structure when implemented; see Section 6. It is not executable in this checkout yet.
+
 ## 6. Implemented integration and Part B handoff
 
 The integration owner has connected A and C. GPU kernels remain in their own directories and separate executables. Neither part runs another part's GPU executable for correctness. Both link the reusable `attention_reference` CMake target from [part_a/cpu_reference/CMakeLists.txt](part_a/cpu_reference/CMakeLists.txt).
@@ -219,6 +270,64 @@ Implement only B's dense fused kernels and its adapter. A/C integration and root
 8. Test `bash part_b/run.sh --grid smoke --output /tmp/b_smoke`, CPU-only analyze mode, and `bash run.sh --parts a,b,c --grid smoke --output /tmp/abc_smoke`. Root already discovers `part_b/run.sh`, requires dense FP32 grid coverage, validates the schema/input/GPU identity and plots `variant=selected` against A-dense. Fix B's adapter rather than changing shared semantics to make an invalid run pass. After acceptance, run the final full experiment on the same machine for all three parts.
 
 Part B may add FP16/Tensor Core experiments, but FP32 dense coverage is required. Preserve precision labels and unsupported shapes; do not compare B-dense output with C-causal output as equal operations. Their workload/traffic comparison is a separate study.
+
+#### Planned Part B files and result destinations
+
+Part B is not present yet. Use the following layout when implementing it; helper and kernel filenames are recommended, while `part_b/CMakeLists.txt`, `part_b/run.sh` and the public output contract are required by the existing integration.
+
+```text
+part_b/                           # planned; not implemented in this checkout
+  CMakeLists.txt                  # builds B kernels/runner; links attention_reference
+  README.md                       # B algorithms, variants, commands and limitations
+  run.sh                          # same named CLI as part_a/run.sh and part_c/run.sh
+  include/flash_attention/
+    dense_flash_attention.h       # public declarations; add headers as needed
+  src/
+    dense_flash_attention.cu      # definitions; separate variants into .cu files as needed
+  tests/
+    kernel_runner.cpp             # small/full correctness and safety entry points
+    evaluation_runner.cpp         # validated tuning, timing and memory cases
+  scripts/
+    run_standard.py               # builds, tests, tunes, profiles and exports
+    export_results.py             # native B records -> shared seven-table schema
+  results/                        # optional retained B-local studies, not auto-imported
+```
+
+Do not hard-code `part_b/results/` as the destination. Like A and C, B must write its complete standalone bundle to the `--output` path supplied by its caller:
+
+```bash
+# Once B exists: independent B smoke run.
+bash part_b/run.sh --grid smoke --output results/b_smoke
+# Equivalent B-only execution through the root workflow; includes aggregation.
+bash run.sh --parts b --grid smoke --output results/b_root_smoke
+# Complete shared-machine run: root invokes all three runners, then aggregates.
+bash run.sh --output results/final_submission
+```
+
+For the first command, B writes:
+
+```text
+results/b_smoke/
+  correctness.csv
+  samples.csv
+  summary.csv
+  resources.csv
+  profiles.csv
+  memory.csv
+  work.csv
+  manifest.json, audit.json, run_status.json, commands.jsonl
+  configs/part_b.json             # bounded candidates and frozen selection
+  logs/                          # build/test/benchmark/profiler command output
+  raw/part_b/                    # native records, source provenance and profile exports
+  plots/part_b/                  # B figures and their plotted data
+  supplementary/part_b/          # any additional B evidence/figures
+```
+
+With the complete root command, the same B bundle instead goes to `results/final_submission/parts/part_b/`, alongside equivalent A/C bundles. Root supplies that path automatically; B must not choose a separate default directory during a root run.
+
+Aggregation is automatic in `scripts/run_all.py`: read the seven canonical tables from each child bundle → validate schemas, numerical checks, grid, GPU and fingerprints → assign the joint run identity → write merged tables at `results/final_submission/*.csv`. Native records remain in the child bundles. Root copies retained per-part figures/supplementary files and invokes `scripts/plot_combined.py` to produce main figures under `plots/part_a/`, `plots/part_b/`, `plots/part_c/`, combined figures under `plots/combined/`, and the matched ratios in `comparison.csv`.
+
+An independent `results/b_smoke/` run is not automatically merged into an earlier A/C run. Use the root all-parts command for the final comparison dataset; do not concatenate historical CSVs or copy them into a new run. Regenerate a completed joint bundle with `bash run.sh --analyze-only results/final_submission`.
 
 #### B adapter details required by the existing collector
 
