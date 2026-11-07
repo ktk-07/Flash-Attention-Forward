@@ -1,0 +1,202 @@
+
+Fatbin ptx code:
+================
+arch = sm_86
+code version = [8,5]
+host = linux
+compile_size = 64bit
+compressed
+identifier = /home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_1.cu
+ptxasOptions =  --generate-line-info 
+
+Fatbin elf code:
+================
+arch = sm_86
+code version = [1,7]
+host = linux
+compile_size = 64bit
+identifier = /home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_1.cu
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _Z27flash_attention_v1_baselineILi32ELi32ELi128EEvPKfS1_S1_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:169 STACK:128 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z27flash_attention_v1_baselineILi32ELi32ELi96EEvPKfS1_S1_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:126 STACK:128 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z27flash_attention_v1_baselineILi32ELi32ELi65EEvPKfS1_S1_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:153 STACK:128 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z27flash_attention_v1_baselineILi32ELi32ELi64EEvPKfS1_S1_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:154 STACK:128 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z27flash_attention_v1_baselineILi32ELi32ELi40EEvPKfS1_S1_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:100 STACK:128 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z27flash_attention_v1_baselineILi32ELi32ELi33EEvPKfS1_S1_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:74 STACK:128 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z27flash_attention_v1_baselineILi32ELi32ELi32EEvPKfS1_S1_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:92 STACK:128 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z27flash_attention_v1_baselineILi32ELi32ELi16EEvPKfS1_S1_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:80 STACK:128 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z27flash_attention_v1_baselineILi32ELi32ELi7EEvPKfS1_S1_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:80 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+
+Fatbin ptx code:
+================
+arch = sm_86
+code version = [8,5]
+host = linux
+compile_size = 64bit
+compressed
+identifier = /home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu
+ptxasOptions =  --generate-line-info 
+
+Fatbin elf code:
+================
+arch = sm_86
+code version = [1,7]
+host = linux
+compile_size = 64bit
+identifier = /home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _ZN11vector_load58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi128ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:74 STACK:192 SHARED:49152 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN11vector_load58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi96ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:64 STACK:160 SHARED:36864 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN11vector_load58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi65ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:64 STACK:160 SHARED:24960 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN11vector_load58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi64ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:55 STACK:128 SHARED:24576 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN11vector_load58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi40ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:56 STACK:128 SHARED:15360 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN11vector_load58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi33ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:56 STACK:128 SHARED:12672 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN11vector_load58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi32ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:56 STACK:96 SHARED:12288 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN11vector_load58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi16ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:48 STACK:96 SHARED:6144 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN11vector_load58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi7ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:48 STACK:96 SHARED:2688 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN9tile_skip58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi128ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:76 STACK:192 SHARED:49152 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN9tile_skip58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi96ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:73 STACK:160 SHARED:36864 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN9tile_skip58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi65ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:72 STACK:160 SHARED:24960 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN9tile_skip58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi64ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:69 STACK:128 SHARED:24576 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN9tile_skip58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi40ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:72 STACK:128 SHARED:15360 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN9tile_skip58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi33ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:71 STACK:128 SHARED:12672 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN9tile_skip58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi32ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:40 STACK:96 SHARED:12288 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN9tile_skip58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi16ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:40 STACK:96 SHARED:6144 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN9tile_skip58casual_flash_attention_forward_gpu_optimised_for_cuda_coreILi32ELi32ELi7ELi4ELi3ELi5EEEvPfS1_S1_S1_iiiiiiiiiiiiiiiiiiiif:
+  REG:44 STACK:96 SHARED:2688 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_cuda_core_tiledILi32ELi32ELi128ELi4ELi3ELi5EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:76 STACK:192 SHARED:49152 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z33flash_attention_v2_warp_per_queryILi4ELi32ELi128EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:63 STACK:0 SHARED:32768 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_scalar_baselineILi32ELi32ELi128EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:128 STACK:640 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_cuda_core_tiledILi32ELi32ELi96ELi4ELi3ELi5EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:73 STACK:160 SHARED:36864 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z33flash_attention_v2_warp_per_queryILi4ELi32ELi96EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:63 STACK:0 SHARED:24576 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_scalar_baselineILi32ELi32ELi96EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:128 STACK:512 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_cuda_core_tiledILi32ELi32ELi65ELi4ELi3ELi5EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:72 STACK:160 SHARED:24960 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z33flash_attention_v2_warp_per_queryILi4ELi32ELi65EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:64 STACK:0 SHARED:16640 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_scalar_baselineILi32ELi32ELi65EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:128 STACK:264 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_cuda_core_tiledILi32ELi32ELi64ELi4ELi3ELi5EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:69 STACK:128 SHARED:24576 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z33flash_attention_v2_warp_per_queryILi4ELi32ELi64EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:72 STACK:0 SHARED:16384 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_scalar_baselineILi32ELi32ELi64EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:64 STACK:384 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_cuda_core_tiledILi32ELi32ELi40ELi4ELi3ELi5EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:72 STACK:128 SHARED:15360 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z33flash_attention_v2_warp_per_queryILi4ELi32ELi40EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:40 STACK:0 SHARED:10240 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_scalar_baselineILi32ELi32ELi40EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:64 STACK:288 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_cuda_core_tiledILi32ELi32ELi33ELi4ELi3ELi5EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:71 STACK:128 SHARED:12672 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z33flash_attention_v2_warp_per_queryILi4ELi32ELi33EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:72 STACK:0 SHARED:8448 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_scalar_baselineILi32ELi32ELi33EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:56 STACK:136 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_cuda_core_tiledILi32ELi32ELi32ELi4ELi3ELi5EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:40 STACK:96 SHARED:12288 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z33flash_attention_v2_warp_per_queryILi4ELi32ELi32EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:64 STACK:0 SHARED:8192 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_scalar_baselineILi32ELi32ELi32EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:64 STACK:256 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_cuda_core_tiledILi32ELi32ELi16ELi4ELi3ELi5EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:40 STACK:96 SHARED:6144 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z33flash_attention_v2_warp_per_queryILi4ELi32ELi16EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:64 STACK:0 SHARED:4096 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_scalar_baselineILi32ELi32ELi16EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:64 STACK:192 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_cuda_core_tiledILi32ELi32ELi7ELi4ELi3ELi5EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:44 STACK:96 SHARED:2688 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z33flash_attention_v2_warp_per_queryILi4ELi32ELi7EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:40 STACK:0 SHARED:1792 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z34flash_attention_v2_scalar_baselineILi32ELi32ELi7EEvPfS0_S0_S0_iiiiiiiiiiiiiiiiiiiif:
+  REG:56 STACK:160 SHARED:0 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+
+Fatbin ptx code:
+================
+arch = sm_86
+code version = [8,5]
+host = linux
+compile_size = 64bit
+compressed
+identifier = /home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_tensor_core.cu
+ptxasOptions =  --generate-line-info 
+
+Fatbin elf code:
+================
+arch = sm_86
+code version = [1,7]
+host = linux
+compile_size = 64bit
+identifier = /home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_tensor_core.cu
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _Z50flash_attention_v2_tensor_core_ptx_mma_fully_fusedILi32ELi32ELi128ELi2EEvPK6__halfS2_S2_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:111 STACK:0 SHARED:25600 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z26flash_attention_wmma_fusedILi32ELi32ELi128ELi2EEvPK6__halfS2_S2_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:40 STACK:0 SHARED:46464 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z50flash_attention_v2_tensor_core_ptx_mma_fully_fusedILi32ELi32ELi96ELi2EEvPK6__halfS2_S2_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:79 STACK:0 SHARED:19456 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z26flash_attention_wmma_fusedILi32ELi32ELi96ELi2EEvPK6__halfS2_S2_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:40 STACK:0 SHARED:36224 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z26flash_attention_wmma_fusedILi32ELi32ELi65ELi2EEvPK6__halfS2_S2_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:40 STACK:0 SHARED:31104 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z50flash_attention_v2_tensor_core_ptx_mma_fully_fusedILi32ELi32ELi64ELi2EEvPK6__halfS2_S2_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:64 STACK:0 SHARED:13312 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z26flash_attention_wmma_fusedILi32ELi32ELi64ELi2EEvPK6__halfS2_S2_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:40 STACK:0 SHARED:25984 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z26flash_attention_wmma_fusedILi32ELi32ELi40ELi2EEvPK6__halfS2_S2_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:40 STACK:0 SHARED:20864 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z26flash_attention_wmma_fusedILi32ELi32ELi33ELi2EEvPK6__halfS2_S2_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:40 STACK:0 SHARED:20864 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z50flash_attention_v2_tensor_core_ptx_mma_fully_fusedILi32ELi32ELi32ELi2EEvPK6__halfS2_S2_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:54 STACK:0 SHARED:7168 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z26flash_attention_wmma_fusedILi32ELi32ELi32ELi2EEvPK6__halfS2_S2_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:40 STACK:0 SHARED:15744 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z50flash_attention_v2_tensor_core_ptx_mma_fully_fusedILi32ELi32ELi16ELi2EEvPK6__halfS2_S2_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:40 STACK:0 SHARED:4096 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z26flash_attention_wmma_fusedILi32ELi32ELi16ELi2EEvPK6__halfS2_S2_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:37 STACK:0 SHARED:10624 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _Z26flash_attention_wmma_fusedILi32ELi32ELi7ELi2EEvPK6__halfS2_S2_Pfiiiiiiiiiiiiiiiiiiiif:
+  REG:37 STACK:0 SHARED:10624 LOCAL:0 CONSTANT[0]:468 TEXTURE:0 SURFACE:0 SAMPLER:0

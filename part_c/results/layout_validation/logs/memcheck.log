@@ -1,0 +1,11 @@
+========= COMPUTE-SANITIZER
+fa1 B=1 H=1 N=33 d=64 random PASS max_abs=1.00835e-07
+scalar B=1 H=1 N=33 d=64 random PASS max_abs=1.31068e-07
+warp B=1 H=1 N=33 d=64 random PASS max_abs=1.00835e-07
+tiled B=1 H=1 N=33 d=64 random PASS max_abs=1.02864e-07
+skip B=1 H=1 N=33 d=64 random PASS max_abs=1.02864e-07
+vector B=1 H=1 N=33 d=64 random PASS max_abs=1.02864e-07
+wmma B=1 H=1 N=33 d=64 random PASS max_abs=0.000150329
+ptx B=1 H=1 N=33 d=64 random PASS max_abs=0.000150329
+PASS=8 FAIL=0 UNSUPPORTED=0
+========= ERROR SUMMARY: 0 errors

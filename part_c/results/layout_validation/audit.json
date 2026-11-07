@@ -1,0 +1,12 @@
+{
+  "correctness": {
+    "PASS": 380,
+    "UNSUPPORTED": 4
+  },
+  "benchmark_configurations": 120,
+  "benchmark_samples": 2400,
+  "benchmark_validation": "three CPU-oracle query rows per batch/head; all outputs finite",
+  "preserved_original_kernel_comments": 308,
+  "original_development_file_relocated_and_fixed": true,
+  "statistics_recomputed": true
+}

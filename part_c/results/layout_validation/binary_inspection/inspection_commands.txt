@@ -1,0 +1,2 @@
+cuobjdump --dump-resource-usage /tmp/part_c-layout-build/part_c_runner
+cuobjdump --dump-sass /tmp/part_c-layout-build/part_c_runner

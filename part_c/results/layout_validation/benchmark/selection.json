@@ -1,0 +1,15 @@
+{
+  "policy": "exploratory geometric mean on B4 H8 d64 N256/1024, fixed configurations; not independent tuning",
+  "scores_ms": {
+    "fa1": 5.500963853525509,
+    "scalar": 7.332869197203204,
+    "warp": 2.71883360966628,
+    "tiled": 2.6090992025383812,
+    "skip": 2.5986931984339843,
+    "vector": 2.6893028445249065,
+    "wmma": 0.85302103610878,
+    "ptx": 0.37764850148942536
+  },
+  "best_cuda": "skip",
+  "best_tensor": "ptx"
+}

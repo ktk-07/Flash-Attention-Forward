@@ -1,0 +1,34 @@
+nvidia-smi 
+exit_code=0
+nvcc --version 
+exit_code=0
+c++ --version 
+exit_code=0
+cmake -S part_c -B /tmp/part_c-layout-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=86 -DBUILD_TESTING=ON 
+exit_code=0
+cmake --build /tmp/part_c-layout-build --parallel 2 
+exit_code=0
+sha256sum part_c/src/causal_flash_attn.cu part_c/src/flash_attention_1.cu part_c/src/flash_attention_2_cuda_core.cu part_c/src/flash_attention_2_tensor_core.cu part_c/include/flash_attention/flash_attention_1.h part_c/include/flash_attention/flash_attention_2_cuda_core.h part_c/include/flash_attention/flash_attention_2_tensor_core.h part_c/include/flash_attention/types.h part_c/tests/kernel_runner.cpp /tmp/part_c-layout-build/part_c_runner 
+exit_code=0
+/tmp/part_c-layout-build/part_c_runner --suite correctness --output part_c/results/layout_validation/correctness 
+exit_code=0
+/tmp/part_c-layout-build/part_c_runner --suite benchmark --grid full --output part_c/results/layout_validation/benchmark 
+exit_code=0
+compute-sanitizer --tool memcheck --error-exitcode 3 /tmp/part_c-layout-build/part_c_runner --suite smoke --output part_c/results/layout_validation/memcheck 
+exit_code=0
+compute-sanitizer --tool racecheck --error-exitcode 3 /tmp/part_c-layout-build/part_c_runner --suite smoke --output part_c/results/layout_validation/racecheck 
+exit_code=0
+compute-sanitizer --tool synccheck --error-exitcode 3 /tmp/part_c-layout-build/part_c_runner --suite smoke --output part_c/results/layout_validation/synccheck 
+exit_code=0
+compute-sanitizer --tool initcheck --error-exitcode 3 /tmp/part_c-layout-build/part_c_runner --suite smoke --output part_c/results/layout_validation/initcheck 
+exit_code=0
+python3 part_c/scripts/plot_results.py part_c/results/layout_validation/benchmark 
+exit_code=0
+python3 part_c/scripts/inspect_binary.py /tmp/part_c-layout-build/part_c_runner part_c/results/layout_validation/binary_inspection 
+exit_code=0
+python3 part_c/scripts/audit_results.py part_c/results/layout_validation 
+exit_code=0
+nvcc -O3 -std=c++17 -arch=sm_86 -lineinfo part_c/src/causal_flash_attn_full_test.cu -o /tmp/part_c-layout-build/part_c_legacy_tests 
+exit_code=0
+/tmp/part_c-layout-build/part_c_legacy_tests 
+exit_code=0
