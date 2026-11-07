@@ -991,13 +991,254 @@ __global__ void flash_attention_wmma_fused(const half* __restrict__ Q,
 }
 
 // Fully Fused PTX MMA Optimized FlashAttention
-template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM>
-__global__ void casual_flash_attention_forward_gpu_optimised_for_tensor_core(float* Q,
-                                                                             float* K,
-                                                                             float* V,
-                                                                             float* O
-){
+template<int BLOCK_Q, int BLOCK_KV, int HEAD_DIM, int NUM_WARPS>
+__global__ void flash_attention_v2_tensor_core_ptx_mma_fully_fused(
+    const half* __restrict__ Q, const half* __restrict__ K,
+    const half* __restrict__ V, float* __restrict__ O,
+    int B, int N, int row, int col,
+    int stride_qb, int stride_qn, int stride_qs, int stride_qh,
+    int stride_kb, int stride_kn, int stride_ks, int stride_kh,
+    int stride_vb, int stride_vn, int stride_vs, int stride_vh,
+    int stride_ob, int stride_on, int stride_os, int stride_oh,
+    float softmax_scale) {
+    static_assert(BLOCK_Q == 16 * NUM_WARPS,
+                  "One warp owns 16 query rows; BLOCK_Q=16*NUM_WARPS");
+    static_assert(BLOCK_KV >= 16 && BLOCK_KV % 16 == 0,
+                  "KV tiles are processed in 16-key chunks");
+    static_assert(HEAD_DIM >= 16 && HEAD_DIM % 16 == 0,
+                  "This first PTX version supports H divisible by 16");
+    static_assert(NUM_WARPS >= 1 && NUM_WARPS <= 8,
+                  "Use 1..8 warps per CTA");
 
+    constexpr int WARP_SIZE = 32;
+    constexpr int MMA_M = 16, MMA_N = 8, MMA_K = 16;
+    constexpr int OUTPUT_TILES = HEAD_DIM / MMA_N;
+    const int warp_id = threadIdx.x / WARP_SIZE;
+    const int lane_id = threadIdx.x % WARP_SIZE;
+    const int lane_group = lane_id / 4;     // 0..7: two query rows
+    const int lane_in_group = lane_id % 4;  // 0..3: two keys per 8-key half
+
+    const int batch_idx = blockIdx.x / N;
+    const int head_idx = blockIdx.x % N;
+    const int query_block_start = blockIdx.y * BLOCK_Q;
+    const int query_local_start = warp_id * MMA_M;
+    const int query_row_0 = query_local_start + lane_group;
+    const int query_row_1 = query_row_0 + 8;
+    const int query_global_0 = query_block_start + query_row_0;
+    const int query_global_1 = query_block_start + query_row_1;
+
+    const size_t q_head_offset = size_t(batch_idx) * stride_qb + size_t(head_idx) * stride_qn;
+    const size_t k_head_offset = size_t(batch_idx) * stride_kb + size_t(head_idx) * stride_kn;
+    const size_t v_head_offset = size_t(batch_idx) * stride_vb + size_t(head_idx) * stride_vn;
+    const size_t o_head_offset = size_t(batch_idx) * stride_ob + size_t(head_idx) * stride_on;
+
+    // Shared memory is CTA-wide; each warp has its own P[16][16] to prevent
+    // races. Q is loaded once per CTA; K/V are reloaded per KV tile.
+    // FP16 shared footprint for 4 warps, BLOCK_Q=64, BLOCK_KV=32, H=64:
+    // (64*64 + 2*32*64 + 4*16*16)*2 = 18,432 bytes.
+    __shared__ half q_shared[BLOCK_Q][HEAD_DIM];
+    __shared__ half k_shared[BLOCK_KV][HEAD_DIM];
+    __shared__ half v_shared[BLOCK_KV][HEAD_DIM];
+    __shared__ half prob_shared[NUM_WARPS][MMA_M][2 * MMA_N];
+
+    // Each thread loads strided, contiguous-in-feature elements. This is
+    // cooperative CTA loading, but NOT vectorized float4/half8 loading.
+    for (int idx = threadIdx.x; idx < BLOCK_Q * HEAD_DIM;
+         idx += blockDim.x) {
+        const int qr = idx / HEAD_DIM;
+        const int d = idx % HEAD_DIM;
+        const int qg = query_block_start + qr;
+        q_shared[qr][d] = (qg < row)
+            ? Q[q_head_offset + size_t(qg) * stride_qs + size_t(d) * stride_qh]
+            : __float2half(0.0f);
+    }
+    __syncthreads();
+
+    // Two independent online-softmax states per lane. Each state is
+    // replicated across the 4 lanes of a lane_group, which makes a 4-lane
+    // max/sum reduction straightforward. NO CTA-wide softmax reduction.
+    float running_max_0 = -CUDART_INF_F, running_max_1 = -CUDART_INF_F;
+    float running_sum_0 = 0.0f, running_sum_1 = 0.0f;
+
+    // Persistent FP32 output accumulator, indexed by 8-feature MMA tile.
+    // For each tile: [row0,col0], [row0,col1], [row1,col0], [row1,col1].
+    // This is the crucial improvement over staging WMMA output in SMEM.
+    float output_accumulator[OUTPUT_TILES][4];
+    #pragma unroll
+    for (int t = 0; t < OUTPUT_TILES; ++t) {
+        #pragma unroll
+        for (int i = 0; i < 4; ++i) output_accumulator[t][i] = 0.0f;
+    }
+
+    // A query block cannot attend to keys beyond its last query position.
+    // All warps use the SAME tile count, so CTA barriers are safe.
+    const int valid_query_end = min(row, query_block_start + BLOCK_Q);
+    const int valid_key_end = min(col, valid_query_end);
+    const int num_key_tiles = (valid_key_end + BLOCK_KV - 1) / BLOCK_KV;
+
+    for (int key_tile_idx = 0; key_tile_idx < num_key_tiles; ++key_tile_idx) {
+        const int key_block_start = key_tile_idx * BLOCK_KV;
+        for (int idx = threadIdx.x; idx < BLOCK_KV * HEAD_DIM;
+             idx += blockDim.x) {
+            const int kr = idx / HEAD_DIM;
+            const int d = idx % HEAD_DIM;
+            const int kg = key_block_start + kr;
+            k_shared[kr][d] = (kg < col)
+                ? K[k_head_offset + size_t(kg) * stride_ks + size_t(d) * stride_kh]
+                : __float2half(0.0f);
+            v_shared[kr][d] = (kg < col)
+                ? V[v_head_offset + size_t(kg) * stride_vs + size_t(d) * stride_vh]
+                : __float2half(0.0f);
+        }
+        __syncthreads();  // Q/K/V ready before Tensor Core loads.
+
+        // MMA has N=8 columns. We compute TWO 16x8 score tiles to obtain
+        // 16 keys, then softmax all 16 keys together. Why 16? PV MMA has
+        // K=16 and consumes a complete P[16,16] tile in one instruction.
+        for (int key_local_start = 0; key_local_start < BLOCK_KV;
+             key_local_start += 16) {
+            float score_0[4] = {0.f, 0.f, 0.f, 0.f};
+            float score_1[4] = {0.f, 0.f, 0.f, 0.f};
+
+            // Reduction dimension is HEAD_DIM. One m16n8k16 instruction
+            // consumes 16 features. Four instructions per score half for H=64.
+            for (int d_base = 0; d_base < HEAD_DIM; d_base += MMA_K) {
+                uint32_t a[4], b0[2], b1[2];
+                const int d0 = d_base + 2 * lane_in_group;
+                const int d1 = d0 + 8;
+                a[0] = fa_pack_half2(q_shared[query_row_0][d0],
+                                     q_shared[query_row_0][d0 + 1]);
+                a[1] = fa_pack_half2(q_shared[query_row_0][d1],
+                                     q_shared[query_row_0][d1 + 1]);
+                a[2] = fa_pack_half2(q_shared[query_row_1][d0],
+                                     q_shared[query_row_1][d0 + 1]);
+                a[3] = fa_pack_half2(q_shared[query_row_1][d1],
+                                     q_shared[query_row_1][d1 + 1]);
+
+                const int k0 = key_local_start + lane_group;
+                const int k1 = k0 + 8;
+                b0[0] = fa_pack_half2(k_shared[k0][d0], k_shared[k0][d0 + 1]);
+                b0[1] = fa_pack_half2(k_shared[k0][d1], k_shared[k0][d1 + 1]);
+                b1[0] = fa_pack_half2(k_shared[k1][d0], k_shared[k1][d0 + 1]);
+                b1[1] = fa_pack_half2(k_shared[k1][d1], k_shared[k1][d1 + 1]);
+                fa_mma_m16n8k16(score_0, a, b0);
+                fa_mma_m16n8k16(score_1, a, b1);
+            }
+
+            // Each lane has 4 key scores for each of its TWO query rows.
+            // C register mapping: score_0[0:2] -> row0, keys 0..7;
+            // score_1[0:2] -> row0, keys 8..15; [2:4] -> row1.
+            float s0[4] = {score_0[0], score_0[1], score_1[0], score_1[1]};
+            float s1[4] = {score_0[2], score_0[3], score_1[2], score_1[3]};
+            float partial_max_0 = -CUDART_INF_F;
+            float partial_max_1 = -CUDART_INF_F;
+            #pragma unroll
+            for (int j = 0; j < 4; ++j) {
+                const int key_offset = (j / 2) * 8 + 2 * lane_in_group + (j % 2);
+                const int kg = key_block_start + key_local_start + key_offset;
+                s0[j] = (query_global_0 < row && kg < col && kg <= query_global_0)
+                    ? s0[j] * softmax_scale : -CUDART_INF_F;
+                s1[j] = (query_global_1 < row && kg < col && kg <= query_global_1)
+                    ? s1[j] * softmax_scale : -CUDART_INF_F;
+                partial_max_0 = fmaxf(partial_max_0, s0[j]);
+                partial_max_1 = fmaxf(partial_max_1, s1[j]);
+            }
+
+            // Four-lane reduction, confined to groups of lanes [0..3],
+            // [4..7], ... . XOR 1 and XOR 2 never cross group boundaries.
+            #pragma unroll
+            for (int mask = 1; mask <= 2; mask *= 2) {
+                partial_max_0 = fmaxf(partial_max_0,
+                    __shfl_xor_sync(0xffffffffu, partial_max_0, mask));
+                partial_max_1 = fmaxf(partial_max_1,
+                    __shfl_xor_sync(0xffffffffu, partial_max_1, mask));
+            }
+            const float new_max_0 = fmaxf(running_max_0, partial_max_0);
+            const float new_max_1 = fmaxf(running_max_1, partial_max_1);
+            // All-masked rows: alpha=0 and P=0; avoid exp(-inf - -inf).
+            const float alpha_0 = (running_max_0 == -CUDART_INF_F ||
+                                   new_max_0 == -CUDART_INF_F)
+                                    ? 0.f : expf(running_max_0 - new_max_0);
+            const float alpha_1 = (running_max_1 == -CUDART_INF_F ||
+                                   new_max_1 == -CUDART_INF_F)
+                                    ? 0.f : expf(running_max_1 - new_max_1);
+            float partial_sum_0 = 0.f, partial_sum_1 = 0.f;
+            #pragma unroll
+            for (int j = 0; j < 4; ++j) {
+                const float p0 = (s0[j] == -CUDART_INF_F) ? 0.f : expf(s0[j] - new_max_0);
+                const float p1 = (s1[j] == -CUDART_INF_F) ? 0.f : expf(s1[j] - new_max_1);
+                partial_sum_0 += p0;
+                partial_sum_1 += p1;
+                const int key_offset = (j / 2) * 8 + 2 * lane_in_group + (j % 2);
+                // PV requires FP16 A operands. Rounding P to FP16 is an
+                // approximation; m/l remain FP32. No S or P matrix in HBM.
+                prob_shared[warp_id][lane_group][key_offset] = __float2half_rn(p0);
+                prob_shared[warp_id][lane_group + 8][key_offset] = __float2half_rn(p1);
+            }
+            #pragma unroll
+            for (int mask = 1; mask <= 2; mask *= 2) {
+                partial_sum_0 += __shfl_xor_sync(0xffffffffu, partial_sum_0, mask);
+                partial_sum_1 += __shfl_xor_sync(0xffffffffu, partial_sum_1, mask);
+            }
+            running_sum_0 = alpha_0 * running_sum_0 + partial_sum_0;
+            running_sum_1 = alpha_1 * running_sum_1 + partial_sum_1;
+            running_max_0 = new_max_0;
+            running_max_1 = new_max_1;
+            __syncwarp(); // All 16x16 probabilities are written.
+
+            // PV: P[16,16] @ V[16,8] -> 16x8 FP32. Each lane's output
+            // registers are rescaled by the row-specific alpha *before* MMA.
+            // This avoids the WMMA implementation's output shared-memory
+            // round-trip and row-wise rescaling in a separate loop.
+            #pragma unroll
+            for (int output_tile_idx = 0; output_tile_idx < OUTPUT_TILES;
+                 ++output_tile_idx) {
+                const int d_out = output_tile_idx * MMA_N;
+                uint32_t a[4], b[2];
+                const int k0 = 2 * lane_in_group;
+                const int k1 = k0 + 8;
+                a[0] = fa_pack_half2(prob_shared[warp_id][lane_group][k0],
+                                     prob_shared[warp_id][lane_group][k0 + 1]);
+                a[1] = fa_pack_half2(prob_shared[warp_id][lane_group][k1],
+                                     prob_shared[warp_id][lane_group][k1 + 1]);
+                a[2] = fa_pack_half2(prob_shared[warp_id][lane_group + 8][k0],
+                                     prob_shared[warp_id][lane_group + 8][k0 + 1]);
+                a[3] = fa_pack_half2(prob_shared[warp_id][lane_group + 8][k1],
+                                     prob_shared[warp_id][lane_group + 8][k1 + 1]);
+                const int feature = d_out + lane_group;
+                b[0] = fa_pack_half2(v_shared[key_local_start + k0][feature],
+                                     v_shared[key_local_start + k0 + 1][feature]);
+                b[1] = fa_pack_half2(v_shared[key_local_start + k1][feature],
+                                     v_shared[key_local_start + k1 + 1][feature]);
+                float* c = output_accumulator[output_tile_idx];
+                c[0] *= alpha_0; c[1] *= alpha_0;
+                c[2] *= alpha_1; c[3] *= alpha_1;
+                fa_mma_m16n8k16(output_accumulator[output_tile_idx], a, b);
+            }
+            __syncwarp(); // P buffer can be overwritten by the next 16 keys.
+        }
+        __syncthreads(); // No warp still reads K/V before the next tile load.
+    }
+
+    // Output C fragment layout gives each lane 2 adjacent features in each
+    // of two rows. We can write FP32 O directly without an output SMEM tile.
+    #pragma unroll
+    for (int t = 0; t < OUTPUT_TILES; ++t) {
+        const int d0 = t * MMA_N + 2 * lane_in_group;
+        const int d1 = d0 + 1;
+        if (query_global_0 < row) {
+            const float inv = running_sum_0 > 0.f ? 1.f / running_sum_0 : 0.f;
+            const size_t base = o_head_offset + size_t(query_global_0) * stride_os;
+            O[base + size_t(d0) * stride_oh] = output_accumulator[t][0] * inv;
+            O[base + size_t(d1) * stride_oh] = output_accumulator[t][1] * inv;
+        }
+        if (query_global_1 < row) {
+            const float inv = running_sum_1 > 0.f ? 1.f / running_sum_1 : 0.f;
+            const size_t base = o_head_offset + size_t(query_global_1) * stride_os;
+            O[base + size_t(d0) * stride_oh] = output_accumulator[t][2] * inv;
+            O[base + size_t(d1) * stride_oh] = output_accumulator[t][3] * inv;
+        }
+    }
 }
 
 
