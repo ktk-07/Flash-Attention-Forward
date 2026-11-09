@@ -1,5 +1,26 @@
 # CEG5206 Team Project — FlashAttention Forward
 
+## Part B: exact notebook execution for A/C reviewers
+
+The measured dense B implementation and recorded smoke/full runs are now in
+`part_b/`. Start with [part_b/CROSS_CHECK.md](part_b/CROSS_CHECK.md).
+
+```bash
+# Verify pinned source/input/reference data without a GPU.
+python3 part_b/scripts/reproduce_notebook.py --grid full --check-only
+# Rebuild and replay the same 83-case smoke plan on your GPU, without retuning.
+bash part_b/reproduce.sh --grid smoke --output results/b_crosscheck_smoke
+# Replay all 165 full-grid cases / 1,800 timing samples.
+bash part_b/reproduce.sh --grid full --output results/b_crosscheck_full
+```
+
+Replay preserves the recorded code, inputs, case order and launch choices.
+`crosscheck.json` states numerical replay success; `audit.passed=false` remains
+explicit because replay does not collect sanitizer/profile evidence. Timings on
+other systems are separate observations. Use the normal root A/B/C workflow for
+new accepted same-machine comparisons; its acceptance checks are unchanged.
+
+
 **Documentation:** This `README.md` describes the project, repository structure, implementation conventions and evaluation status. For step-by-step instructions to reproduce the available runs, use [README.txt](README.txt). Section 6 documents the implemented A/C workflow and the exact Part B integration contract.
 
 NUS CEG5206 — Algorithms & Performance Optimization for Computing, AY2026/2027 Semester 1, Group 1.
@@ -27,7 +48,7 @@ Each member contributes testing, tuning, profiling and analysis. Record actual c
 ```text
 README.md                         # project overview, conventions and result index
 README.txt                        # executable reproduction instructions
-run.sh                            # shared A/C pipeline; defaults to A/B/C, B pending
+run.sh                            # shared A/B/C pipeline; B safety/profiling acceptance pending
 run_all.sh                        # compatibility alias for run.sh
 scripts/run_all.py                # command logging, CSV collection and audit
 part_a/
@@ -53,7 +74,7 @@ part_c/
   PROFILING.md
 ```
 
-Part B is absent. Root and standalone A/C runners now share the generator, FP64 reference library, fixed CSV schema and validation gates. An all-parts request fails before creating a run until `part_b/run.sh` exists. Use an explicit A/C subset while B is being developed. Kernels and native evidence stay in separate directories.
+Part B now implements dense FP32 streaming, tiled and float4 fused kernels with the shared generator, FP64 oracle and seven-table adapter. See [part_b/README.md](part_b/README.md). Its retained local diagnostic measurements passed numerical checks, but sanitizer attachment and performance-counter access were blocked on the development host; these bundles deliberately fail final acceptance. A complete common-machine run is still required.
 
 ## 1. Software and platform requirements
 
@@ -229,7 +250,7 @@ Checked against this checkout on 8 November 2026. The earlier list describing th
 | Requested work | Current status | Implementation / verification |
 |---|---|---|
 | 1. Part A shared interfaces | Implemented | [`attention_reference` library](part_a/cpu_reference/CMakeLists.txt), [output-only full/sampled oracle](part_a/cpu_reference/sampled_reference.cpp), [agreement tests](part_a/tests/reference_test.cpp), per-case O validation/fingerprints in [main.cpp](part_a/main.cpp), and [canonical export](part_a/scripts/export_results.py). |
-| 2. Part B | Pending; deliberately not implemented here | Dense kernels, correctness, tuning and standalone adapter must follow the Part B contract below. No placeholder B runner is supplied. |
+| 2. Part B | Implemented; final safety/profiling acceptance pending | Dense FP32 kernels, shared-oracle validation, bounded tuning and seven-table adapter are in `part_b/`. Diagnostic results deliberately fail final acceptance when sanitizers are omitted. |
 | 3. Part C shared correctness linkage | Implemented | [Active test support](part_c/tests/test_support.cpp) calls the shared generator, pattern transformations, fingerprint and FP64 output reference; all active runners link the library through [CMake](part_c/CMakeLists.txt). Original kernel bodies are unchanged. Historical scratch/legacy tests retain their provenance and are not the shared comparison path. |
 | 4. Root experiment pipeline | Implemented for available parts | [run.sh](run.sh) invokes [scripts/run_all.py](scripts/run_all.py); standalone A/C workflows perform tests, sanitizers, tuning, timing, memory/resources, optional fresh profiling and export. Aggregation validates the requested grid and tables. Individual parts and CPU-only analysis are supported. [run_all.sh](run_all.sh) is now an alias, not a separate prototype. |
 | 5. Combined plotting and analysis | Implemented | [plot_combined.py](scripts/plot_combined.py) generates applicable standardized comparisons and preserves individual figures. A/B and dense-B/causal-C paths are tested with temporary synthetic fixtures only; actual B measurements remain unavailable. |
@@ -273,10 +294,10 @@ Part B may add FP16/Tensor Core experiments, but FP32 dense coverage is required
 
 #### Planned Part B files and result destinations
 
-Part B is not present yet. Use the following layout when implementing it; helper and kernel filenames are recommended, while `part_b/CMakeLists.txt`, `part_b/run.sh` and the public output contract are required by the existing integration.
+Part B is implemented in the layout below. Its commands and evidence limitations are documented in `part_b/README.md`. The integration contract remains authoritative.
 
 ```text
-part_b/                           # planned; not implemented in this checkout
+part_b/                           # implemented dense fused kernels and adapter
   CMakeLists.txt                  # builds B kernels/runner; links attention_reference
   README.md                       # B algorithms, variants, commands and limitations
   run.sh                          # same named CLI as part_a/run.sh and part_c/run.sh
@@ -285,7 +306,7 @@ part_b/                           # planned; not implemented in this checkout
   src/
     dense_flash_attention.cu      # definitions; separate variants into .cu files as needed
   tests/
-    kernel_runner.cpp             # small/full correctness and safety entry points
+    test_reference_replay.py       # pinned source/input and CPU-only replay guards
     evaluation_runner.cpp         # validated tuning, timing and memory cases
   scripts/
     run_standard.py               # builds, tests, tunes, profiles and exports
@@ -420,7 +441,7 @@ Offline root analysis checks the recorded child table hashes, invokes each child
 
 ### Status and final collection
 
-A/C software integration is implemented; Part B's implementation/adapter and the final full common-machine experiment remain outstanding. Smoke runs exercise the pipeline, not report performance. A requested A/C subset can pass its audit while `all_three_parts_present=false`. `--no-profile` leaves the absence of fresh counters explicit. Completing A/C does not complete the report, video or final submission.
+A/B/C software integration is implemented; Part B safety/profiling acceptance and the final full common-machine experiment remain outstanding. Smoke runs exercise the pipeline, not report performance. A requested A/C subset can pass its audit while `all_three_parts_present=false`. `--no-profile` leaves the absence of fresh counters explicit. Completing A/C does not complete the report, video or final submission.
 
 ## 7. Measurement conventions
 
@@ -483,7 +504,7 @@ See [part_c/PROFILING.md](part_c/PROFILING.md) for metric definitions, capture l
 
 Retain raw benchmark CSVs, selected configurations, metadata, plotting scripts, readable figures and reproduction instructions. Include source and source/binary hashes; large raw Nsight reports can be supplied as a separate accessible artifact with checksums. Do not submit compiled build directories as results.
 
-Part C's local evaluation does not complete the project-wide requirements. The remaining shared work includes the final dense fused Part B source and tests, same-GPU A/B/C results, materialised-versus-fused validation, dense-versus-causal work/traffic analysis, the report, video, references and member contributions. The final comparison must include materialised versus fused latency/storage, dense versus causal work/traffic, bounded tuning and controlled optimisation comparisons. No fixed speedup target is required by the rubric; well-supported slowdowns and limitations are valid results.
+Part C's local evaluation does not complete the project-wide requirements. The remaining shared work includes acceptance of Part B sanitizer/profiler evidence, same-GPU A/B/C results, materialised-versus-fused validation, dense-versus-causal work/traffic analysis, the report, video, references and member contributions. The final comparison must include materialised versus fused latency/storage, dense versus causal work/traffic, bounded tuning and controlled optimisation comparisons. No fixed speedup target is required by the rubric; well-supported slowdowns and limitations are valid results.
 
 ### Part A saved evaluation
 

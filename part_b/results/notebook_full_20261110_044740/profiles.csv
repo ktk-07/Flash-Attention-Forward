@@ -1,0 +1,1 @@
+experiment,precision,B,H,N,d,mode,variant,tile,softmax_threads,run_id,case_id,part,config,pattern,layout,input_precision,accumulator_precision,output_precision,generator,seed,input_digest,rounded_input_digest,kernel,metric,unit,value,stage,profile_repeat,availability,reason,source_report

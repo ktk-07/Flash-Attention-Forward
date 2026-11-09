@@ -1,0 +1,127 @@
+{
+  "candidates": [
+    {
+      "variant": "streaming",
+      "warps": 4,
+      "key_tile": 32
+    },
+    {
+      "variant": "tiled",
+      "warps": 4,
+      "key_tile": 32
+    },
+    {
+      "variant": "vector",
+      "warps": 4,
+      "key_tile": 32
+    },
+    {
+      "variant": "tiled",
+      "warps": 8,
+      "key_tile": 32
+    },
+    {
+      "variant": "vector",
+      "warps": 4,
+      "key_tile": 64
+    }
+  ],
+  "selected": {
+    "32": {
+      "variant": "vector",
+      "warps": 4,
+      "key_tile": 64
+    },
+    "64": {
+      "variant": "vector",
+      "warps": 4,
+      "key_tile": 32
+    },
+    "128": {
+      "variant": "streaming",
+      "warps": 4,
+      "key_tile": 32
+    }
+  },
+  "scores": {
+    "32": [
+      {
+        "config": "vector_w4_k64",
+        "geomean_ms": 1.7666753965397817
+      },
+      {
+        "config": "vector_w4_k32",
+        "geomean_ms": 1.7826508785925927
+      },
+      {
+        "config": "tiled_w8_k32",
+        "geomean_ms": 1.8352177699489338
+      },
+      {
+        "config": "tiled_w4_k32",
+        "geomean_ms": 1.860998229257013
+      },
+      {
+        "config": "streaming_w4_k32",
+        "geomean_ms": 2.3608887610336025
+      }
+    ],
+    "64": [
+      {
+        "config": "vector_w4_k32",
+        "geomean_ms": 1.9781682851523985
+      },
+      {
+        "config": "tiled_w8_k32",
+        "geomean_ms": 2.0442538527036733
+      },
+      {
+        "config": "tiled_w4_k32",
+        "geomean_ms": 2.1468157663
+      },
+      {
+        "config": "streaming_w4_k32",
+        "geomean_ms": 2.2989593316614934
+      },
+      {
+        "config": "vector_w4_k64",
+        "geomean_ms": 2.9631137866250774
+      }
+    ],
+    "128": [
+      {
+        "config": "streaming_w4_k32",
+        "geomean_ms": 2.3637100037037793
+      },
+      {
+        "config": "tiled_w8_k32",
+        "geomean_ms": 2.6428439217531388
+      },
+      {
+        "config": "vector_w4_k32",
+        "geomean_ms": 3.674078535799599
+      },
+      {
+        "config": "tiled_w4_k32",
+        "geomean_ms": 4.505326946271476
+      },
+      {
+        "config": "vector_w4_k64",
+        "geomean_ms": 6.11206320616269
+      }
+    ]
+  },
+  "tuning_lengths": [
+    256,
+    1024
+  ],
+  "reporting_lengths": [
+    256,
+    512,
+    1024,
+    2048,
+    4096
+  ],
+  "selection": "minimum geometric mean forward median, lexical config-name tie break",
+  "frozen_utc": "2026-11-09T20:48:14.483909+00:00"
+}

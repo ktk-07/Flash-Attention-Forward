@@ -74,11 +74,15 @@ class IntegrationTests(unittest.TestCase):
             self.assertTrue((out/'plots/combined/dense_causal_work.png').is_file())
     def test_missing_b_fails_without_writing(self):
         with tempfile.TemporaryDirectory() as temp:
-            target=Path(temp)/'new';r=subprocess.run(['bash',ROOT/'run.sh','--output',target,'--dry-run'],capture_output=True,text=True)
+            # Missing-B rejection must use a fixture now that B exists in-tree.
+            repo=Path(temp)/'repo';shutil.copytree(ROOT/'scripts',repo/'scripts')
+            for part in ['part_a','part_c']:
+                (repo/part).mkdir();(repo/part/'run.sh').write_text('# fixture: never executed\n')
+            target=Path(temp)/'new';r=subprocess.run([sys.executable,repo/'scripts/run_all.py','--output',target,'--dry-run'],capture_output=True,text=True)
             self.assertNotEqual(r.returncode,0);self.assertIn('part_b/run.sh is missing',r.stderr);self.assertFalse(target.exists())
     def test_dry_run_and_alias_no_gpu_or_outputs(self):
         with tempfile.TemporaryDirectory() as temp:
-            for wrapper in ['run.sh','run_all.sh','part_a/run.sh','part_c/run.sh']:
+            for wrapper in ['run.sh','run_all.sh','part_a/run.sh','part_b/run.sh','part_c/run.sh']:
                 target=Path(temp)/wrapper.replace('/','_');args=['bash',ROOT/wrapper,'--arch','86','--dry-run','--output',target]
                 if wrapper in ['run.sh','run_all.sh']:args+=['--parts','a,c']
                 result=subprocess.run(args,capture_output=True,text=True);self.assertEqual(result.returncode,0,result.stderr);self.assertFalse(target.exists())

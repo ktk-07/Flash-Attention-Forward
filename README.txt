@@ -1,3 +1,10 @@
+PART B EXACT REPLAY FOR A/C REVIEWERS
+See part_b/CROSS_CHECK.md.
+python3 part_b/scripts/reproduce_notebook.py --grid full --check-only
+bash part_b/reproduce.sh --grid smoke --output results/b_crosscheck_smoke
+bash part_b/reproduce.sh --grid full --output results/b_crosscheck_full
+Replay is diagnostic; root safety/profile acceptance remains unchanged.
+
 CEG5206 TEAM PROJECT — FLASHATTENTION FORWARD
 Reproduction instructions
 
@@ -33,13 +40,11 @@ or another supported SM. --device 0 (or a GPU UUID) selects one physical GPU.
 Full runs include fresh Nsight profiling. --no-profile explicitly skips it and
 records missing counter evidence. Avoid competing GPU workloads.
 
-4. COMPLETE EXAMINER RUN (AFTER PART B IS SUPPLIED)
+4. COMPLETE EXAMINER RUN (AFTER SAFETY/PROFILING ACCEPTANCE)
 
 bash run.sh --output results/final_submission
 
-The default requests A/B/C and currently stops before creating output because
-Part B is absent. README.md Section 6 contains the exact B implementation and
-adapter instructions. Do not treat an A/C subset as a complete submission.
+The default requests A/B/C. Part B is implemented; see part_b/README.md for its commands and diagnostic evidence limitations. Final sanitizer/profiler acceptance and a common-machine run remain required. Do not treat an A/C subset as a complete submission.
 run_all.sh is an alias for run.sh, using the identical workflow.
 
 5. INDEPENDENT PARTS
@@ -47,7 +52,7 @@ run_all.sh is an alias for run.sh, using the identical workflow.
 bash part_a/run.sh --output results/a_only
 bash part_c/run.sh --output results/c_only
 
-After B implements the shared interface:
+Part B implements the shared interface:
 bash part_b/run.sh --output results/b_only
 
 Individual runners accept --build DIR, --arch, --device, --grid full|smoke,

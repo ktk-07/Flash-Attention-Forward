@@ -1,0 +1,6 @@
+{
+  "uuid": "GPU-46dcdb6f-3d34-f41d-dea5-746626f9b013",
+  "name": "NVIDIA GeForce RTX 4070 Ti",
+  "driver_version": "621.01",
+  "compute_cap": "8.9"
+}
