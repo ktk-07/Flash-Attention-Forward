@@ -5,11 +5,22 @@ os.environ.setdefault("MPLCONFIGDIR","/tmp/attention-matplotlib")
 from pathlib import Path
 import results_schema as schema
 from workflow import dump,sha
+from ncu_csv import metric_aliases
 
 def write_rows(path,rows):
     if not rows:return
     with path.open('w',newline='') as stream:
         w=csv.DictWriter(stream,fieldnames=list(rows[0]));w.writeheader();w.writerows(rows)
+def metric_records(rows,name):
+    aliases=metric_aliases(name);selected={}
+    for row in rows:
+        if row['metric'] not in aliases:continue
+        key=tuple(row.get(k,'') for k in ['case_id','stage','profile_repeat'])
+        old=selected.get(key)
+        rank=lambda r:(r['availability']!='available',aliases.index(r['metric']))
+        if old is None or rank(row)<rank(old):selected[key]=row
+    return list(selected.values())
+
 def generate(out):
     import matplotlib
     matplotlib.use('Agg')
@@ -24,6 +35,16 @@ def generate(out):
             for ext in ['png','pdf']:fig.savefig(folder/f'{name}.{ext}',metadata={'CreationDate':None,'ModDate':None} if ext=='pdf' else {'Software':'attention-evaluation'},dpi=160)
             plt.close(fig);index.append({'part':part,'figure':str((folder/name).relative_to(out)),'description':description})
         modes=sorted({r['mode'] for r in subset});ds=sorted({int(r['d']) for r in subset})
+        if part=='part_a':
+            fig,axes=plt.subplots(1,2,figsize=(8,3.2))
+            for ax,mode in zip(axes,['dense','causal']):
+                for variant in ['naive','tiled','parallel','optimized','wmma','ptx']:
+                    line=sorted([r for r in subset if r['mode']==mode and r['d']=='64' and r['variant']==variant],key=lambda r:int(r['N']))
+                    if not line:continue
+                    ax.errorbar([int(r['N']) for r in line],[float(r['forward_median_ms']) for r in line],yerr=[[float(r['forward_median_ms'])-float(r['forward_q1_ms']) for r in line],[float(r['forward_q3_ms'])-float(r['forward_median_ms']) for r in line]],marker='o',label=variant,capsize=2)
+                ax.set(title=mode,xlabel='Sequence length',ylabel='Forward latency (ms)',yscale='log');ax.set_xticks([256,1024,2048,4096]);ax.grid(alpha=.25);ax.legend(fontsize=9)
+            save(fig,'materialised_comparison','Part A d=64 progression, medians and interquartile ranges. Tensor Core variants use FP16 operands and FP32 accumulation/output.')
+
         for precision in ['FP32','FP16']:
             current=[r for r in subset if r['precision']==precision]
             if not current:continue
@@ -64,6 +85,22 @@ def generate(out):
             keys=sorted(groups);ax.bar(range(len(keys)),[math.exp(sum(map(math.log,groups[k]))/len(groups[k])) for k in keys]);ax.set_xticks(range(len(keys)),[f'{a}/{b}' for a,b in keys],rotation=90,fontsize=6);ax.set(ylabel='Geometric mean tuning latency (ms)',yscale='log')
             save(fig,'tuning','Bounded candidate sweep, grouped by mode and configuration. Selection rules and frozen configurations are retained.')
         profiled=[r for r in tables['profiles'] if r['part']==part and r['availability']=='available']
+        if part=='part_a':
+            reads=metric_records(profiled,'dram__bytes_read.sum');writes=metric_records(profiled,'dram__bytes_write.sum')
+            groups={}
+            for kind,records in [('read',reads),('write',writes)]:
+                for r in records:
+                    key=(r['variant'],r['mode'],r['N'],r['stage'])
+                    groups.setdefault(key,{}).setdefault(kind,[]).append(float(r['value']))
+            keys=sorted(k for k,v in groups.items() if 'read' in v and 'write' in v)
+            if keys:
+                med=lambda a:sorted(a)[len(a)//2]/2**20
+                read=[med(groups[k]['read']) for k in keys];write=[med(groups[k]['write']) for k in keys]
+                fig,ax=plt.subplots(figsize=(13,4.8));x=list(range(len(keys)))
+                ax.bar(x,read,label='DRAM read');ax.bar(x,write,bottom=read,label='DRAM write')
+                ax.set_xticks(x,['/'.join(k) for k in keys],rotation=90,fontsize=6)
+                ax.set(ylabel='DRAM traffic per kernel capture (MiB)',title='Separate Nsight stage captures; cache control=all');ax.legend();ax.grid(axis='y',alpha=.25)
+                save(fig,'dram_traffic','Median read/write traffic over three instrumented captures per stage. These cold-cache captures are separate from normal forward timing.')
         metrics=['sm__warps_active.avg.pct_of_peak_sustained_active','smsp__warps_eligible.avg.per_cycle_active','smsp__pcsamp_warps_issue_stalled_mio_throttle']
         selected_metrics=[metric for metric in metrics if any(r['metric']==metric for r in profiled)]
         if selected_metrics:
@@ -79,7 +116,7 @@ def generate(out):
         stages=[r for r in subset if r.get('qk_median_ms')]
         if stages:
             write_rows(folder/'stage_plot_data.csv',stages)
-            fig,ax=plt.subplots(figsize=(10,4));stage_rows=[r for r in stages if r['variant'] in ['optimized','tensorcore'] and r['d']=='64'];x=list(range(len(stage_rows)));bottom=[0.]*len(x)
+            fig,ax=plt.subplots(figsize=(10,4));stage_rows=[r for r in stages if r['variant'] in ['optimized','wmma','ptx'] and r['d']=='64'];x=list(range(len(stage_rows)));bottom=[0.]*len(x)
             for stage in ['qk','softmax','pv']:
                 values=[float(r[stage+'_median_ms']) for r in stage_rows];ax.bar(x,values,bottom=bottom,label=stage);bottom=[a+b for a,b in zip(bottom,values)]
             ax.set_xticks(x,[f"{r['mode']}/{r['variant']}/N{r['N']}" for r in stage_rows],rotation=90,fontsize=7);ax.set(ylabel='Independent stage median (ms)',title='Stage breakdown; sum is not the measured forward median');ax.legend()
@@ -97,35 +134,37 @@ def generate(out):
     for mode,left,right in [('causal','part_a','part_c'),('dense','part_a','part_b')]:
         if left not in parts or right not in parts:continue
         for precision in ['FP32','FP16']:
-            arows=[r for r in rows if r['part']==left and r['mode']==mode and r['precision']==precision and r['variant']==('optimized' if precision=='FP32' else 'tensorcore')]
+            arows=[r for r in rows if r['part']==left and r['mode']==mode and r['precision']==precision and r['variant'] in (['optimized'] if precision=='FP32' else ['wmma','ptx'])]
             for a in arows:
                 matches=[r for r in rows if r['part']==right and r['mode']==mode and r['precision']==precision and all(r[k]==a[k] for k in (['B','H','N','d','pattern','input_digest']+(['rounded_input_digest'] if precision=='FP16' else [])))]
-                if right=='part_c':matches=[r for r in matches if r['variant']==choose_c(precision,int(a['d']))]
+                if right=='part_c':matches=[r for r in matches if r['variant']==(choose_c(precision,int(a['d'])) if precision=='FP32' else a['variant'])]
                 if right=='part_b':matches=[r for r in matches if r['variant']=='selected']
                 if len(matches)!=1:continue
-                b=matches[0];comparison.append({'mode':mode,'precision':precision,'B':a['B'],'H':a['H'],'N':a['N'],'d':a['d'],'baseline_part':left,'baseline_variant':a['variant'],'target_part':right,'target_variant':b['variant'],'baseline_ms':a['forward_median_ms'],'baseline_q1_ms':a['forward_q1_ms'],'baseline_q3_ms':a['forward_q3_ms'],'target_ms':b['forward_median_ms'],'target_q1_ms':b['forward_q1_ms'],'target_q3_ms':b['forward_q3_ms'],'speedup':float(a['forward_median_ms'])/float(b['forward_median_ms']),'input_digest':a['input_digest'],'rounded_input_digest':a['rounded_input_digest'],'numerical_contract':'matched_FP32' if precision=='FP32' else 'FP16_inputs_A_FP16_accum_output_vs_C_FP32_accum_output'})
+                b=matches[0]
+                if any(a[k]!=b[k] for k in ['input_precision','accumulator_precision','output_precision']):raise ValueError('Cross-part precision metadata differs')
+                comparison.append({'mode':mode,'precision':precision,'B':a['B'],'H':a['H'],'N':a['N'],'d':a['d'],'baseline_part':left,'baseline_variant':a['variant'],'target_part':right,'target_variant':b['variant'],'baseline_ms':a['forward_median_ms'],'baseline_q1_ms':a['forward_q1_ms'],'baseline_q3_ms':a['forward_q3_ms'],'target_ms':b['forward_median_ms'],'target_q1_ms':b['forward_q1_ms'],'target_q3_ms':b['forward_q3_ms'],'speedup':float(a['forward_median_ms'])/float(b['forward_median_ms']),'input_digest':a['input_digest'],'rounded_input_digest':a['rounded_input_digest'],'numerical_contract':'matched_FP32' if precision=='FP32' else 'FP16_inputs_FP32_accum_output_different_P_rounding_order'})
     for mode,left,right in [('causal','part_a','part_c'),('dense','part_a','part_b')]:
         if left in parts and right in parts:
             for precision in (['FP32','FP16'] if right=='part_c' else ['FP32']):
-                count=sum(r['part']==left and r['mode']==mode and r['precision']==precision and r['variant']==('optimized' if precision=='FP32' else 'tensorcore') for r in rows)
+                count=sum(r['part']==left and r['mode']==mode and r['precision']==precision and r['variant'] in (['optimized'] if precision=='FP32' else ['wmma','ptx']) for r in rows)
                 actual=sum(r['target_part']==right and r['precision']==precision for r in comparison)
                 if actual!=count:raise ValueError(f'Missing frozen cross-part comparison: {right}/{precision}, expected {count}, found {actual}')
     folder=out/'plots/combined';folder.mkdir(parents=True,exist_ok=True);write_rows(out/'comparison.csv',comparison)
     if comparison:
         fig,axes=plt.subplots(1,2,figsize=(12,4))
         groups={}
-        for row in comparison:groups.setdefault((row['target_part'],row['precision'],row['d']),[]).append(row)
+        for row in comparison:groups.setdefault((row['target_part'],row['precision'],row['d'],row['baseline_variant']),[]).append(row)
         for key,group in sorted(groups.items()):
             group.sort(key=lambda r:int(r['N']));label='/'.join(key)
             axes[0].plot([int(r['N']) for r in group],[float(r['speedup']) for r in group],marker='o',label=label)
             axes[1].errorbar([int(r['N']) for r in group],[float(r['target_ms']) for r in group],yerr=[[float(r['target_ms'])-float(r['target_q1_ms']) for r in group],[float(r['target_q3_ms'])-float(r['target_ms']) for r in group]],marker='o',label=label,capsize=2)
-            axes[1].plot([int(r['N']) for r in group],[float(r['baseline_ms']) for r in group],linestyle='--',label='A/'+key[1]+'/d'+key[2])
+            axes[1].plot([int(r['N']) for r in group],[float(r['baseline_ms']) for r in group],linestyle='--',label='A/'+key[3]+'/'+key[1]+'/d'+key[2])
         axes[0].axhline(1,color='gray',linestyle='--');axes[0].set(xlabel='Sequence length',ylabel='Part A latency / fused latency');axes[1].set(xlabel='Sequence length',ylabel='Forward latency (ms); A dashed, fused solid',yscale='log')
         for ax in axes:ax.grid(alpha=.25);ax.legend(fontsize=7)
-        fig.suptitle('Same-input comparison; FP16 A accum/output=FP16, C accum/output=FP32',fontsize=10)
+        fig.suptitle('Same inputs and FP32 accumulation/output; FP16 probability rounding order differs',fontsize=10)
         fig.tight_layout()
         for ext in ['png','pdf']:fig.savefig(folder/f'cross_part.{ext}',metadata={'CreationDate':None,'ModDate':None} if ext=='pdf' else {'Software':'attention-evaluation'},dpi=160)
-        plt.close(fig);index.append({'part':'combined','figure':'plots/combined/cross_part','description':'Frozen selections on identical inputs. FP16 comparison has different accumulator/output contracts.'})
+        plt.close(fig);index.append({'part':'combined','figure':'plots/combined/cross_part','description':'Frozen selections on identical inputs. FP16 comparison matches accumulator/output precision; probability rounding order differs.'})
         memory_data=[];fig,ax=plt.subplots(figsize=(9,4))
         for part in parts:
             for precision in ['FP32','FP16']:
@@ -145,7 +184,7 @@ def generate(out):
             amounts=[]
             for metric in ['dram__bytes_read.sum','dram__bytes_write.sum']:
                 scale={'byte':1,'Kbyte':1000,'Mbyte':1000**2,'Gbyte':1000**3,'Tbyte':1000**4}
-                raw=[p for p in tables['profiles'] if p['case_id']==row['case_id'] and p['metric']==metric and p['availability']=='available']
+                raw=[p for p in metric_records(tables['profiles'],metric) if p['case_id']==row['case_id'] and p['availability']=='available']
                 if any(p['unit'] not in scale for p in raw):return ''
                 values=sorted(float(p['value'])*scale[p['unit']] for p in raw)
                 if not values:return ''

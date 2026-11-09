@@ -205,7 +205,7 @@ After a standalone run, open the files below using a text/CSV viewer and an imag
 | Native evidence and additional studies | `results/a_only/raw/part_a/` | `results/c_only/raw/part_c/`, `supplementary/part_c/` |
 | Commands and diagnostic output | `results/a_only/commands.jsonl`, `logs/` | `results/c_only/commands.jsonl`, `logs/` |
 
-Paths in this table are relative to the repository root. Saved historical results in `part_a/results/` and `part_c/results/` are separate from these new output bundles. Check validation scope, GPU identity and precision labels before using a value in the report.
+Paths in this table are relative to the repository root. Saved standalone Part A results and historical Part C results are separate from these new output bundles. Check validation scope, GPU identity and precision labels before using a value in the report.
 
 To regenerate an individual's saved figures/tables without executing GPU kernels, run from the repository root:
 
@@ -414,7 +414,7 @@ results/<run_id>/
 
 Each standalone bundle has the same seven canonical CSVs at its root. Keeping complete child bundles preserves extra results needed for the report. Private scratch/history stays in ignored `extra/`; numerical evidence does not.
 
-[plot_combined.py](scripts/plot_combined.py) consumes canonical tables only. It generates per-part FP32/FP16 kernel progression with IQR, throughput/storage, tuning and materialised stage breakdowns, plus applicable A-causal/C-causal and A-dense/B-dense comparisons. Once B is present it also generates dense-B versus causal-C latency, analytical valid-pair counts and available measured DRAM traffic, explicitly labelling them as different workloads. C additionally regenerates its native CUDA progression, Tensor Core progression, frozen core-versus-Tensor-Core, controlled scalar/vector-load ablation, tuning, memory and profiler figures. Full numerical data and native profiler metrics remain available for further report analysis. Missing parts/counters are declared, not plotted as fabricated zeros. FP16 A/C comparisons explicitly label their different accumulation/output contracts.
+[plot_combined.py](scripts/plot_combined.py) consumes canonical tables only. It generates per-part FP32/FP16 kernel progression with IQR, throughput/storage, tuning and materialised stage breakdowns, plus applicable A-causal/C-causal and A-dense/B-dense comparisons. Once B is present it also generates dense-B versus causal-C latency, analytical valid-pair counts and available measured DRAM traffic, explicitly labelling them as different workloads. C additionally regenerates its native CUDA progression, Tensor Core progression, frozen core-versus-Tensor-Core, controlled scalar/vector-load ablation, tuning, memory and profiler figures. Full numerical data and native profiler metrics remain available for further report analysis. Missing parts/counters are declared, not plotted as fabricated zeros. FP16 A/C comparisons use FP32 accumulation/output and label their different probability rounding order.
 
 Offline root analysis checks the recorded child table hashes, invokes each child’s native re-extraction/analysis, rechecks table hashes, aggregates, copies retained supplementary evidence and regenerates common figures. Individual analyze modes re-extract native data; C also regenerates native/supplementary plots. Large binary Nsight reports are optional for CSV-only figure reproduction and remain checksummed evidence for deeper inspection.
 
@@ -438,13 +438,13 @@ A/C software integration is implemented; Part B's implementation/adapter and the
 
 The current studies use fixed sequential ordering and unmanaged clocks; very close winners may change on rerun. Rotating implementation order across independent future sessions would strengthen uncertainty estimates.
 
-Part A Tensor Core uses FP16 accumulators, intermediates, softmax and output. Part C Tensor Core uses FP16 Q/K/V, FP32 accumulators/state/output, and FP16 probability operands for PV. These comparisons show precision/performance trade-offs; they do not isolate fusion or hardware alone. Never divide historical Part A timings by Part C timings from another GPU.
+Part A provides WMMA and direct PTX materialised baselines with FP16 Q/K/V/P and FP32 S, accumulation, softmax arithmetic and O. Part C also uses FP32 accumulation/output, but rounds tile probabilities before online normalization. Match A-WMMA with C-WMMA and A-PTX with C-PTX, and retain this rounding-order distinction. Never divide historical Part A timings by Part C timings from another GPU.
 
 ## 8. Read the results
 
 | Location | Contents |
 |---|---|
-| [part_a/results/](part_a/results/) | Historical materialised results on RTX 5060 Ti |
+| [part_a/results/](part_a/results/) | Completed FP32 and mixed-precision materialised results on RTX 5060 Ti |
 | [part_c/results/layout_validation/](part_c/results/layout_validation/) | Previous fixed-default correctness, benchmarks, sanitizers and figures |
 | [part_c/results/standardized/](part_c/results/standardized/) | Part A-format saved-data export, retaining native counters and supplementary source/SASS evidence |
 | [part_c/results/bounded_evaluation/](part_c/results/bounded_evaluation/) | New common-input bounded study, frozen selection, matched ablation and memory |
@@ -484,3 +484,7 @@ See [part_c/PROFILING.md](part_c/PROFILING.md) for metric definitions, capture l
 Retain raw benchmark CSVs, selected configurations, metadata, plotting scripts, readable figures and reproduction instructions. Include source and source/binary hashes; large raw Nsight reports can be supplied as a separate accessible artifact with checksums. Do not submit compiled build directories as results.
 
 Part C's local evaluation does not complete the project-wide requirements. The remaining shared work includes the final dense fused Part B source and tests, same-GPU A/B/C results, materialised-versus-fused validation, dense-versus-causal work/traffic analysis, the report, video, references and member contributions. The final comparison must include materialised versus fused latency/storage, dense versus causal work/traffic, bounded tuning and controlled optimisation comparisons. No fixed speedup target is required by the rubric; well-supported slowdowns and limitations are valid results.
+
+### Part A saved evaluation
+
+The saved Part A run covers 180 main configurations with all six variants, 96 tuning configurations and 108 profiled kernel captures on the RTX 5060 Ti. Correctness records passed. These standalone results are separate from the pending common-machine A/B/C evaluation. Part A report counters are kept compact; the readers accept current and older Nsight DRAM names. See [Part A](part_a/README.md) for commands and result scope.

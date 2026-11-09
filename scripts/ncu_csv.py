@@ -13,3 +13,11 @@ def metric_rows(context,data,units,repeat,source,stage):
         try:available=math.isfinite(float(raw.replace(',','')))
         except ValueError:available=False
         yield {**context,'kernel':data['Kernel Name'],'metric':name,'unit':units.get(name,''),'value':raw.replace(',','') if available else '', 'stage':stage,'profile_repeat':str(repeat),'availability':'available' if available else 'unavailable','reason':'' if available else 'Nsight value unavailable; original retained in raw CSV','source_report':source}
+
+# Nsight counter aliases
+ALIASES={
+    'dram__bytes_read.sum':('dram__bytes_read.sum','dram__bytes_op_read.sum'),
+    'dram__bytes_write.sum':('dram__bytes_write.sum','dram__bytes_op_write.sum'),
+    'dram__throughput.avg.pct_of_peak_sustained_elapsed':('dram__throughput.avg.pct_of_peak_sustained_elapsed','gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed'),
+}
+def metric_aliases(name):return ALIASES.get(name,(name,))

@@ -102,11 +102,20 @@ parts/part_a/ and parts/part_c/ retain complete standalone bundles including
 native data, commands, logs, configuration selections and additional evidence.
 Main figures are in plots/part_a/, plots/part_c/ and plots/combined/, PNG/PDF.
 Additional C profiler evidence remains in supplementary/part_c/ and its child
-bundle. Historical results in part_a/results/ and part_c/results/ are preserved;
+bundle. Saved results in part_a/results/ and historical results in part_c/results/ remain separate;
 never divide historical timings collected on different GPUs.
 
 Twenty repetitions describe within-case spread. Large numerical checks sample
 three query rows/head plus all-output finiteness; small suites check full O.
-FP16 A and C have different accumulation/output contracts, labelled explicitly.
+A and C Tensor Core paths use FP32 accumulation/output; probability rounding order differs.
 The final report, video, references, contribution statement and common-machine
 A/B/C full run are still team submission work. No runner performs Git actions.
+
+PART A SAVED RESULTS
+
+Part A includes FP32 naive/tiled/parallel/optimized and mixed-precision WMMA/PTX.
+The saved full-grid RTX 5060 Ti run and compact report figures are in part_a/results.
+Regenerate the figures with: python3 part_a/plot_results.py
+A/C Tensor Core paths use FP32 accumulation/output and different probability rounding order.
+Part A accepts compressed Nsight reports and supports profiling-only resume.
+A new common-machine A/B/C run remains required after Part B integration.

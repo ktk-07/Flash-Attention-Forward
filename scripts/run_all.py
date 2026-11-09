@@ -31,7 +31,7 @@ def aggregate(out,requested,grid):
         status=json.loads((bundle/'run_status.json').read_text()) if (bundle/'run_status.json').exists() else {}
         profile_requested[part]=manifest.get('profile_requested',status.get('profiling_requested',False))
         profile_captures[part]=audit.get('profile_captures',0)
-        if profile_requested[part] and profile_captures[part] < {'part_a':72,'part_b':6,'part_c':12}[part]:raise ValueError(part+' lacks requested fresh profiling captures')
+        if profile_requested[part] and profile_captures[part] < {'part_a':108,'part_b':6,'part_c':12}[part]:raise ValueError(part+' lacks requested fresh profiling captures')
         devices[part]=device
         if len({d['uuid'] for d in devices.values()})!=1:raise ValueError('Cannot combine measurements from different physical GPUs')
         main=[r for r in native['summary'] if r['experiment']=='proposal'];counts[part]=len(main)
@@ -42,7 +42,7 @@ def aggregate(out,requested,grid):
         for precision in ['FP32','FP16'] if part!='part_b' else ['FP32']:
             found={tuple(r[k] for k in ['B','H','N','d','mode']) for r in main if r['precision']==precision}
             if found!=expected:raise ValueError(f'{part}: incomplete {precision} {grid} grid')
-            required=(['naive','tiled','parallel','optimized'] if precision=='FP32' else ['tensorcore']) if part=='part_a' else (['skip','vector'] if precision=='FP32' else ['wmma','ptx']) if part=='part_c' else ['selected']
+            required=(['naive','tiled','parallel','optimized'] if precision=='FP32' else ['wmma','ptx']) if part=='part_a' else (['skip','vector'] if precision=='FP32' else ['wmma','ptx']) if part=='part_c' else ['selected']
             for variant in required:
                 covered={tuple(r[k] for k in ['B','H','N','d','mode']) for r in main if r['precision']==precision and r['variant']==variant}
                 if covered!=expected:raise ValueError(f'{part}: incomplete required variant {variant}')
@@ -73,7 +73,7 @@ def aggregate(out,requested,grid):
     dump(out/'aggregation_audit.json',audit);dump(out/'audit.json',audit)
     dump(out/'manifest.json',{'schema_version':schema.VERSION,'requested_parts':requested,'grid':grid,'devices':devices,'source_tables':source_hashes,'missing_parts':[p for p in PARTS if p not in requested],'processing_sources':{str(p.relative_to(ROOT)):sha(p) for p in sorted((ROOT/'scripts').glob('*.py'))},'generated_utc':datetime.now(timezone.utc).isoformat()})
     generate(out)
-    (out/'ANALYSIS.md').write_text('# Combined evaluation\n\nRequested parts: '+', '.join(requested)+'. Grid: '+grid+'.\n\nAll accepted timing rows have output validation against the shared Part A FP64 oracle. Benchmark checks use three query rows per head plus all-output finiteness checks; Part A additionally checks full output for its small benchmark shapes. Small correctness suites compare full outputs.\n\nInput fingerprints and physical GPU UUIDs agree. FP32 A/C comparisons match numerical precision. FP16 comparisons use identical rounded inputs but A accumulates and outputs FP16, while C accumulates and outputs FP32; interpret these as different numerical contracts. Configuration selection precedes the final grid; full-grid N=512/2048/4096 are held out from tuning.\n\nTwenty repetitions describe within-case variation, not independent-session uncertainty. Explicit allocation ledgers are not total process peaks. Fused stage timings are unavailable. Nsight instrumented timings are excluded. Missing parts and missing counters are declared in aggregation_audit.json; an A/C or smoke run is not the final A/B/C experiment. Native data, commands and additional insights remain in parts/.\n')
+    (out/'ANALYSIS.md').write_text('# Combined evaluation\n\nRequested parts: '+', '.join(requested)+'. Grid: '+grid+'.\n\nAll accepted timing rows have output validation against the shared Part A FP64 oracle. Benchmark checks use three query rows per head plus all-output finiteness checks; Part A additionally checks full output for small shapes and N=256,d=64. Small correctness suites compare full outputs.\n\nInput fingerprints and physical GPU UUIDs agree. FP32 A/C comparisons match numerical precision. FP16 comparisons use identical rounded inputs and FP32 accumulation/output in A and C. A rounds normalized P; C rounds tile probabilities before online normalization. Configuration selection precedes the final grid; full-grid N=512/2048/4096 are held out from tuning.\n\nTwenty repetitions describe within-case variation, not independent-session uncertainty. Explicit allocation ledgers are not total process peaks. Fused stage timings are unavailable. Nsight instrumented timings are excluded. Missing parts and missing counters are declared in aggregation_audit.json; an A/C or smoke run is not the final A/B/C experiment. Native data, commands and additional insights remain in parts/.\n')
     return audit
 
 def main():

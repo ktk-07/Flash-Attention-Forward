@@ -60,63 +60,46 @@ KernelResources softmax_parallel_resources(Shape shape,unsigned threads) {
     if(threads==256) return kernel_info("softmax",softmax_parallel_kernel<256>,256,blocks);
     throw std::invalid_argument("Unsupported softmax block");
 }
-// FP16 arithmetic and reduction
+// FP32 row reduction, FP16 probabilities for PV
 template<unsigned threads>
-__global__ void softmax_fp16_kernel(const __half* s,__half* p,Shape shape,bool causal,std::size_t rows) {
-    __shared__ __half partial[threads];
+__global__ void softmax_mixed_kernel(const float* s,__half* p,Shape shape,bool causal,std::size_t rows) {
+    __shared__ float partial[threads];
     const unsigned tid=threadIdx.x;
-    const __half zero=__float2half(0.0f);
     for(std::size_t row=blockIdx.x;row<rows;row+=gridDim.x) {
-        const auto offset=row*shape.N;
-        const auto valid=causal ? row%shape.N+1 : shape.N;
-        __half maximum=__float2half(-CUDART_INF_F);
-        for(std::size_t j=tid;j<valid;j+=threads) maximum=__hmax(maximum,s[offset+j]);
-
-        // row maximum
+        const auto offset=row*shape.N,valid=causal?row%shape.N+1:shape.N;
+        float maximum=-CUDART_INF_F;
+        for(std::size_t j=tid;j<valid;j+=threads) maximum=fmaxf(maximum,s[offset+j]);
         partial[tid]=maximum;
         __syncthreads();
         for(unsigned step=threads/2;step;step/=2) {
-            if(tid<step) partial[tid]=__hmax(partial[tid],partial[tid+step]);
+            if(tid<step) partial[tid]=fmaxf(partial[tid],partial[tid+step]);
             __syncthreads();
         }
         maximum=partial[0];
         __syncthreads();
-
-        // keep the sum in FP16
-        __half sum=zero;
-        for(std::size_t j=tid;j<shape.N;j+=threads) {
-            const __half value=j<valid ? hexp(__hsub(s[offset+j],maximum)) : zero;
-            p[offset+j]=value;
-            sum=__hadd(sum,value);
-        }
-
+        float sum=0;
+        for(std::size_t j=tid;j<valid;j+=threads) sum+=expf(s[offset+j]-maximum);
         partial[tid]=sum;
         __syncthreads();
         for(unsigned step=threads/2;step;step/=2) {
-            if(tid<step) partial[tid]=__hadd(partial[tid],partial[tid+step]);
+            if(tid<step) partial[tid]+=partial[tid+step];
             __syncthreads();
         }
-
-        // divide by the row sum
         sum=partial[0];
-        for(std::size_t j=tid;j<shape.N;j+=threads) p[offset+j]=__hdiv(p[offset+j],sum);
+        for(std::size_t j=tid;j<shape.N;j+=threads)
+            p[offset+j]=__float2half_rn(j<valid?expf(s[offset+j]-maximum)/sum:0.0f);
         __syncthreads();
     }
 }
-
-// not sure if 256 threads will be faster for longer rows
-void launch_softmax_fp16(const __half* s,__half* p,Shape shape,bool causal,unsigned threads) {
+void launch_softmax_mixed(const float* s,__half* p,Shape shape,bool causal,unsigned threads) {
     const auto rows=shape.B*shape.H*shape.N;
     const auto blocks=static_cast<unsigned>(std::min<std::size_t>(rows,65535));
-    if(threads==128) softmax_fp16_kernel<128><<<blocks,128>>>(s,p,shape,causal,rows);
-    else softmax_fp16_kernel<256><<<blocks,256>>>(s,p,shape,causal,rows);
+    if(threads==128) softmax_mixed_kernel<128><<<blocks,128>>>(s,p,shape,causal,rows);
+    else softmax_mixed_kernel<256><<<blocks,256>>>(s,p,shape,causal,rows);
 }
-
-KernelResources softmax_fp16_resources(Shape shape,unsigned threads) {
-    const auto rows=shape.B*shape.H*shape.N;
-    const auto blocks=static_cast<unsigned>(std::min<std::size_t>(rows,65535));
-    if(threads==128) return kernel_info("softmax",softmax_fp16_kernel<128>,128,blocks);
-    return kernel_info("softmax",softmax_fp16_kernel<256>,256,blocks);
+KernelResources softmax_mixed_resources(Shape shape,unsigned threads) {
+    const auto blocks=static_cast<unsigned>(std::min<std::size_t>(shape.B*shape.H*shape.N,65535));
+    if(threads==128) return kernel_info("softmax",softmax_mixed_kernel<128>,128,blocks);
+    return kernel_info("softmax",softmax_mixed_kernel<256>,256,blocks);
 }
-
 }

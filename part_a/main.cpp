@@ -32,6 +32,8 @@ struct Options {
     bool cpu=false, custom=false, fixed=false, profile=false;
 };
 
+bool tensorcore(const std::string& name) { return name=="wmma" || name=="ptx"; }
+
 struct Variant { const char* name; BaselineVariant value; };
 struct Stats { double q1, median, q3; double iqr() const { return q3-q1; } };
 std::uint64_t integer(const std::string& text) {
@@ -48,7 +50,7 @@ Options parse(int argc,char** argv) {
         if(arg=="--help") {
             std::cout<<"attention [--cpu] [--shape B H N d] [--mode dense|causal|both]\n"
                 "  --output NEW_DIRECTORY --grid correctness|representative|tuning|ablation|proposal\n"
-                "  --variants main|all|naive|tiled|parallel|optimized|tensorcore\n"
+                "  --variants main|all|naive|tiled|parallel|optimized|wmma|ptx\n"
                 "  --tile 8|16|32 --softmax-threads 128|256\n"
                 "  --profile-only\n";
             std::exit(0);
@@ -81,7 +83,7 @@ Options parse(int argc,char** argv) {
         else if(o.grid=="tuning") o.variants="optimized";
         else o.variants="main";
     }
-    if(o.variants=="tensorcore" && (o.config.tile!=16 || o.grid=="ablation"))
+    if(tensorcore(o.variants) && (o.config.tile!=16 || o.grid=="ablation"))
         throw std::invalid_argument("Tensor Core uses tile 16 and a separate FP16 experiment");
     return o;
 }
@@ -93,7 +95,8 @@ std::vector<bool> modes(const Options& o) {
 }
 
 std::vector<Variant> variants(const Options& o) {
-    if(o.variants=="tensorcore") return {{"tensorcore",BaselineVariant::TensorCore}};
+    if(o.variants=="wmma") return {{"wmma",BaselineVariant::TensorCore}};
+    if(o.variants=="ptx") return {{"ptx",BaselineVariant::TensorCorePtx}};
     std::vector<Variant> selected;
     for(auto v:{Variant{"naive",BaselineVariant::Naive},Variant{"tiled",BaselineVariant::TiledMatmul},
                 Variant{"parallel",BaselineVariant::ParallelSoftmax},Variant{"optimized",BaselineVariant::Optimized}})
@@ -103,8 +106,8 @@ std::vector<Variant> variants(const Options& o) {
 }
 
 std::vector<KernelConfig> configurations(const Options& o) {
-    if(o.variants=="tensorcore" && (o.grid=="correctness" || o.grid=="tuning")) return {{16,128},{16,256}};
-    if(o.variants!="tensorcore" && (o.grid=="correctness" || o.grid=="tuning"))
+    if(tensorcore(o.variants) && (o.grid=="correctness" || o.grid=="tuning")) return {{16,128},{16,256}};
+    if(!tensorcore(o.variants) && (o.grid=="correctness" || o.grid=="tuning"))
         return {{8,256},{16,256},{32,256},{16,128}};
     return {o.config};
 }
@@ -152,7 +155,8 @@ void checked(cudaError_t error,const char* operation) {
 // GPU buffers
 template<class T>
 struct DeviceBuffers {
-    T *q=nullptr,*k=nullptr,*v=nullptr,*s=nullptr,*p=nullptr,*o=nullptr;
+    T *q=nullptr,*k=nullptr,*v=nullptr,*p=nullptr;
+    float *s=nullptr,*o=nullptr;
     cudaEvent_t events[4]{};
     std::size_t elements=0, matrices=0, bytes=0;
     double setup_ms=0;
@@ -161,7 +165,8 @@ struct DeviceBuffers {
     DeviceBuffers& operator=(const DeviceBuffers&)=delete;
     ~DeviceBuffers() {
         for(auto event:events) if(event) (void)cudaEventDestroy(event);
-        for(T* ptr:{q,k,v,s,p,o}) if(ptr) (void)cudaFree(ptr);
+        for(T* ptr:{q,k,v,p}) if(ptr) (void)cudaFree(ptr);
+        for(float* ptr:{s,o}) if(ptr) (void)cudaFree(ptr);
     }
 };
 
@@ -170,12 +175,12 @@ void prepare(DeviceBuffers<T>& device,Input& input) {
     device.elements=input_elements(input.shape);
     device.matrices=checked_product(checked_product(input.shape.B,input.shape.H),checked_product(input.shape.N,input.shape.N));
     const auto tb=checked_product(device.elements,sizeof(T)),mb=checked_product(device.matrices,sizeof(T));
-    auto tensors=checked_product(tb,4), matrices=checked_product(mb,2);
-    if(tensors>std::numeric_limits<std::size_t>::max()-matrices) throw std::invalid_argument("Workspace size overflow");
-    device.bytes=tensors+matrices;
+    device.bytes=3*tb+mb+4*(device.elements+device.matrices);
     const auto start=std::chrono::steady_clock::now();
-    for(T** ptr:{&device.q,&device.k,&device.v,&device.o}) checked(cudaMalloc(reinterpret_cast<void**>(ptr),tb),"allocate tensor");
-    for(T** ptr:{&device.s,&device.p}) checked(cudaMalloc(reinterpret_cast<void**>(ptr),mb),"allocate matrix");
+    for(T** ptr:{&device.q,&device.k,&device.v}) checked(cudaMalloc(reinterpret_cast<void**>(ptr),tb),"allocate input");
+    checked(cudaMalloc(reinterpret_cast<void**>(&device.p),mb),"allocate probabilities");
+    checked(cudaMalloc(reinterpret_cast<void**>(&device.s),4*device.matrices),"allocate scores");
+    checked(cudaMalloc(reinterpret_cast<void**>(&device.o),4*device.elements),"allocate output");
 
     // prepare CPU and GPU inputs
     T* destinations[]={device.q,device.k,device.v};
@@ -203,9 +208,9 @@ template<class T>
 void stage(DeviceBuffers<T>& b,Shape shape,bool causal,Variant v,KernelConfig c,int index) {
     // choose the stage kernel
     if constexpr(std::is_same_v<T,__half>) {
-        if(index==0) detail::launch_qk_tensorcore(b.q,b.k,b.s,shape,causal);
-        else if(index==1) detail::launch_softmax_fp16(b.s,b.p,shape,causal,c.softmax_threads);
-        else detail::launch_pv_tensorcore(b.p,b.v,b.o,shape);
+        if(index==0) detail::launch_qk_tensorcore(b.q,b.k,b.s,shape,causal,v.value==BaselineVariant::TensorCorePtx);
+        else if(index==1) detail::launch_softmax_mixed(b.s,b.p,shape,causal,c.softmax_threads);
+        else detail::launch_pv_tensorcore(b.p,b.v,b.o,shape,v.value==BaselineVariant::TensorCorePtx);
     } else {
         bool tiled=v.value==BaselineVariant::TiledMatmul || v.value==BaselineVariant::Optimized;
         bool parallel=v.value==BaselineVariant::ParallelSoftmax || v.value==BaselineVariant::Optimized;
@@ -245,14 +250,14 @@ std::vector<float> download(const T* source,std::size_t count) {
 
 struct Tolerance { double absolute,relative; };
 Tolerance tolerance(const Options& o) {
-    return o.variants=="tensorcore" ? Tolerance{0.002,0.02} : Tolerance{0.0001,0.0001};
+    return tensorcore(o.variants) ? Tolerance{0.002,0.02} : Tolerance{0.0001,0.0001};
 }
 // compare with CPU
 template<class T>
 void correctness(const Options& o) {
     const auto tol=tolerance(o);
     auto out=file(o.output/"correctness.csv");
-    const std::string prefix=o.grid+","+(o.variants=="tensorcore"?"FP16,":"FP32,");
+    const std::string prefix=o.grid+","+(tensorcore(o.variants)?"FP16,":"FP32,");
     out<<"experiment,precision,B,H,N,d,mode,variant,tile,softmax_threads,stage,atol,rtol,max_absolute,max_relative,failures,status,checked_elements,nonfinite,input_digest,effective_input_digest,pattern,reference_scope,reference_backend\n";
     for(auto shape:shapes(o)) {
         auto input=synthetic_input(shape,o.seed);apply_pattern(input,o.pattern);
@@ -265,11 +270,11 @@ void correctness(const Options& o) {
                 if(v.value==BaselineVariant::TiledMatmul && c.softmax_threads!=256) continue;
                 if(v.value==BaselineVariant::ParallelSoftmax && c.tile!=16) continue;
                 forward(b,shape,causal,v,c);
-                const T* device[]={b.s,b.p,b.o};
+                const std::vector<float> actual[]={download(b.s,b.matrices),download(b.p,b.matrices),download(b.o,b.elements)};
                 const std::vector<double>* host[]={&expected.scores,&expected.probabilities,&expected.output};
                 const char* names[]={"S","P","O"};
                 for(int i=0;i<3;++i) {
-                    const auto r=compare(download(device[i],host[i]->size()),*host[i],tol.absolute,tol.relative,i==0);
+                    const auto r=compare(actual[i],*host[i],tol.absolute,tol.relative,i==0);
                     out<<prefix<<identity(shape,causal,v,c)<<','<<names[i]<<','<<tol.absolute<<','<<tol.relative<<','<<r.max_absolute<<','<<r.max_relative<<','<<r.failures<<','<<(r.passed()?"PASS":"FAIL")<<','<<r.checked<<','<<r.nonfinite<<','<<original_digest<<','<<effective_digest<<','<<o.pattern<<",full,part_a_shared_fp64\n";
                     out.flush();
                     if(!r.passed()) throw std::runtime_error("CPU/GPU mismatch in "+std::string(names[i]));
@@ -291,8 +296,8 @@ void environment(const Options& o) {
        <<"\nCUDA_architectures="<<PART_A_ARCHITECTURES<<"\nCUDA_runtime_API="<<runtime<<"\nCUDA_driver_API="<<driver
        <<"\nCXX_standard=17\nCUDA_standard=17\nprofile_info="<<PART_A_PROFILE_ENABLED<<"\nCXX_flags="<<PART_A_CXX_FLAGS<<"\nCUDA_flags="<<PART_A_CUDA_FLAGS
        <<"\ngenerator=splitmix64-fp32-v1\nseed="<<o.seed<<"\ngrid="<<o.grid<<"\nvariants="<<o.variants
-       <<"\nmode="<<o.mode<<"\nprecision="<<(o.variants=="tensorcore"?"FP16 storage, WMMA accumulator and softmax":"FP32")
-       <<"\nCPU_accumulation=FP64\nCPU_input="<<(o.variants=="tensorcore"?"FP16-rounded Q/K/V":"original FP32 Q/K/V")
+       <<"\nmode="<<o.mode<<"\nprecision="<<(tensorcore(o.variants)?"FP16 Q/K/V/P; FP32 S/accumulation/softmax/O":"FP32")
+       <<"\nCPU_accumulation=FP64\nCPU_input="<<(tensorcore(o.variants)?"FP16-rounded Q/K/V":"original FP32 Q/K/V")
        <<"\natol="<<tol.absolute<<"\nrtol="<<tol.relative
        <<"\nrelative_error_denominator=max(abs(reference),1e-12)\nwarmup="<<o.warmup<<"\nrepeats="<<o.repeats
        <<"\ntiming=CUDA events; separate forward and stage passes; setup and copies excluded"
@@ -324,9 +329,9 @@ void resources(std::ofstream& out,Shape shape,bool causal,Variant v,KernelConfig
         out<<prefix<<identity(shape,causal,v,c)<<','<<r.stage<<','<<r.blocks<<','<<r.threads<<','<<r.registers_per_thread<<','<<r.shared_bytes<<','<<r.local_bytes_per_thread<<','<<r.active_blocks_per_sm<<','<<r.theoretical_occupancy_percent<<'\n';
     };
     if constexpr(std::is_same_v<T,__half>) {
-        write(detail::qk_tensorcore_resources(shape));
-        write(detail::softmax_fp16_resources(shape,c.softmax_threads));
-        write(detail::pv_tensorcore_resources(shape));
+        write(detail::qk_tensorcore_resources(shape,v.value==BaselineVariant::TensorCorePtx));
+        write(detail::softmax_mixed_resources(shape,c.softmax_threads));
+        write(detail::pv_tensorcore_resources(shape,v.value==BaselineVariant::TensorCorePtx));
     } else {
         bool tiled=v.value==BaselineVariant::TiledMatmul || v.value==BaselineVariant::Optimized;
         bool parallel=v.value==BaselineVariant::ParallelSoftmax || v.value==BaselineVariant::Optimized;
@@ -340,7 +345,7 @@ template<class T>
 void gpu_run(const Options& o) {
     const auto tol=tolerance(o);
     const auto selected=variants(o); const auto configs=configurations(o); const auto selected_modes=modes(o);
-    const std::string prefix=o.grid+","+(o.variants=="tensorcore"?"FP16,":"FP32,");
+    const std::string prefix=o.grid+","+(tensorcore(o.variants)?"FP16,":"FP32,");
     const std::string head="experiment,precision,B,H,N,d,mode,variant,tile,softmax_threads";
     std::ofstream summary,resource,samples;
     if(o.grid!="ablation") resource=file(o.output/"resources.csv");
@@ -356,7 +361,7 @@ void gpu_run(const Options& o) {
         const auto original_digest=input_fingerprint(input);DeviceBuffers<T> b; prepare(b,input);
         const auto effective_digest=input_fingerprint(input);
         const bool validate=!o.profile;
-        const bool sampled=shape.N>97;
+        const bool sampled=shape.N>97 && !(shape.N==256 && shape.d==64);
         for(bool causal:selected_modes) {
             std::vector<double> expected;
             if(validate) expected=reference_output(input,causal,sampled);
@@ -417,7 +422,7 @@ int main(int argc,char** argv) {
         if(options.output.empty()) throw std::invalid_argument("--output NEW_DIRECTORY is required for GPU runs");
         if(!std::filesystem::create_directories(options.output)) throw std::invalid_argument("Output directory already exists");
         environment(options);
-        if(options.variants=="tensorcore") {
+        if(tensorcore(options.variants)) {
             if(options.grid=="correctness") correctness<__half>(options); else gpu_run<__half>(options);
         } else {
             if(options.grid=="correctness") correctness<float>(options); else gpu_run<float>(options);

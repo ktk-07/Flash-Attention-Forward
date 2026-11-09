@@ -20,7 +20,7 @@ def fixture(part):
     expanded={name:[] for name in tables}
     for name,rows in tables.items():
         for row in rows:
-            variants=(['naive','tiled','parallel','optimized'] if row['precision']=='FP32' else ['tensorcore']) if part=='part_a' else (['skip','vector'] if row['precision']=='FP32' else ['wmma','ptx'])
+            variants=(['naive','tiled','parallel','optimized'] if row['precision']=='FP32' else ['wmma','ptx']) if part=='part_a' else (['skip','vector'] if row['precision']=='FP32' else ['wmma','ptx'])
             for variant in variants:
                 value=dict(row,variant=variant,config=variant);value['case_id']=schema.case_id(value);expanded[name].append(value)
     return expanded
@@ -69,7 +69,7 @@ class IntegrationTests(unittest.TestCase):
                     (folder/'configs').mkdir();dump(folder/'configs/part_c.json',{'frozen_selection':{'families':{'cuda_core':{'64':'skip'},'tensor_core':{'64':'wmma'}}}})
             audit=aggregate(out,['part_a','part_b','part_c'],'smoke')
             self.assertTrue(audit['all_three_parts_present']);self.assertFalse(audit['final_report_grid'])
-            self.assertEqual(len(schema.read(out/'comparison.csv')),6)
+            self.assertEqual(len(schema.read(out/'comparison.csv')),8)
             self.assertEqual(len(schema.read(out/'plots/combined/dense_causal_work.csv')),2)
             self.assertTrue((out/'plots/combined/dense_causal_work.png').is_file())
     def test_missing_b_fails_without_writing(self):

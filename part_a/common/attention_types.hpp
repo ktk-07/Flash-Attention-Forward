@@ -13,7 +13,7 @@ namespace attention {
 struct Shape { std::size_t B, H, N, d; };
 struct Input { Shape shape; std::vector<float> q, k, v; };
 struct Result { std::vector<double> scores, probabilities, output; };
-enum class BaselineVariant { Naive, TiledMatmul, ParallelSoftmax, Optimized, TensorCore };
+enum class BaselineVariant { Naive, TiledMatmul, ParallelSoftmax, Optimized, TensorCore, TensorCorePtx };
 struct KernelConfig { unsigned tile=16, softmax_threads=256; };
 struct KernelResources {
     std::string stage;
@@ -24,7 +24,7 @@ struct KernelResources {
 };
 // FP64 reference
 Result reference(const Input& input, bool causal=false);
-// Output-only FP64 oracle; unsampled output rows are NaN sentinels.
+// FP64 output with optional sampled rows
 std::vector<double> reference_output(Shape shape, const std::vector<float>& q,
     const std::vector<float>& k, const std::vector<float>& v, bool causal, bool sampled);
 inline std::vector<double> reference_output(const Input& input, bool causal, bool sampled) {
@@ -42,12 +42,12 @@ void launch_qk_tiled(const float* q, const float* k, float* s, Shape shape, bool
 void launch_softmax_parallel(const float* s, float* p, Shape shape, bool causal, unsigned threads = 256);
 void launch_pv_tiled(const float* p, const float* v, float* o, Shape shape, unsigned tile = 16);
 #ifdef PART_A_ENABLE_CUDA
-void launch_qk_tensorcore(const __half* q,const __half* k,__half* s,Shape shape,bool causal);
-void launch_pv_tensorcore(const __half* p,const __half* v,__half* o,Shape shape);
-void launch_softmax_fp16(const __half* s,__half* p,Shape shape,bool causal,unsigned threads);
-KernelResources qk_tensorcore_resources(Shape shape);
-KernelResources pv_tensorcore_resources(Shape shape);
-KernelResources softmax_fp16_resources(Shape shape,unsigned threads);
+void launch_qk_tensorcore(const __half* q,const __half* k,float* s,Shape shape,bool causal,bool ptx=false);
+void launch_pv_tensorcore(const __half* p,const __half* v,float* o,Shape shape,bool ptx=false);
+void launch_softmax_mixed(const float* s,__half* p,Shape shape,bool causal,unsigned threads);
+KernelResources qk_tensorcore_resources(Shape shape,bool ptx=false);
+KernelResources pv_tensorcore_resources(Shape shape,bool ptx=false);
+KernelResources softmax_mixed_resources(Shape shape,unsigned threads);
 #endif
 KernelResources qk_resources(Shape shape);
 KernelResources softmax_resources(Shape shape);

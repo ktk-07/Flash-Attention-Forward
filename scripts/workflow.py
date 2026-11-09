@@ -19,15 +19,16 @@ def architecture(value,device,dry=False):
     if len(text.splitlines())!=1:raise ValueError('Select exactly one GPU')
     result=text.replace('.','');return architecture(result,device)
 class Workflow:
-    def __init__(self,out,device,dry=False,profile=True):
+    def __init__(self,out,device,dry=False,profile=True,resume=False):
         self.out=Path(out).resolve();self.dry=dry;self.env=dict(os.environ,CUDA_VISIBLE_DEVICES=device)
-        if self.out.exists():raise ValueError('Choose a fresh output directory')
+        if self.out.exists() and not resume:raise ValueError('Choose a fresh output directory')
+        if resume and not (self.out/'logs').is_dir():raise ValueError('Cannot resume a directory without workflow logs')
         if not dry:
             for package in ['numpy','matplotlib']:
                 if importlib.util.find_spec(package) is None:raise ValueError('Missing Python dependency: '+package)
             for name in ['cmake','nvcc','nvidia-smi','compute-sanitizer']+(['ncu'] if profile else []):
                 if not shutil.which(name):raise ValueError('Missing tool: '+name)
-            (self.out/'logs').mkdir(parents=True)
+            (self.out/'logs').mkdir(parents=True,exist_ok=resume)
     def run(self,label,argv):
         argv=list(map(str,argv));print(label+': '+shlex.join(argv),flush=True)
         if self.dry:return

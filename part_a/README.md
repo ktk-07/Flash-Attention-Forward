@@ -1,74 +1,46 @@
 # Part A
 
-CPU FP64 reference and materialized GPU attention baselines for dense and causal modes. ChatGPT Codex assisted development.
+CPU FP64 reference and materialised CUDA attention baselines for dense and causal attention.
 
-## Common-machine integration
+## Implementations
 
-Integration is maintained by Kyaw Tun Khine. The materialised GPU kernels remain unchanged. From the repository root:
+- `naive`: direct FP32 products and one thread per softmax row
+- `tiled`: shared-memory FP32 products
+- `parallel`: block-parallel FP32 softmax
+- `optimized`: tiled products and parallel softmax
+- `wmma`: FP16 matrix operands with WMMA 16x16x16 products
+- `ptx`: FP16 matrix operands with direct PTX m16n8k16 products
+
+Both Tensor Core variants use FP16 Q/K/V/P and FP32 S, accumulation, softmax arithmetic and O. A rounds normalized P; Part C rounds tile weights before online normalization. Compare matching WMMA/PTX variants and state this rounding-order difference.
+
+## Run
+
+Requires CMake, a C++17 compiler, CUDA, Compute Sanitizer, Nsight Compute, NumPy and Matplotlib. Tensor Core paths require SM80 or newer. From the repository root:
 
 ```bash
-bash part_a/run.sh --grid smoke --output results/a_smoke
-bash part_a/run.sh --output results/a_full
-bash part_a/run.sh --analyze-only results/a_full
-bash run.sh --parts a,c --output results/ac_full
+python3 part_a/scripts/run_standard.py --output build-a-run --publish part_a/results
 ```
 
-The wrapper builds CUDA and the reusable `attention_reference` library, runs the shared CPU contract, full small-shape dense/causal S/P/O checks, deterministic pattern tests and representative Compute Sanitizer checks. It tunes optimized FP32 and FP16 Tensor Core configurations separately per mode/head dimension, freezes before the main grid, validates every timing case and exports the shared seven CSVs. Full runs also collect fresh stage-specific Nsight metrics; `--no-profile` records their omission. Architecture defaults to GPU detection (SM80+); `--arch`, `--device`, `--build` and `--dry-run` are supported. See the main [README](../README.md) for the common schema and Part B handoff.
+Choose a fresh output directory. On Windows, use an x64 Visual Studio 2022 developer terminal, replace `python3` with `python`, and add `--arch 120 --build build-a`. CUDA and profiling tools must be on PATH.
 
-Native data and source snapshots stay under `raw/part_a/`, public tables at the bundle root, and plotted data/PNG/PDF figures under `plots/part_a/`. Historical `results/` below remain separate RTX 5060 Ti evidence.
+The full run checks small S/P/O, tunes bounded configurations and records the proposal grid with 5 warmups and 20 repetitions. Preparation, transfers, comparison and profiling are outside the CUDA-event timings. Forward and stage timings use separate passes.
 
-## Build and run
-
-Requires CMake 3.18+, C++17, CUDA and Python with Matplotlib for figures. Saved measurements use an RTX 5060 Ti with CUDA architecture 120.
-
-```powershell
-cmake -S . -B build-gpu -G "Visual Studio 17 2022" -A x64 -DPART_A_ENABLE_CUDA=ON -DPART_A_PROFILE_INFO=ON -DCMAKE_CUDA_ARCHITECTURES=120
-cmake --build build-gpu --config Release
-.\build-gpu\Release\attention.exe --grid correctness --output build-gpu/correctness
-.\build-gpu\Release\attention.exe --shape 4 8 256 64 --mode both --tile 16 --softmax-threads 128 --output build-gpu/representative
-```
-
-Each run writes to a new output directory. Build directories keep new run records separate from the saved results. For CPU-only execution, configure without CUDA and run `attention --cpu --shape 1 1 2 2`.
-
-## Implementation
-
-Q/K/V/O use row-major `[B,H,N,d]`; S/P use `[B,H,N,N]`. Each forward pass runs separate QK, softmax and PV kernels.
-
-- `naive`: one score/output element per thread and one softmax row per thread
-- `tiled`: shared-memory matrix multiplication with naive softmax
-- `parallel`: naive matrix multiplication with block-parallel softmax
-- `optimized`: tiled matrix multiplication and block-parallel softmax
-- `tensorcore`: FP16 Q/K/V/S/P/O, WMMA 16x16x16 multiplication with FP16 accumulators, and CUDA half-precision softmax
-
-`main` selects naive and optimized; `all` selects the four FP32 variants. The Tensor Core extension changes precision and matrix hardware together. Its CPU reference reads the same FP16-rounded inputs.
-
-Small shapes compare S/P/O against FP64. Every new performance case validates O against the shared output-only FP64 oracle: full rows for N<=97, otherwise queries 0,N/2,N−1 per head plus all-output finiteness checks. The saved historical measurements retain their original validation scope. The criterion is `abs(error)<=atol+rtol*abs(reference)`: FP32 uses atol=rtol=0.0001; FP16 uses atol=0.002 and rtol=0.02.
-
-Seed=5206, 5 warmups, 20 repeats. CUDA events measure forward and stage times in separate passes, excluding input preparation, allocation, transfers and comparison. Results report medians, IQR, sequences/s and allocated Q/K/V/S/P/O bytes.
+For a common-machine A/C evaluation: `bash run.sh --parts a,c --output results/ac_full`. Part B can join after integration.
 
 ## Results
 
-CSV tables use `experiment` and `precision` to distinguish runs.
+The saved RTX 5060 Ti run completed 180 main configurations, 96 tuning configurations and 32 input-pattern configurations. All 728 correctness records passed. The saved data contains 6160 timing samples and 108 kernel profiling captures. All final configurations use tile=16 and 128 softmax threads. See `results/environment.txt` for the environment and selection method.
 
-| File | Contents |
-|---|---|
-| `results/correctness.csv` | FP32/FP16 small-shape S/P/O comparisons |
-| `results/samples.csv` | Individual timing samples for the main grid, tuning and ablation |
-| `results/summary.csv` | Timing statistics, errors, throughput and allocated workspace |
-| `results/profiles.csv` | Measured DRAM traffic, bandwidth, registers, shared memory and occupancy |
-| `results/resources.csv` | Launch settings and kernel resource usage |
-| `results/environment.txt` | Environment, configurations, tuning selection and rerun details |
-| `results/figures/` | Six report figures |
+Small shapes and N=256,d=64 compare full output against FP64. Other large cases compare queries 0,N/2,N-1 per head and check every output for finiteness. FP16-input references use rounded Q/K/V. FP32 tolerances are 1e-4 absolute/relative; mixed precision uses 0.002 absolute and 0.02 relative.
 
-The main grid uses B=4, H=8, N=256/512/1024/2048/4096 and d=32/64/128 in both modes. The frozen configuration is tile=16, softmax threads=128.
+`results/` contains seven CSVs: correctness, samples, summary, profiles, resources, memory and work, plus environment settings and report figures. Profiling retains selected report counters with their original names; readers accept old and new Nsight DRAM names. Full captures and diagnostic output stay in the local run directory. Saved CSVs use ordinary Git files; Git LFS is not required.
 
-The saved data contains 330 passing S/P/O records, 122 performance configurations, 2440 timing samples and 12 profiling cases. FP32 optimized is 3.18-6.96x faster than naive. FP16 Tensor Core is 1.27-1.78x faster than FP32 optimized, with a geometric mean of 1.42x and half the allocated workspace. The largest recorded main-grid FP16 output absolute error is 0.000919.
+For E=BHNd and M=BHN^2, allocated device buffers occupy 16E+8M bytes for FP32 and 10E+6M bytes for the Tensor Core paths. Allocated bytes and profiler memory traffic are separate measurements.
 
-Six FP16 performance cases were repeated; their complete 20-sample runs replaced the earlier timings. Forward IQR/median is at most 5.30% for FP32 and 7.19% for FP16. Saved output errors come from the original numerical validation. These historical results are preserved. The final shared A/B/C experiment must be collected anew on one machine.
+Regenerate saved figures without CUDA:
 
-```powershell
-python -m pip install matplotlib
-python plot_results.py
+```bash
+python3 part_a/plot_results.py
 ```
 
-Use `python plot_results.py --select-config` to print the best FP32 tuning configuration. Plotting reads `results/summary.csv` and writes only to `results/figures/`.
+Use `--analyze-only build-a-run --publish part_a/results` with `run_standard.py` to re-export a complete local run. `--resume-profiles build-a-run --build BUILD --publish part_a/results` resumes missing profiler work without repeating timings. Both compressed and uncompressed Nsight reports are supported.
