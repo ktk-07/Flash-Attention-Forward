@@ -2,7 +2,7 @@
 
 Part C implements causal attention with online softmax, progressing from scalar CUDA kernels to cooperative warps, register tiling, vector loads, WMMA and PTX MMA. All kernels compute a complete forward pass without materialising the full score/probability matrices in device memory.
 
-For shared setup and submission reproduction, see [../README.md](../README.md) and [../README.txt](../README.txt). A/C integration is implemented by Kyaw Tun Khine; Part B remains pending.
+For shared setup and submission reproduction, see [../README.md](../README.md) and [../README.txt](../README.txt). A/B/C integration is maintained by Kyaw Tun Khine. The combined smoke run passed correctness, representative sanitizers, aggregation, plots and offline regeneration; the final full-grid experiment is assigned to the team's full-run operator.
 
 ## Source layout
 
@@ -88,7 +88,7 @@ The published [saved-data export](results/standardized/ANALYSIS.md) is a format 
 
 Fused QK/softmax/PV timings and unmeasured setup time stay blank. Raw missing Nsight counters stay explicitly unavailable. Per-thread resource estimates are distinct from measured occupancy, source shared excess is distinct from aggregate arbitration counts, and warp-state percentages are not runtime fractions. Shared-memory/local traffic is not allocated storage.
 
-The exporter verifies native case hashes and metadata, fingerprints, sample/summary statistics, O-validation joins, profiler CSV hashes, supplied binary report hashes and byte-identical evidence copies. `.ncu-rep` files may be supplied separately; when absent, saved CSV evidence still exports and the missing binaries/expected checksums are explicit. New runs link the shared Part A CPU reference directly. Historical exports retain their original oracle provenance. Part B and the final common-machine A/B/C experiment remain pending.
+The exporter verifies native case hashes and metadata, fingerprints, sample/summary statistics, O-validation joins, profiler CSV hashes, supplied binary report hashes and byte-identical evidence copies. `.ncu-rep` files may be supplied separately; when absent, saved CSV evidence still exports and the missing binaries/expected checksums are explicit. New runs link the shared Part A CPU reference directly. Historical exports retain their original oracle provenance. Part B is integrated and passed the three-part smoke workflow. The full-grid common-machine experiment and its full profiler evidence remain to be collected by the assigned operator.
 
 CPU-only adapter regression tests:
 

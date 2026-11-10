@@ -5,7 +5,7 @@ AY2026/2027 Semester 1 · Group 1
 
 CUDA C++ implementations of materialised attention (Part A), dense fused FlashAttention (Part B) and causal fused FlashAttention (Part C). The project studies tiling, online softmax, fusion, causal tile skipping, memory behaviour and mixed-precision Tensor Core execution.
 
-**Documentation:** this README describes the repository, shared interfaces, run commands, plots and evidence status. [README.txt](README.txt) provides the submission reproduction checklist. Implementation details are in the [Part A](part_a/README.md), [Part B](part_b/README.md) and [Part C](part_c/README.md) READMEs.
+**Documentation:** this README describes the repository, shared interfaces, run commands, plots and evidence status. [README.txt](README.txt) provides the submission reproduction checklist. The full-run handoff and packaging commands are in [README.txt](README.txt), supported by [prepare_submission.py](scripts/prepare_submission.py). Implementation details are in the [Part A](part_a/README.md), [Part B](part_b/README.md) and [Part C](part_c/README.md) READMEs.
 
 **Current status:** the integrated A/B/C smoke run passed correctness, representative sanitizers, tuning, CSV aggregation, plotting and CPU-only regeneration on the RTX 3070 Ti Laptop. Part B passed 24 sanitizer checks in that run. The full-grid common-machine experiment and its fresh profiler captures remain outstanding; retained diagnostic replays have their own separate acceptance scope.
 
@@ -38,6 +38,7 @@ scripts/
   workflow.py                               # command logging, GPU identity and provenance
   ncu_csv.py                                # Nsight CSV parsing and metric aliases
   plot_combined.py                          # common per-part and combined plots/indexes
+  prepare_submission.py                   # source audit, full-run checks and ZIP packaging
   fa1_comparison.py                         # matched FA1/FA2 latency and speedup figures
 part_a/
   common/                                   # tensor types, deterministic inputs, reference API
@@ -470,6 +471,23 @@ These commands read saved measurements; they do not rerun CUDA kernels. Diagnost
 Preserve previous exports by using a copied bundle or a fresh result destination. Historical native datasets should use their captured processors/configurations; current source does not retroactively turn an old FA1 timing into a new PTX FA1 measurement. Saved CSVs suffice for available counter plots; full binary Nsight integrity/source audits additionally require the checksummed `.ncu-rep` files. See [Part C profiling](part_c/PROFILING.md) and [Part B cross-checking](part_b/CROSS_CHECK.md).
 
 ## 10. Submission and outstanding scope
+
+The full-run operator should follow [README.txt, Steps 1–5](README.txt) using the integrator's reviewed source version. It specifies the one-machine command, smoke/counter preflight, expected profiler coverage (A108/B6/C24), full-grid acceptance and offline regeneration. No full experiment is launched by the source or archive checks.
+
+The CPU-only [submission helper](scripts/prepare_submission.py) provides:
+
+| Command | Purpose |
+|---|---|
+| `source-check --output extra/source_audit` | Copy maintained source/fixtures to a clean filesystem snapshot; run CPU tests and a dry plan without Git/GPU |
+| `check --results results/final_submission` | Require complete A/B/C full-grid tables, identities, profiler evidence and figures |
+| `pack ...` | Include maintained source, complete selected results and explicitly supplied final report, version and URLs; optionally split raw profiler binaries |
+| `verify-archive SOURCE.zip --profiles PROFILER.zip` | Verify transferred archive members and SHA-256 checksums |
+
+The missing historical Part B smoke recording remains Yichun's task. Source-audit replay tests report that unresolved dependency; final packaging refuses to hide it. The fresh integrated runner does not depend on that recording. `--allow-smoke` checking and `--validation-only` packaging are explicitly labelled preparation tests, not final report evidence.
+
+Archive outputs and audit copies belong under ignored `extra/` or a separate delivery location. The private `extra/main.tex` is excluded; the final PDF must be supplied explicitly. Report/video contents, actual contributions, AI disclosure, public link access and the reviewed commit require human confirmation. Nothing is uploaded or committed by the helper.
+
+
 
 Retain raw benchmark CSVs, selected configurations, metadata, plotting scripts, readable figures and reproduction instructions. Include source and source/binary hashes; large raw Nsight reports can be supplied as a separate accessible artifact with checksums. Do not submit compiled build directories as results.
 
