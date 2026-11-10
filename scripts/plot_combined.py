@@ -5,7 +5,11 @@ os.environ.setdefault("MPLCONFIGDIR","/tmp/attention-matplotlib")
 from pathlib import Path
 import results_schema as schema
 from workflow import dump,sha
+<<<<<<< Updated upstream
 from ncu_csv import metric_aliases
+=======
+from fa1_comparison import generate as generate_fa1_comparisons
+>>>>>>> Stashed changes
 
 def write_rows(path,rows):
     if not rows:return
@@ -123,6 +127,7 @@ def generate(out):
             save(fig,'stage_breakdown','Independent stage passes; fused stages are unavailable, not zero.')
     # Frozen C family winners; avoid selecting minima on the reporting grid.
     c_registry=out/'configs/part_c.json';c_data=json.loads(c_registry.read_text()) if c_registry.exists() else {}
+    index.extend(generate_fa1_comparisons(out,tables,c_data.get('frozen_selection',{})))
     def choose_c(precision,d):
         family=c_data.get('frozen_selection',{}).get('families',{})
         key='cuda_core' if precision=='FP32' else 'tensor_core'

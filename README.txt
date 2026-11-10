@@ -81,6 +81,12 @@ View one standalone run from the repository root:
 - resources.csv, profiles.csv, memory.csv, work.csv: detailed evidence.
 - raw/part_a/ or raw/part_c/, commands.jsonl and logs/: native records/commands.
 - C additionally retains supplementary/part_c/ and plots/README.md.
+Fresh C runs include both FP32 FA1 and WMMA FA1 in all standard stages.
+fa1_fa2_comparison.csv records matched-precision FA1/FA2 ratios;
+fa1_cross_precision.csv labels FP16 FA1 versus FP32 FA2 separately. Their
+PNG/PDF figures are in plots/part_c/. Full C profiling collects 24 captures
+covering both FA1 baselines and both frozen d=64 FA2 family winners.
+Historical bundles retain their original kernel coverage.
 Open CSVs with a CSV viewer and PNG/PDF figures with a normal image/PDF viewer.
 For a combined root run, inspect its parts/part_a/ or parts/part_c/ child bundle,
 or its top-level plots/part_a/ and plots/part_c/ folders. No rerun is needed.

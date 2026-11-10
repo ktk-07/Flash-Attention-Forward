@@ -24,9 +24,9 @@ def outputs():
     if (out/'profiling/audit.json').exists():files.extend([out/'profiling/metrics.csv',out/'profiling/REPORT.md'])
     return {str(path.relative_to(out)):sha(path) for path in sorted(files)}
 before=outputs();scripts=Path(__file__).resolve().parent;reruns=[]
-analysis_commands=[[sys.executable,str(scripts/'evaluate.py'),'--build','/tmp/unused-build','--output',str(out),'--analyze-only']]
+analysis_commands=[[sys.executable,str(out/'analysis/evaluate.py'),'--build','/tmp/unused-build','--output',str(out),'--analyze-only']]
 if (out/'profiling/audit.json').exists():
-    analysis_commands.append([sys.executable,str(scripts/'profile_frozen.py'),str(out),'--analyze-only'])
+    analysis_commands.append([sys.executable,str(out/'profiling/processing/profile_frozen.py'),str(out),'--analyze-only'])
 for cmd in analysis_commands:
     result=subprocess.run(cmd,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     reruns.append({'argv':cmd,'exit_code':result.returncode,'output':result.stdout});assert result.returncode==0,result.stdout

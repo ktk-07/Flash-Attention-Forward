@@ -19,6 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
 import results_schema as schema
+from fa1_comparison import generate as generate_fa1_comparisons
 
 GENERATOR = 'splitmix64-fp32-v1'
 KERNELS = ['fa1', 'scalar', 'warp', 'tiled', 'skip', 'vector', 'wmma', 'ptx']
@@ -57,12 +58,13 @@ def check_declared_files(folder, declared):
 
 def common(row, run_id, plan, selection):
     phase = PHASES[row['experiment']]
+    if row['experiment']=='default_main' and row['kernel'] in plan.get('fa1_baselines',[]):phase='proposal'
     if row['experiment'] == 'default_main' and row['kernel'] in selection['variants']:
         if selection['variants'][row['kernel']][row['d']]['config'] == int(row['config']):
             phase = 'proposal'
     result = {field: '' for field in schema.COMMON}
     result.update(experiment=phase, precision=row['input_precision'], **{field: row[field] for field in ['B','H','N','d','pattern','input_precision','accumulator_precision','output_precision','input_digest','rounded_input_digest']})
-    result.update(mode='causal', variant=row['kernel'], run_id=run_id, part='part_c', config=f"{row['kernel']}:c{row['config']}:d{row['d']}", layout='BHNd_contiguous_row_major', generator=GENERATOR, seed=str(plan['seed']))
+    result.update(mode='causal', variant=row['kernel'], run_id=run_id, part='part_c', config=f"{row['kernel']}"+(':kv_outer_shared_v2' if row['kernel']=='fa1' and plan.get('fa1_workspace_floats_per_query') else ':kv_outer_wmma_v1' if row['kernel']=='fa1_wmma' else '')+f":c{row['config']}:d{row['d']}", layout='BHNd_contiguous_row_major', generator=GENERATOR, seed=str(plan['seed']))
     result['case_id'] = schema.case_id(result)
     return result
 
@@ -101,7 +103,7 @@ def verify_native(study):
                 continue
             if any(sample[field] != value for sample in group):
                 raise ValueError(f'Inconsistent raw case metadata: {field}')
-            if row['kernel'] in ['fa1','scalar','warp'] and field in unavailable:
+            if (row['kernel'] in ['scalar','warp'] or (row['kernel']=='fa1' and not plan.get('fa1_workspace_floats_per_query'))) and field in unavailable:
                 continue  # Native summary already marks unavailable query fields blank.
             if row[field] != value:
                 raise ValueError(f'Native summary metadata differs from raw rows: {field}')
@@ -127,15 +129,17 @@ def make_tables(study, run_id):
             raise ValueError('Config ID maps to different launch parameters')
         configs[ctx['config']] = {'variant': row['kernel'], 'd': int(row['d']), 'native_config': int(row['config']), 'launch': params}
         count = math.prod(int(row[k]) for k in ['B','H','N','d'])
-        if int(row['explicit_live_device_bytes']) != count * (10 if row['input_precision'] == 'FP16' else 16):
+        fa1_bytes=4*plan.get('fa1_workspace_floats_per_query',0)*int(row['B'])*int(row['H'])*int(row['N']) if row['kernel'] in ['fa1','fa1_wmma'] else 0
+        if int(row['explicit_live_device_bytes']) != count * (10 if row['input_precision'] == 'FP16' else 16)+fa1_bytes:
             raise ValueError('Explicit allocation ledger does not match the recorded precision')
         if row['mode'] == 'benchmark':
             tables['summary'].append({**ctx, **{k: row[k] for k in ['atol','rtol','max_absolute','max_relative','repeats','sequences_per_second','tokens_per_second','reference_scope']}, 'warmup': str(plan['warmups']), 'forward_median_ms': row['median_ms'], 'forward_q1_ms': row['q1_ms'], 'forward_q3_ms': row['q3_ms'], 'forward_iqr_ms': row['iqr_ms'], 'validation_status': row['status'], 'peak_workspace_allocated_bytes': row['explicit_live_device_bytes']})
             blocks = int(row['B'])*int(row['H'])*math.ceil(int(row['N'])/params['block_q'])
+            if row['kernel'] in ['fa1','fa1_wmma'] and fa1_bytes:blocks=int(row['B'])*int(row['H'])
             tables['resources'].append({**ctx, 'stage': 'forward', 'blocks': str(blocks), 'threads': str(32*params['warps']), **{k: row[k] for k in ['registers_per_thread','shared_bytes','local_bytes_per_thread','active_blocks_per_sm']}, 'theoretical_occupancy_percent': row['occupancy_estimate_percent']})
             n = int(row['N']); heads = int(row['B'])*int(row['H'])
             work = {**ctx, 'valid_attention_pairs': str(heads*n*(n+1)//2), 'scheduled_tiles': '', 'skipped_tiles': '', 'evidence_kind': 'analytical_valid_attention_pairs'}
-            if row['kernel'] in ['tiled','skip','vector','wmma','ptx']:
+            if row['kernel'] in ['tiled','skip','vector','wmma','ptx'] or fa1_bytes:
                 bq, bk = params['block_q'], params['block_kv']
                 scheduled = heads*sum(math.ceil(min(n, q+bq)/bk) for q in range(0,n,bq))
                 dense = heads*math.ceil(n/bq)*math.ceil(n/bk)
@@ -143,15 +147,17 @@ def make_tables(study, run_id):
             tables['work'].append(work)
             if ctx['experiment'] == 'proposal':
                 timing_index[tuple(row[k] for k in ['kernel','config','B','H','N','d','pattern'])] = (ctx, row)
+            if fa1_bytes:
+                tables['memory'].append({**ctx,'explicit_live_device_bytes':row['explicit_live_device_bytes'],'auxiliary_global_bytes':str(fa1_bytes),'observed_device_delta_bytes':row['observed_device_delta_bytes'],'measurement':'persistent_QKVO_plus_FA1_m_l;reset_in_forward;device_delta_not_process_peak'})
         elif row['mode'] == 'memory':
-            tables['memory'].append({**ctx, 'explicit_live_device_bytes': row['explicit_live_device_bytes'], 'auxiliary_global_bytes': '0', 'observed_device_delta_bytes': row['observed_device_delta_bytes'], 'measurement': 'persistent_QKVO_ledger;device_delta_observed_at_three_points_not_total_process_peak'})
+            tables['memory'].append({**ctx, 'explicit_live_device_bytes': row['explicit_live_device_bytes'], 'auxiliary_global_bytes': str(fa1_bytes), 'observed_device_delta_bytes': row['observed_device_delta_bytes'], 'measurement': 'persistent_QKVO_ledger;device_delta_observed_at_three_points_not_total_process_peak'})
     for row in samples:
         if row['mode'] == 'benchmark':
             ctx = contexts.get(native_keys(row))
             if not ctx:
                 raise ValueError('Raw timing case has no native summary')
             tables['samples'].append({**ctx, 'repeat': row['repeat'], 'forward_ms': row['forward_ms']})
-    expected = {(k, str(n), str(d)) for k in KERNELS for n in plan['main_N'] for d in plan['d']}
+    expected = {(k, str(n), str(d)) for k in plan.get('kernels',KERNELS) for n in plan['main_N'] for d in plan['d']}
     actual = {(r['kernel'],r['N'],r['d']) for r in rows if r['experiment']=='default_main'}
     if actual != expected:
         raise ValueError('Incomplete default main grid')
@@ -189,8 +195,12 @@ def import_profiles(study, manifest, timing_index, tables):
             raise ValueError('Derived profiler metrics changed')
     derived = {(r['kernel'],r['config'],r['N'],r['d'],r['rep']): r for r in schema.read(profile / 'metrics.csv')}
     cases = sorted((profile / 'cases').iterdir())
-    if len(cases) != 12:
-        raise ValueError('Expected twelve frozen-winner captures')
+    selection=json.loads((study/'frozen_selection.json').read_text())
+    targets=plan.get('targets',[{'kernel':selection['families'][f]['64'],'config':selection['variants'][selection['families'][f]['64']]['64']['config']} for f in ['cuda_core','tensor_core']])
+    expected={(t['kernel'],str(t['config']),str(n),str(plan.get('d',64)),str(rep)) for t in targets for n in plan.get('N',[256,4096]) for rep in range(plan.get('repeats',3))}
+    identities=[json.loads((case/'identity.json').read_text()) for case in cases]
+    actual={tuple(str(r[k]) for k in ['kernel','config','N','d','rep']) for r in identities}
+    if len(cases)!=len(expected) or actual!=expected:raise ValueError('Incomplete baseline/frozen profile grid')
     for case in cases:
         identity = json.loads((case / 'identity.json').read_text())
         checks = schema.read(case / 'validation.csv')
@@ -213,6 +223,10 @@ def import_profiles(study, manifest, timing_index, tables):
         names, units, values = raw
         symbol = values[names.index('Kernel Name')]
         raw_data = dict(zip(names, values))
+        heads=int(first['B'])*int(first['H'])
+        qtiles=1 if first['kernel'] in ['fa1','fa1_wmma'] else math.ceil(int(first['N'])/int(first['block_q']))
+        dims=lambda name:tuple(int(v) for v in raw_data[name].strip('()').split(','))
+        if dims('Grid Size')!=(heads,qtiles,1) or dims('Block Size')!=(32*int(first['warps']),1,1):raise ValueError('Profile launch geometry mismatch')
         state_values = []
         for field, value in raw_data.items():
             if field.startswith('smsp__pcsamp_warps_issue_stalled_') and not field.endswith('_not_issued'):
@@ -286,8 +300,9 @@ def plot_insights(study, output, profiles):
         return statistics.median(values) if values else float('nan')
     output.mkdir(parents=True, exist_ok=True); names=[]
     for name, columns, ylabel in [('occupancy',['occupancy_pct'],'Achieved occupancy (%)'),('eligible_warps',['eligible_warps_per_scheduler'],'Eligible warps per scheduler'),('tensor_activity',['tensor_active_pct'],'Tensor pipeline (% of active-cycle peak)'),('warp_states',['long_scoreboard_pct','short_scoreboard_pct','mio_throttle_pct'],'Share of sampled warp states (%)'),('shared_wavefronts',['shared_actual','shared_ideal','shared_excessive'],'Shared wavefront count'),('traffic',['dram_read_bytes','dram_write_bytes','local_load_sectors','local_store_sectors'],'Traffic (GiB; distinct memory levels)')]:
-        fig, axes = plt.subplots(1,2,figsize=(11,4),layout='constrained')
-        for ax,n in zip(axes,[256,4096]):
+        lengths=sorted({int(r['N']) for r in rows})
+        fig, axes = plt.subplots(1,len(lengths),figsize=(5.5*len(lengths),4),layout='constrained',squeeze=False)
+        for ax,n in zip(axes[0],lengths):
             width=.8/len(columns)
             for i,col in enumerate(columns):
                 vals=[median(k,n,col) for k in variants]
@@ -297,7 +312,7 @@ def plot_insights(study, output, profiles):
                 for position,value in zip(positions,vals):
                     if not math.isfinite(value):ax.text(position,0,'n/a',rotation=90,fontsize=7)
             ax.set_xticks(range(len(variants)),variants);ax.set(title=f'N={n}, d=64',ylabel=ylabel);ax.legend(fontsize=7);ax.grid(axis='y',alpha=.2)
-        fig.suptitle('Frozen winners: medians of 3 Nsight captures; profiler timing excluded')
+        fig.suptitle('FA1 baselines / frozen FA2: median Nsight counters; profiler timing excluded')
         for extension in ['png','pdf']:
             target=output/f'{name}.{extension}';options={'dpi':160} if extension=='png' else {'metadata':{'CreationDate':None,'ModDate':None}}
             fig.savefig(target,**options);names.append(target.name)
@@ -351,23 +366,31 @@ def publish(study, out, supplementary=(), in_place=False, regenerate=False):
     extra=out/'supplementary/part_c';extra.mkdir(parents=True,exist_ok=True)
     generated=plot_insights(native,extra/'plots',tables['profiles'])
     source_copy=out/'analysis';source_copy.mkdir(exist_ok=True)
-    for source in [Path(__file__).resolve(),Path(schema.__file__).resolve()]:
+    for source in [Path(__file__).resolve(),Path(schema.__file__).resolve(),Path(sys.modules[generate_fa1_comparisons.__module__].__file__).resolve()]:
         if source != source_copy/source.name:
             shutil.copy2(source,source_copy/source.name)
     native_manifest=json.loads((native/'manifest.json').read_text())
+    fa1_plan=json.loads((native/'plan.json').read_text())
     symbols={
-        'fa1':'flash_attention_v1_baseline','scalar':'flash_attention_v2_scalar_baseline',
+        'fa1':('flash_attention_v1_tiled' if fa1_plan.get('fa1_workspace_floats_per_query') else 'flash_attention_v1_baseline'),'scalar':'flash_attention_v2_scalar_baseline',
         'warp':'flash_attention_v2_warp_per_query','tiled':'flash_attention_v2_cuda_core_tiled',
         'skip':'tile_skip::casual_flash_attention_forward_gpu_optimised_for_cuda_core',
         'vector':'vector_load::casual_flash_attention_forward_gpu_optimised_for_cuda_core',
         'wmma':'flash_attention_wmma_fused','ptx':'flash_attention_v2_tensor_core_ptx_mma_fully_fused'}
+    if 'fa1_wmma' in fa1_plan.get('kernels',[]):symbols['fa1_wmma']='flash_attention_v1_wmma'
     implementations={}
     for variant,symbol in symbols.items():
-        tensor=variant in ['wmma','ptx']
-        filename='flash_attention_1.cu' if variant=='fa1' else 'flash_attention_2_tensor_core.cu' if tensor else 'flash_attention_2_cuda_core.cu'
+        tensor=variant in ['fa1_wmma','wmma','ptx']
+        filename='flash_attention_1_tensor_core.cu' if variant=='fa1_wmma' else 'flash_attention_1.cu' if variant=='fa1' else 'flash_attention_2_tensor_core.cu' if tensor else 'flash_attention_2_cuda_core.cu'
         relative='part_c/src/'+filename
         implementations[variant]={'symbol':symbol,'source':'raw/part_c/study/source_snapshot/'+relative,'source_sha256':native_manifest['sources'][relative], 'input_precision':'FP16' if tensor else 'FP32','accumulator_precision':'FP32','output_precision':'FP32','softmax_precision':'FP32','probability_operand_precision':'FP16' if tensor else 'FP32'}
     manifest={'schema_version':schema.VERSION,'native_plot_processor_sha256':native_plot_processor_sha256,'exporter':'part_c_to_part_a_v1','grid':json.loads((native/'plan.json').read_text()).get('grid','full'),'run_id':run_id,'part':'part_c','implementations':implementations,'export_kind':'format_adaptation_not_a_new_GPU_measurement','measurement_started_utc':json.loads((native/'manifest.json').read_text()).get('started_utc',''),'native_binary_sha256':json.loads((native/'manifest.json').read_text())['binary_sha256'],'native_source':'raw/part_c/study','supplementary_datasets':historical,'native_inventory':declared_native,'supplementary_inventory':{name:inventory(out/name) for name in historical},'source_columns_preserved_in_raw':list(schema.read(native/'measurements.csv')[0]),'experiment_mapping':PHASES,'selected_default_config_promoted_to_proposal':True,'mapping':{'kernel':'variant','mode':'native execution mode replaced by causal attention mode; native value retained in raw','median_ms':'forward_median_ms','q1_ms':'forward_q1_ms','q3_ms':'forward_q3_ms','iqr_ms':'forward_iqr_ms'},'profiling':{'captures':audit['profile_captures'],'all_raw_metric_names_units_and_original_values_retained':True,'verified_binary_reports':audit['verified_binary_profile_reports'],'missing_binary_reports':audit['missing_binary_profile_reports'],'instrumented_times_excluded_from_samples':True,'historical_profiles_are_supplementary_not_relabelled_as_current':historical},'reference_backend':json.loads((native/'plan.json').read_text()).get('reference_backend','historical Part C FP64 oracle'),'final_abc_integration_complete':False,'processing_sha256':{s.name:sha(s) for s in source_copy.iterdir() if s.is_file()}}
+    manifest['study_kernels']=fa1_plan.get('kernels',KERNELS)
+    manifest['fa1_baselines']=fa1_plan.get('fa1_baselines',[])
+    manifest['required_profile_captures']=24 if 'fa1_wmma' in fa1_plan.get('fa1_baselines',[]) else 12
+    generate_fa1_comparisons(out,tables,selection)
+    manifest['fa1_implementation']=fa1_plan.get('fa1_implementation','historical_query_parallel_scalar')
+    manifest['fa1_workspace_floats_per_query']=fa1_plan.get('fa1_workspace_floats_per_query',0)
     dump(out/'manifest.json',manifest)
     audit['external_native_files_missing']=check_declared_files(native,declared_native)
     audit['native_inventory_verified']=inventory(study)==before
@@ -379,7 +402,7 @@ def publish(study, out, supplementary=(), in_place=False, regenerate=False):
     links+=['','## Additional generated profiler plots','']+[f'- [{name}](plots/{name})' for name in generated]
     (extra/'README.md').write_text('\n'.join(links)+'\n')
     figure_index=out/'plots/README.md';figure_index.parent.mkdir(exist_ok=True)
-    figure_index.write_text('# Part C figure index\n\nThe seven native study figures are in [part_c/](part_c/). Additional profiler charts and preserved insights are indexed in [supplementary/part_c/](../supplementary/part_c/README.md).\n')
+    figure_index.write_text('# Part C figure index\n\nThe seven native study figures are in [part_c/](part_c/). Fresh runs additionally include matched-precision FA1/FA2 and cross-precision comparison plots; see ../fa1_comparison_index.json and the corresponding CSVs. Additional profiler charts and preserved insights are indexed in [supplementary/part_c/](../supplementary/part_c/README.md).\n')
     (out/'ANALYSIS.md').write_text('# Part C report export\n\nThis bundle uses Part A column names with explicit precision, fingerprints and validation scope. All unprofiled timings and numerical checks are unchanged. See [native measured findings](raw/part_c/study/REPORT.md) and [supplementary profiler insights](supplementary/part_c/README.md).\n\nFused stage times, setup timing and inappropriate naive speedups are blank. Allocation fields measure explicit live buffers. Work.csv uses analytical valid pairs and source-derived CTA tile schedules, not measured executed FLOPs. The manifest records the actual oracle backend. Historical bundles keep their original reference provenance; fresh runs use the shared Part A CPU library.\n')
     if not audit['native_inventory_verified']:raise ValueError('Source changed during export')
     return audit

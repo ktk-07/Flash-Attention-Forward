@@ -55,6 +55,15 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(len(derived),12)
         self.assertTrue(all(r['unit']=='%' for r in derived))
 
+    def test_fa1_revision_has_distinct_configuration_identity(self):
+        plan=json.loads((NATIVE/'plan.json').read_text())
+        row=next(r for r in schema.read(NATIVE/'summary.csv') if r['kernel']=='fa1')
+        old=exporter.common(row,'same_run',plan,self.selection)
+        current=exporter.common(row,'same_run',{**plan,'fa1_workspace_floats_per_query':2},self.selection)
+        self.assertNotEqual(old['config'],current['config'])
+        self.assertNotEqual(old['case_id'],current['case_id'])
+        self.assertIn('kv_outer_shared_v2',current['config'])
+
     def test_duplicate_repetitions_rejected(self):
         tables=copy.deepcopy(self.tables)
         tables['samples'][1]['repeat']=tables['samples'][0]['repeat']

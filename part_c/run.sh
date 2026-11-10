@@ -4,6 +4,10 @@
 set -uo pipefail
 # Named CLI publishes the standardized report; legacy positional workflows stay available.
 case "${1:-}" in
+    --fa1-pilot)
+        shift
+        exec python3 "$(dirname "$0")/scripts/compare_fa1.py" "$@"
+        ;;
     --export)
         shift
         if [ "$#" -eq 0 ]; then printf 'Usage: run.sh --export STUDY --output BUNDLE\n' >&2; exit 2; fi
@@ -61,7 +65,9 @@ record nvcc_version nvcc --version
 record host_compiler c++ --version
 record configure cmake -S part_c -B "$task_build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=86 -DBUILD_TESTING=ON || exit 1
 record build cmake --build "$task_build" --parallel 2 || exit 1
-record source_hashes sha256sum part_c/src/flash_attention_1.cu part_c/src/flash_attention_2_cuda_core.cu part_c/src/flash_attention_2_tensor_core.cu part_c/include/flash_attention/*.h part_c/tests/*.cpp part_c/tests/*.h part_c/tests/kernel_bodies.json part_c/CMakeLists.txt "$task_build/part_c_runner"
+record source_hashes sha256sum part_c/src/flash_attention_1.cu part_c/src/flash_attention_1_tensor_core.cu part_c/src/flash_attention_2_cuda_core.cu part_c/src/flash_attention_2_tensor_core.cu part_c/include/flash_attention/*.h part_c/tests/*.cpp part_c/tests/*.h part_c/tests/kernel_bodies.json part_c/CMakeLists.txt "$task_build/part_c_runner"
+record fa1_invariants "$task_build/part_c_fa1_test" --output "$task_run/fa1_invariants" || exit 1
+record fa1_wmma_invariants "$task_build/part_c_fa1_test" --tensorcore --output "$task_run/fa1_wmma_invariants" || exit 1
 record correctness "$task_build/part_c_runner" --suite correctness --output "$task_run/correctness" || exit 1
 record benchmark "$task_build/part_c_runner" --suite benchmark --grid full --output "$task_run/benchmark" || exit 1
 for task_tool in memcheck racecheck synccheck initcheck; do

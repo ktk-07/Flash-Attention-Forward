@@ -8,11 +8,13 @@ void check(cudaError_t error);
 struct Shape { int b,h,n,d; std::size_t size() const; };
 extern const std::vector<std::string> kernels;
 bool tensor(const std::string& id);
+bool needs_fa1_workspace(const std::string& id);
 struct Buffers {
     float *q=nullptr,*k=nullptr,*v=nullptr,*o=nullptr;
     half *hq=nullptr,*hk=nullptr,*hv=nullptr;
-    std::size_t allocated_bytes=0;
-    Buffers(std::size_t count,bool tensor_inputs=false,bool minimal=false);
+    float* fa1_workspace=nullptr;
+    std::size_t allocated_bytes=0,fa1_rows=0;
+    Buffers(std::size_t count,bool tensor_inputs=false,bool minimal=false,std::size_t fa1_query_rows=0);
     ~Buffers();
     Buffers(const Buffers&)=delete;
     void release() noexcept;

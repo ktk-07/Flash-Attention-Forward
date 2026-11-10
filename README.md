@@ -144,7 +144,9 @@ cmake --build /tmp/part_c-evaluation-build --parallel 2
   --suite correctness --output part_c/results/my_correctness
 ```
 
-The default regression checks all eight variants, including tails, unusual head dimensions and deterministic patterns. Unsupported PTX dimensions are explicit skips. The bounded study separately validates every candidate configuration before tuning. Full small-case outputs are checked; large performance cases check queries 0, N/2 and N−1 in every head plus finiteness of every output. Sampled checks are not labelled full validation.
+The default regression checks all nine variants (including FP32 and WMMA FA1 baselines), including tails, unusual head dimensions and deterministic patterns. Unsupported PTX dimensions are explicit skips. The bounded study separately validates every candidate configuration before tuning. Full small-case outputs are checked; large performance cases check queries 0, N/2 and N−1 in every head plus finiteness of every output. Sampled checks are not labelled full validation.
+
+Fresh Part C runs include both fixed FA1 baselines throughout correctness, main-grid timing, memory, profiling and plots. `fa1_fa2_comparison.csv` records matched-precision ratios against frozen FA2 configurations; `fa1_cross_precision.csv` labels FP16 FA1 versus FP32 FA2 separately. Both have PNG/PDF figures in `plots/part_c/`. These compare our implementations, not official FA1 performance. Full C profiling now contains 24 captures: both FA1 baselines and both frozen d=64 FA2 family winners, two lengths and three repetitions. Historical bundles keep their recorded coverage. See [Part C](part_c/README.md) for precision/state details.
 
 CPU-only integration/export regression checks (no CUDA access required):
 
@@ -250,8 +252,13 @@ Checked against this checkout on 8 November 2026. The earlier list describing th
 | Requested work | Current status | Implementation / verification |
 |---|---|---|
 | 1. Part A shared interfaces | Implemented | [`attention_reference` library](part_a/cpu_reference/CMakeLists.txt), [output-only full/sampled oracle](part_a/cpu_reference/sampled_reference.cpp), [agreement tests](part_a/tests/reference_test.cpp), per-case O validation/fingerprints in [main.cpp](part_a/main.cpp), and [canonical export](part_a/scripts/export_results.py). |
+<<<<<<< Updated upstream
 | 2. Part B | Implemented; final safety/profiling acceptance pending | Dense FP32 kernels, shared-oracle validation, bounded tuning and seven-table adapter are in `part_b/`. Diagnostic results deliberately fail final acceptance when sanitizers are omitted. |
 | 3. Part C shared correctness linkage | Implemented | [Active test support](part_c/tests/test_support.cpp) calls the shared generator, pattern transformations, fingerprint and FP64 output reference; all active runners link the library through [CMake](part_c/CMakeLists.txt). Original kernel bodies are unchanged. Historical scratch/legacy tests retain their provenance and are not the shared comparison path. |
+=======
+| 2. Part B | Pending; deliberately not implemented here | Dense kernels, correctness, tuning and standalone adapter must follow the Part B contract below. No placeholder B runner is supplied. |
+| 3. Part C shared correctness linkage | Implemented | [Active test support](part_c/tests/test_support.cpp) calls the shared generator, pattern transformations, fingerprint and FP64 output reference; all active runners link the library through [CMake](part_c/CMakeLists.txt). FA2 kernel bodies are unchanged; FA1 was rewritten on 9 November to follow the K/V-outer shared-memory schedule described in [Part C](part_c/README.md). Historical scratch/legacy tests retain their provenance and are not the shared comparison path. |
+>>>>>>> Stashed changes
 | 4. Root experiment pipeline | Implemented for available parts | [run.sh](run.sh) invokes [scripts/run_all.py](scripts/run_all.py); standalone A/C workflows perform tests, sanitizers, tuning, timing, memory/resources, optional fresh profiling and export. Aggregation validates the requested grid and tables. Individual parts and CPU-only analysis are supported. [run_all.sh](run_all.sh) is now an alias, not a separate prototype. |
 | 5. Combined plotting and analysis | Implemented | [plot_combined.py](scripts/plot_combined.py) generates applicable standardized comparisons and preserves individual figures. A/B and dense-B/causal-C paths are tested with temporary synthetic fixtures only; actual B measurements remain unavailable. |
 | 6. Final common-machine experiment | Pending | After B passes its standalone and joint smoke checks, execute the complete full-grid A/B/C workflow with profiling. Review its actual outputs before writing final performance conclusions. |
@@ -442,6 +449,10 @@ Offline root analysis checks the recorded child table hashes, invokes each child
 ### Status and final collection
 
 A/B/C software integration is implemented; Part B safety/profiling acceptance and the final full common-machine experiment remain outstanding. Smoke runs exercise the pipeline, not report performance. A requested A/C subset can pass its audit while `all_three_parts_present=false`. `--no-profile` leaves the absence of fresh counters explicit. Completing A/C does not complete the report, video or final submission.
+
+**FA1 baseline revision (9 November 2026):** new Part C runs use a CUDA-core FA1 Algorithm-1 schedule with shared Q/K/V/S/O, global per-row m/l and one CTA per head. The workspace and dynamic shared memory are included in new metadata/ledgers. Historical FA1 timings/profile captures remain measurements of the earlier scalar query-parallel kernel; they cannot establish the rewritten kernel’s performance. See [Part C’s implementation and tests](part_c/README.md).
+
+**Optional FA1 Tensor Core pilot:** `bash part_c/run.sh --fa1-pilot --output results/my_fa1_pilot` compares the separate WMMA FA1 implementation with the FA2-style WMMA/PTX kernels, while keeping FP32 comparisons separate. It uses only N256/1024,d64 by default and preserves native records, standardized tables and labelled plots. It does not measure official FA1 or establish performance parity. See [Part C’s pilot instructions](part_c/README.md).
 
 ## 7. Measurement conventions
 

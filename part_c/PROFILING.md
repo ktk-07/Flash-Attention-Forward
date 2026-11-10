@@ -18,7 +18,7 @@ python3 part_c/scripts/analyze_source.py part_c/results/my_profile
 python3 part_c/scripts/interpret_profiles.py part_c/results/my_profile
 ```
 
-`profile_kernels.py` drives all eight maintained kernel variants at `B=4,H=8,d=64,N=256/4096`, with three independent captures per kernel/shape. The default uses SM86, matching the local Ampere GPU. This is a representative small/large study, not exhaustive profiling of all benchmark shapes.
+`profile_kernels.py` drives all nine maintained kernel variants (including both FA1 baselines; 54 captures) at `B=4,H=8,d=64,N=256/4096`, with three independent captures per kernel/shape. The default uses SM86, matching the local Ampere GPU. This is a representative small/large study, not exhaustive profiling of all benchmark shapes.
 
 The existing full small-case correctness suite runs first. Each capture also checks query rows `0,N/2,N-1` in every batch/head against CPU FP64 attention and checks all outputs for finiteness. Tensor Core references use identical FP16-rounded inputs.
 
@@ -79,7 +79,7 @@ The saved analysis includes source shared actual/ideal/excessive wavefronts. His
 
 ## Profiling frozen configurations
 
-The bounded study profiles its frozen d=64 family winners separately from the historical eight-kernel defaults:
+The bounded study profiles both fixed FA1 baselines and its frozen d=64 FA2 family winners. This is separate from the all-kernel fixed-default profiler:
 
 ```bash
 bash part_c/profile.sh --frozen part_c/results/my_bounded_study
@@ -87,4 +87,32 @@ bash part_c/profile.sh --frozen part_c/results/my_bounded_study
 python3 part_c/scripts/profile_frozen.py part_c/results/my_bounded_study --analyze-only
 ```
 
-This uses the same evaluation binary hash recorded by the study, one module-warmup launch, one validation launch, five warmups, then `--launch-skip 7 --launch-count 1` to capture the first timed launch. All timings produced under Nsight are excluded from the unprofiled study. Three independent captures at N=256/4096 produce twelve raw reports and source-level actual/ideal/excessive shared wavefronts. The input sequence is the new Part A-compatible stream; historical profiles retain their older stream. Avoid treating cross-study counter differences as a precision-controlled or input-controlled ablation.
+This uses the same evaluation binary hash recorded by the study, one module-warmup launch, one validation launch, five warmups, then `--launch-skip 7 --launch-count 1` to capture the first timed launch. All timings produced under Nsight are excluded from the unprofiled study. Three independent captures per target at N=256/4096 produce 24 raw reports and source-level actual/ideal/excessive shared wavefronts. The input sequence is the new Part A-compatible stream; historical profiles retain their older stream. Avoid treating cross-study counter differences as a precision-controlled or input-controlled ablation.
+
+## FA1 schedule/version note
+
+Fresh all-kernel captures record `fa1_grid=one_CTA_per_batch_head` and
+`fa1_implementation=kv_outer_shared_fp32_v2`. FA1's grid is now `(B*H,1,1)`;
+Both FA1 baselines use that grid; FA2 kernels retain their query-tile grids. FP32 FA1 uses dynamic shared
+storage, so static shared bytes alone are not its shared-memory footprint.
+The maintained processor exports dynamic shared bytes separately. Historical
+plans without these flags retain their original query-parallel FA1 grid;
+no saved source snapshots or counter records are relabelled. Profiling still
+selects one forward after validation and five warmups (skip 6): initialisation
+is inside FA1's forward, not an additional launch.
+
+New WMMA FA1 plans record `fa1_wmma_implementation=kv_outer_wmma_v1`.
+Its shared arrays are static. Frozen profiling exports static and dynamic
+shared bytes and their sum for both FA1 baselines and FA2 targets.
+Legacy plans with two targets still require twelve captures. Offline processing
+uses recorded target lists and capture counts, preserving historical coverage.
+
+To exercise the fresh four-target capture/processing path on a **smoke** study:
+
+```bash
+bash part_c/profile.sh --frozen /path/to/smoke/study --build /path/to/matching/build --smoke
+```
+
+Use a study without an existing profiling directory. This records the study's
+small sequence lengths and B/H in the profile plan. It validates the pipeline;
+it is not evidence for the final N256–4096 grid.

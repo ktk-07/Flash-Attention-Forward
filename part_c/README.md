@@ -10,7 +10,8 @@ For shared setup and submission reproduction, see [../README.md](../README.md) a
 part_c/
   include/flash_attention/       # shared types and public launch declarations
   src/
-    flash_attention_1.cu        # educational FA1-style scalar baseline
+    flash_attention_1.cu        # FA1 Algorithm-1 K/V-outer FP32 shared-memory baseline
+    flash_attention_1_tensor_core.cu # maintained WMMA FA1 baseline
     flash_attention_2_cuda_core.cu
     flash_attention_2_tensor_core.cu
   tests/                        # C++ runners, reference and regression checks
@@ -35,7 +36,8 @@ Inputs are contiguous `[B,H,N,d]`, scaled by `1/sqrt(d)`. Query `i` attends to k
 
 | ID | Implementation | Inputs / accumulation / output |
 |---|---|---|
-| `fa1` | One thread per query, scalar online softmax | FP32 / FP32 / FP32 |
+| `fa1` | One CTA/head; K/V outer, Q inner; shared Q/K/V/S/O and global m/l | FP32 / FP32 / FP32 |
+| `fa1_wmma` | FA1 K/V-outer WMMA; normalised global O/m/l | FP16 / FP32 / FP32 |
 | `scalar` | FA2-style scalar baseline | FP32 / FP32 / FP32 |
 | `warp` | Cooperative warp per query | FP32 / FP32 / FP32 |
 | `tiled` | Shared Q/K/V, register tiling; already skips future tiles | FP32 / FP32 / FP32 |
@@ -44,7 +46,7 @@ Inputs are contiguous `[B,H,N,d]`, scaled by `1/sqrt(d)`. Query `i` attends to k
 | `wmma` | Fused WMMA QKᵀ and PV | FP16 / FP32 / FP32 |
 | `ptx` | Fused explicit PTX MMA QKᵀ and PV | FP16 / FP32 / FP32 |
 
-FA1/FA2 names identify educational implementations, not equivalence to official library releases. `tiled` versus `skip` is not a clean causal-skipping ablation. WMMA/PTX also round probability operands to FP16 for PV. PTX packs operands manually; the maintained kernels do not implement `ldmatrix`, swizzling or double buffering.
+FA1/FA2 names identify educational implementations, not equivalence to official library releases. The maintained FA1 now follows the original Algorithm-1 schedule without Tensor Cores; older saved FA1 results refer to the previous query-parallel scalar kernel and must not be relabelled. `tiled` versus `skip` is not a clean causal-skipping ablation. WMMA/PTX also round probability operands to FP16 for PV. PTX packs operands manually; the maintained kernels do not implement `ldmatrix`, swizzling or double buffering.
 
 Instantiated head dimensions are 7,16,32,33,40,64,65,96,128. PTX requires d>=16 divisible by 16; unsupported cases are explicit skips. WMMA pads internally. Tensor configurations require BQ=16×warps and BK divisible by 16.
 
@@ -93,6 +95,20 @@ CPU-only adapter regression tests:
 python3 -m unittest discover -s part_c/tests -p 'test_export_results.py' -v
 ```
 
+## Both FA1 baselines in fresh standard runs
+
+The normal runner checks all nine kernels (428 passes and four unsupported PTX cases), then runs dedicated FP32 and WMMA FA1 suites (236 cases each). Both suites check full output and final m/l state. Frozen verification runs four Compute Sanitizer tools on both FA1 baselines and both selected FA2 family winners (16 checks). FA2 tuning lists are unchanged; FA1 baselines use fixed config 0 and are not selected using reporting timings.
+
+Both FA1s appear as `experiment=proposal` beside the frozen FA2 variants. Their exact memory measurements include the two FP32 B×H×N state arrays. New full profiling captures these two baselines plus the two frozen d=64 FA2 family winners, at N256/4096 with three repetitions (24 captures). Standard smoke runs omit profiling.
+
+Fresh standalone and combined bundles add:
+
+- `fa1_fa2_comparison.csv`: FP32 FA1 versus the frozen CUDA-core family winner, and FP16 FA1 versus each frozen WMMA/PTX variant.
+- `fa1_cross_precision.csv`: FP16 FA1 versus FP32 FA2, explicitly labelled as different precision.
+- `plots/part_c/fa1_fa2_comparison.{png,pdf}` and `fa1_cross_precision.{png,pdf}`, plus an index linking exact case IDs and configurations.
+
+Ratios use unprofiled medians after input-fingerprint checks. Tensor Core progression now includes FA1 WMMA; native CUDA progression includes FP32 FA1. Historical eight-kernel bundles retain their original coverage and are not filled with invented FA1 WMMA measurements. Root A/C comparisons continue to use the frozen FA2 family winners.
+
 ## Native-format compatibility workflows
 
 Use Linux/Bash, CMake >=3.18, C++17, CUDA, Python and the pinned analysis packages. The recorded machine uses an RTX 3070 Ti Laptop (SM86), CUDA 12.6 and Nsight Compute 2024.3. Run commands from the repository root with a fresh output directory.
@@ -128,6 +144,69 @@ cmake --build /tmp/part_c-evaluation-build --parallel 2
 
 The default runner accepts `--kernel fa1|scalar|warp|tiled|skip|vector|wmma|ptx` and `--grid representative` for a shorter benchmark.
 
+## FA1 Algorithm-1 baseline (rewritten 9 November 2026)
+
+The former `fa1` used online softmax but had no shared-memory staging and one CTA per query tile. It was not the original FA1 IO schedule. The maintained implementation now follows the original K/V-outer, Q-inner schedule:
+
+1. One CTA owns a complete batch/head, cooperatively loading a K/V tile once.
+2. It iterates over the applicable query tiles, staging Q and the previous normalised O in shared memory.
+3. One CUDA thread per query row forms a shared score tile, computes its stable softmax and merges the previous maximum/normaliser/output.
+4. It writes O and the row statistics back to global memory before processing the next K/V tile. Entirely future tile pairs are skipped and diagonal entries are masked in causal mode.
+
+This is a readable FP32 CUDA-core implementation of FA1's algorithmic schedule, not a performance replica of the official implementation. It does not call WMMA, MMA or CUTLASS. Both dense and causal modes are exposed by the FA1 API; normal Part C evaluation remains causal. Barriers are collective even for tails; every forward initialises its own O/m/l state in the first K/V iteration, so no reset launch or host memset is hidden outside timing.
+
+The caller preallocates two FP32 arrays of B×H×N elements through `FlashAttention1Workspace` and keeps them alive until the selected stream finishes. Concurrent forwards need disjoint output/state buffers. The wrapper never allocates in the timed path. Live allocation is **16×B×H×N×d + 8×B×H×N bytes**, including Q/K/V/O and m/l. With BQ=BK=32, shared Q/K/V/S/O storage is `4*(2*BQ*d + 2*BK*d + BQ*BK)` bytes: 69,632 bytes at d=128. First-use setup opts into larger dynamic shared memory when needed; insufficient hardware capacity fails explicitly.
+
+A single CTA/head intentionally exposes FA1's reduced parallelism and per-tile O/state traffic relative to the query-resident FA2-style kernels. The new kernel uses coalesced cooperative staging, but simple thread-per-row arithmetic is not a tuned GEMM microkernel. FA1-to-FA2 progression changes scheduling, state placement and compute mapping; it is not a single-feature ablation.
+
+After the normal CMake build:
+
+```bash
+/tmp/part_c-build/part_c_fa1_test --output /tmp/fa1_full_checks
+# A short set suitable for each Compute Sanitizer tool:
+compute-sanitizer --tool racecheck --error-exitcode 3 \
+  /tmp/part_c-build/part_c_fa1_test --smoke --output /tmp/fa1_racecheck
+```
+
+Substitute the actual build path. The dedicated tests compare dense/causal full O and final m/l against FP64; exercise all supported head dimensions, partial tiles, multiple heads, poisoned initial memory, repeat calls, a nondefault stream and future-K/V isolation. The standardized runner executes this suite automatically. Use a fresh output path per command.
+
+New study/profiler plans record `fa1_implementation=kv_outer_shared_fp32_v2`. The exporter gives this FA1 a distinct configuration identity, includes workspace bytes and the one-CTA/head resource grid, and retains dynamic shared-memory queries. Historical bundles have no such flag and keep their old resource/allocation interpretation. Their saved samples and source snapshots are unchanged; regenerate fresh measurements for new FA1 ratios. FA2 CUDA-core and Tensor Core kernel bodies are unchanged by this rewrite.
+
+## FA1 Tensor Core baseline and targeted pilot
+
+Keep the FP32 FA1 baseline and compare FP32 FA1/FA2 separately from mixed precision. `fa1_wmma` is the maintained Tensor Core FA1 baseline: K/V outer and Q inner, one CTA/head, BQ=BK=32, two warps, WMMA for both products. Q/K/V and probability operands are FP16; accumulation, scaling, softmax, row state and O are FP32. Normalised O/m/l are exchanged through global memory between K/V blocks, unlike the query-resident FA2 variants. Workspace is caller-owned and each forward starts fresh internally. It is **not** the official FA1 library or a demonstrated performance-parity implementation.
+
+Both FA1 baselines run in the normal nine-kernel workflow. The targeted pilot remains available for a smaller fixed-configuration comparison:
+
+```bash
+bash part_c/run.sh --fa1-pilot --output results/my_fa1_pilot
+# Print the plan without touching the GPU or creating files.
+bash part_c/run.sh --fa1-pilot --arch 86 --output results/preview_fa1 --dry-run
+# Revalidate saved native records and regenerate figures without CUDA.
+bash part_c/run.sh --fa1-pilot --analyze-only results/my_fa1_pilot
+```
+
+The default pilot uses B4/H8/d64, N256/1024 and config 0 for every implementation. It first runs FP32 and Tensor Core FA1 full output/state suites, the default all-kernel regression, four focused Tensor Core FA1 sanitizer checks and SASS verification. Then it takes five warmups/20 unprofiled samples per case, rotating kernel order between shapes. No winner is chosen on the reporting grid and no unsuccessful speedup case is discarded. `--grid full` is an explicit later expansion; default is the requested small run. `--arch`, `--device` and `--build` work as in the other runners.
+
+- `comparison.csv`: FP32 `fa1` versus `skip`; FP16 `fa1_wmma` versus `wmma` and `ptx`. The matched FP16 contract includes FP32 accumulators/softmax/O, but normalisation/rounding history and WMMA/PTX fragment mappings can differ.
+- `precision_tradeoffs.csv`: FP32 FA1 versus WMMA FA1, explicitly a hardware-plus-precision comparison, **not** an FA2 speedup.
+- Seven standard CSVs at the output root; `experiment=fa1_pilot` keeps these cases out of the core final-grid series.
+- `plots/part_c/{fa1_fa2_speedup,pilot_latency}.{png,pdf}`, with numeric inputs in the CSVs, plus `ANALYSIS.md`, `manifest.json`, `audit.json` and raw records/source snapshots in `raw/part_c/fa1_pilot/`.
+
+Both `fa1` and `fa1_wmma` are included in default regression, main timing, explicit memory measurements, profiling and exports. Either can also be selected explicitly with `part_c_runner --kernel fa1_wmma` or `part_c_evaluation fa1_wmma 0 ...`. The dedicated executable accepts `--tensorcore`; CTest registers its invariant suite. Existing FA1/FA2 kernels, earlier saved results and the fixed main comparison contract are preserved.
+
+The first [recorded small pilot](../results/fa1_pilot_20261110/ANALYSIS.md) ran on the RTX 3070 Ti Laptop GPU (SM86), with B4/H8/d64 and config 0. Speedup means baseline median divided by candidate median:
+
+| Comparison | N=256 | N=1024 |
+|---|---:|---:|
+| FP32 FA1 / FP32 FA2-style `skip` | 3.60× | 4.28× |
+| FA1 WMMA / FA2-style WMMA | 2.21× | 2.88× |
+| FA1 WMMA / FA2-style PTX | 4.26× | 7.87× |
+
+These measurements motivated including both baselines in fresh standard runs. The results are two-shape, fixed-default observations, not full-grid tuning conclusions. Median/IQR values, 200 raw timing samples, fingerprints, numerical checks, source hashes and PNG/PDF figures are retained in that bundle. The FP32-to-Tensor-Core FA1 improvement is stored separately and is not attributed to FA2.
+
+The official FA1 v1.0.9 release supports FP16/BF16 and has different implementation/measurement details. It was not benchmarked by this pilot. An actual official comparison would require a pinned compatible installation and separately validated inputs/timing boundaries; our own kernel must not be relabelled as official performance.
+
 ## Validation and tuning
 
 An independent CPU FP64 reference computes stable causal softmax. Small cases check every output, including tails and random/uniform/constant-V/rising-logit/stress inputs. Large benchmark cases check query rows 0,N/2,N−1 in every head and finiteness of all outputs. Outputs are prefilled with NaNs to catch missing stores.
@@ -144,7 +223,7 @@ Timing uses five warmups and 20 CUDA-event repetitions. Allocation, copies, roun
 
 Start with [results/README.md](results/README.md) and the [bounded-study report](results/bounded_evaluation/REPORT.md).
 
-The recorded study passed 288 full candidate checks, 318 sampled benchmark cases (6,360 samples), and 30 sampled memory cases. Additional verification passed 380 default checks with four explicit unsupported cases, plus eight representative sanitizer runs. Twelve fresh Nsight captures cover the frozen d=64 winners at N=256/4096.
+The historical eight-kernel study passed 288 full candidate checks, 318 sampled benchmark cases (6,360 samples), and 30 sampled memory cases. Additional verification passed 380 default checks with four explicit unsupported cases, plus eight representative sanitizer runs. Twelve fresh Nsight captures cover the frozen d=64 winners at N=256/4096.
 
 | d | Frozen CUDA core | CUDA ms at N4096 | Frozen PTX ms | Core / tensor |
 |---|---|---|---|---|
@@ -156,7 +235,7 @@ These compare FP32 CUDA-core and FP16-input Tensor Core paths. They are not prec
 
 Seven PNG/PDF figures cover CUDA progression, Tensor Core progression, frozen family comparison, default-versus-tuned gains, tuning heatmap, matched scalar/vector loading, and device storage. The matched-load experiment uses identical launch parameters for `skip/vector`; other progression comparisons may combine changes.
 
-Memory cases allocate only Q/K/V/O: 16 bytes/element for FP32, 10 for FP16 inputs with FP32 output. The ledger measures their exact explicit live peak; compiler/runtime allocations are outside it. Three `cudaMemGetInfo` observations are separately labelled, not a continuous total-process peak. The materialised S+P curve is an analytical model, not measured Part A storage. Profiler traffic is a separate metric.
+The frozen FA2-family memory cases allocate Q/K/V/O: 16 bytes/element for FP32, 10 for FP16 inputs with FP32 output. The rewritten FA1 additionally allocates 8×B×H×N bytes for m/l; its benchmark allocation ledger and canonical memory records include them. The ledger measures their exact explicit live peak; compiler/runtime allocations are outside it. Three `cudaMemGetInfo` observations are separately labelled, not a continuous total-process peak. The materialised S+P curve is an analytical model, not measured Part A storage. Profiler traffic is a separate metric.
 
 ## Additional safety checks and profiling
 
@@ -178,4 +257,4 @@ python3 part_c/scripts/audit_evaluation.py part_c/results/bounded_evaluation
 python3 part_c/scripts/profile_frozen.py part_c/results/bounded_evaluation --analyze-only
 ```
 
-No GPU is needed for saved-data processing. Full profile-integrity audits require the checksummed raw `.ncu-rep` files, supplied separately if excluded from Git. Plans, frozen configs, raw samples, command records, numerical checks and source/analysis manifests are retained with each dataset. The small `tests/kernel_bodies.json` manifest lets active audits verify preserved kernel bodies without depending on private development history.
+No GPU is needed for saved-data processing. Full profile-integrity audits require the checksummed raw `.ncu-rep` files, supplied separately if excluded from Git. Plans, frozen configs, raw samples, command records, numerical checks and source/analysis manifests are retained with each dataset. The small `tests/kernel_bodies.json` manifest lets active audits verify the declared current kernel fingerprints (FA1 rewritten; FA2 bodies preserved) without depending on private development history.
