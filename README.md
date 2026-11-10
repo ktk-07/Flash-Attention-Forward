@@ -439,6 +439,29 @@ Each standalone bundle has the same seven canonical CSVs at its root. Keeping co
 
 [plot_combined.py](scripts/plot_combined.py) consumes canonical tables only. It generates per-part FP32/FP16 kernel progression with IQR, throughput/storage, tuning and materialised stage breakdowns, plus applicable A-causal/C-causal and A-dense/B-dense comparisons. Once B is present it also generates dense-B versus causal-C latency, analytical valid-pair counts and available measured DRAM traffic, explicitly labelling them as different workloads. C additionally regenerates its native CUDA progression, Tensor Core progression, frozen core-versus-Tensor-Core, controlled scalar/vector-load ablation, tuning, memory and profiler figures. Full numerical data and native profiler metrics remain available for further report analysis. Missing parts/counters are declared, not plotted as fabricated zeros. FP16 A/C comparisons use FP32 accumulation/output and label their different probability rounding order.
 
+The current FA1/FA2 figure set is listed below. Paths are relative to the selected output bundle. All common figures have PNG/PDF versions. `plots/README.md` links every indexed image/PDF; `figure_index.json` includes common, retained native and supplementary figures; Part C's `plots/README.md` links its actual generated images.
+
+| Figure / location | Interpretation and configuration policy |
+|---|---|
+| `plots/part_c/cuda_core_progression` | Fixed-default FP32 progression, starting at FP32 FA1 |
+| `plots/part_c/tensor_core_progression` | Fixed-default PTX FA1, WMMA FA2 and PTX FA2; implementation progression, not a single-feature ablation |
+| `plots/part_c/kernel_progression_fp32`, `kernel_progression_fp16` | Canonical reporting-grid latency with quartiles; frozen configurations for tuned variants |
+| `plots/part_c/fa1_fa2_latency` | Direct FP32 FA1/core-FA2 and PTX FA1/PTX FA2 latency panels, median and Q1–Q3 |
+| `plots/part_c/fa1_fa2_comparison` | Matched-precision FA1 median / FA2 median; PTX configurations independently frozen |
+| `plots/part_c/fa1_cross_precision` | PTX FA1 / FP32 FA2, explicitly different input precision |
+| `plots/part_c/frozen_family_comparison` | Selected FA2 CUDA-core versus Tensor Core; FP32/FP16 tradeoff |
+| `plots/part_c/frozen_tuning_speedup`, `tuning_heatmap`, `tuning` | Default-versus-frozen gains and bounded candidate search, including PTX FA1 |
+| `plots/part_c/matched_vector_load` | Controlled scalar/vector load comparison with matching launch knobs |
+| `plots/part_c/device_memory`, `throughput_and_memory`, `numerical_error` | Allocated storage (including FA1 m/l), throughput and checked numerical error |
+| `supplementary/part_c/plots/` | Achieved occupancy, eligible warps, Tensor Core activity, sampled warp states, shared wavefronts and memory traffic for recorded profiler targets |
+| `plots/combined/` | Applicable A/B/C comparisons; Part A WMMA/PTX stay separately labelled; dense/causal work is not output equivalence |
+
+The root runner adds the common `kernel_progression_*`, `throughput_and_memory`, `numerical_error` and `tuning` plots. A standalone C export supplies the seven native figures, three FA1 comparison figures and available profiler charts; its own `plots/README.md` lists that actual set.
+
+`fa1_fa2_comparison.csv` supplies exact case IDs, configurations, medians and quartiles for both matched speedup and latency figures. `fa1_cross_precision.csv` is separate. Quartiles describe within-case timing spread, not confidence intervals; speedup curves are ratios of medians. Native fixed-default progression and frozen primary comparisons answer different questions. Optional WMMA FA1 appears only in explicit supplementary/pilot runs or historical bundles.
+
+The scripts are updated for fresh experiments. Existing historical result folders keep their original kernels, timings and captured processors; they are not final plots for the new PTX baseline. Smoke and pilot plots verify the pipeline but do not replace the full-grid report experiment. No final-grid performance data are fabricated during offline regeneration.
+
 Offline root analysis checks the recorded child table hashes, invokes each child’s native re-extraction/analysis, rechecks table hashes, aggregates, copies retained supplementary evidence and regenerates common figures. Individual analyze modes re-extract native data; C also regenerates native/supplementary plots. Large binary Nsight reports are optional for CSV-only figure reproduction and remain checksummed evidence for deeper inspection.
 
 ### Status and final collection
@@ -447,7 +470,7 @@ A/B/C software integration is implemented; Part B safety/profiling acceptance an
 
 **FA1 baseline revision (9 November 2026):** new Part C runs use a CUDA-core FA1 Algorithm-1 schedule with shared Q/K/V/S/O, global per-row m/l and one CTA per head. The workspace and dynamic shared memory are included in new metadata/ledgers. Historical FA1 timings/profile captures remain measurements of the earlier scalar query-parallel kernel; they cannot establish the rewritten kernel’s performance. See [Part C’s implementation and tests](part_c/README.md).
 
-**Optional FA1 Tensor Core pilot:** `bash part_c/run.sh --fa1-pilot --output results/my_fa1_pilot` compares the separate WMMA FA1 implementation with the FA2-style WMMA/PTX kernels, while keeping FP32 comparisons separate. It uses only N256/1024,d64 by default and preserves native records, standardized tables and labelled plots. It does not measure official FA1 or establish performance parity. See [Part C’s pilot instructions](part_c/README.md).
+**Optional FA1 Tensor Core pilot:** `bash part_c/run.sh --fa1-pilot --output results/my_fa1_pilot` compares fixed-default PTX FA1/PTX FA2 and retains WMMA FA1/WMMA/PTX supplementary comparisons, while keeping FP32 comparisons separate. Both FA1 Tensor Core implementations share `flash_attention_1_tensor_core.cu`. It uses only N256/1024,d64 by default and preserves native records, standardized tables and labelled plots. It does not measure official FA1 or establish performance parity. See [Part C’s pilot instructions](part_c/README.md).
 
 ## 7. Measurement conventions
 

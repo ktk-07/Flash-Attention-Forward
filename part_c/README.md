@@ -114,7 +114,9 @@ Standard outputs include:
 
 - `fa1_fa2_comparison.csv`: FP32 FA1 versus frozen FA2 CUDA-core winner, and frozen PTX FA1 versus frozen PTX FA2.
 - `fa1_cross_precision.csv`: PTX FA1 versus FP32 FA2, clearly labelled as different precision.
-- Corresponding PNG/PDF figures in `plots/part_c/`, with exact case IDs, configurations, medians and quartiles in the CSVs.
+- `plots/part_c/fa1_fa2_latency.{png,pdf}`: direct matched-precision latency panels, median with Q1–Q3; FP32 and Tensor Core inputs use separate panels.
+- `plots/part_c/fa1_fa2_comparison.{png,pdf}` and `fa1_cross_precision.{png,pdf}`: ratios of medians, with precision contracts kept separate.
+- Exact case IDs/configurations and all plotted medians/quartiles are in the CSVs. `fa1_comparison_index.json` identifies the actual Tensor Core baseline. Quartiles are within-case spread, not confidence intervals.
 
 Default regression checks all nine kernels; unsupported dimensions are explicit for both PTX variants. Dedicated tests cover 236 FP32 FA1 cases and 134 PTX FA1 cases per configuration, including dense/causal output and m/l, poisoned/repeated state, tails, streams and causal isolation. The standard runner executes all four PTX configurations. Frozen verification runs four Compute Sanitizer tools on the four main profiling targets (16 checks). Historical bundles retain their original coverage and processors.
 
@@ -213,7 +215,7 @@ The default pilot uses B4/H8/d64, N256/1024 and config 0 for every implementatio
 - Seven standard CSVs at the output root; `experiment=fa1_pilot` keeps these cases out of the core final-grid series.
 - `plots/part_c/{fa1_fa2_speedup,pilot_latency}.{png,pdf}`, with numeric inputs in the CSVs, plus `ANALYSIS.md`, `manifest.json`, `audit.json` and raw records/source snapshots in `raw/part_c/fa1_pilot/`.
 
-WMMA FA1 can be selected explicitly with `part_c_runner --kernel fa1_wmma` or `part_c_evaluation fa1_wmma 0 ...`. The dedicated executable accepts `--tensorcore`; Enable `-DPART_C_SUPPLEMENTARY_TESTS=ON` to register its optional CTest suite. Existing FA1/FA2 kernels, earlier saved results and the fixed main comparison contract are preserved.
+WMMA FA1 can be selected explicitly with `part_c_runner --kernel fa1_wmma` or `part_c_evaluation fa1_wmma 0 ...`. The dedicated executable accepts `--tensorcore`; enable `-DPART_C_SUPPLEMENTARY_TESTS=ON` to register its optional CTest suite. Existing FA1/FA2 kernels, earlier saved results and the fixed main comparison contract are preserved.
 
 The first [recorded small pilot](../results/fa1_pilot_20261110/ANALYSIS.md) ran on the RTX 3070 Ti Laptop GPU (SM86), with B4/H8/d64 and config 0. Speedup means baseline median divided by candidate median:
 
@@ -253,7 +255,7 @@ The historical eight-kernel study passed 288 full candidate checks, 318 sampled 
 
 These compare FP32 CUDA-core and FP16-input Tensor Core paths. They are not precision-isolated hardware speedups. Tuning improved the selected core kernels over their own defaults by 1.55×/1.23×/1.36× and PTX by 1.10×/1.16×/1.52× at N4096 for d32/64/128.
 
-Seven PNG/PDF figures cover CUDA progression, Tensor Core progression, frozen family comparison, default-versus-tuned gains, tuning heatmap, matched scalar/vector loading, and device storage. The matched-load experiment uses identical launch parameters for `skip/vector`; other progression comparisons may combine changes.
+The seven native PNG/PDF figures cover fixed-default CUDA/Tensor Core progression, frozen FA2 family comparison, default-versus-tuned gains, tuning heatmap, matched scalar/vector loading, and device storage. Fresh PTX studies include PTX FA1 in progression, tuning and memory. Standard export adds three FA1 comparison figure pairs: matched latency, matched speedup and separately labelled cross-precision speedup. Root aggregation additionally generates common per-part and applicable A/B/C figures. Its `figure_index.json` also lists retained native/supplementary plots; standalone `plots/README.md` links actual Part C figures. The matched-load experiment uses identical launch parameters for `skip/vector`; other progression comparisons may combine changes.
 
 The frozen FA2-family memory cases allocate Q/K/V/O: 16 bytes/element for FP32, 10 for FP16 inputs with FP32 output. The rewritten FA1 additionally allocates 8×B×H×N bytes for m/l; its benchmark allocation ledger and canonical memory records include them. The ledger measures their exact explicit live peak; compiler/runtime allocations are outside it. Three `cudaMemGetInfo` observations are separately labelled, not a continuous total-process peak. The materialised S+P curve is an analytical model, not measured Part A storage. Profiler traffic is a separate metric.
 
@@ -278,3 +280,18 @@ python3 part_c/scripts/profile_frozen.py part_c/results/bounded_evaluation --ana
 ```
 
 No GPU is needed for saved-data processing. Full profile-integrity audits require the checksummed raw `.ncu-rep` files, supplied separately if excluded from Git. Plans, frozen configs, raw samples, command records, numerical checks and source/analysis manifests are retained with each dataset. The small `tests/kernel_bodies.json` manifest lets active audits verify the declared current kernel fingerprints (FA1 rewritten; FA2 bodies preserved) without depending on private development history.
+
+### Regenerating plots after analysis-script updates
+
+Use a copied bundle or a fresh destination to preserve a previous exported report. From the repository root:
+
+```bash
+# Combined bundle: re-extract child tables and regenerate individual/combined figures.
+bash run.sh --analyze-only results/my_combined_run
+# Standalone C bundle: regenerate its native, FA1 comparison and profiler figures.
+bash part_c/run.sh --analyze-only results/my_c_run
+# Explicit fixed-default pilot, including supplementary WMMA FA1:
+bash part_c/run.sh --fa1-pilot --analyze-only results/my_fa1_pilot
+```
+
+These commands use saved measurements and do not access the GPU. Captured native processors reproduce the original seven native figures; current shared comparison code redraws canonical comparisons. To include a newly added kernel in a historical study requires a fresh GPU run, not just new plotting code. Full report figures are generated by the fresh full-grid run; smoke/pilot timings stay labelled as such.

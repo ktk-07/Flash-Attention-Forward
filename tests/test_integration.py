@@ -1,5 +1,5 @@
 """CPU-only integration rejection tests; all synthetic records are temporary test fixtures."""
-import copy,csv,importlib.util,json,shutil,subprocess,sys,tempfile,unittest
+import copy,csv,hashlib,importlib.util,json,shutil,subprocess,sys,tempfile,unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 import results_schema as schema
@@ -67,7 +67,12 @@ class IntegrationTests(unittest.TestCase):
                 dump(folder/'manifest.json',{'schema_version':1,'shared_cpu_reference_linked':True,'device':{'uuid':'GPU-test-fixture'}});dump(folder/'audit.json',{'passed':True})
                 if part=='part_c':
                     (folder/'configs').mkdir();dump(folder/'configs/part_c.json',{'frozen_selection':{'families':{'cuda_core':{'64':'skip'},'tensor_core':{'64':'wmma'}}}})
+            retained=out/'parts/part_c/plots/part_c';retained.mkdir(parents=True)
+            (retained/'native_fixture.png').write_bytes(b'temporary indexing fixture, not report data')
             audit=aggregate(out,['part_a','part_b','part_c'],'smoke')
+            index=json.loads((out/'figure_index.json').read_text())['figures']
+            self.assertTrue(any(item['figure']=='plots/part_c/native_fixture' and item['formats']==['png'] for item in index))
+            self.assertIn('native_fixture',(out/'plots/README.md').read_text())
             self.assertTrue(audit['all_three_parts_present']);self.assertFalse(audit['final_report_grid'])
             self.assertEqual(len(schema.read(out/'comparison.csv')),8)
             self.assertEqual(len(schema.read(out/'plots/combined/dense_causal_work.csv')),2)
@@ -114,6 +119,13 @@ class IntegrationTests(unittest.TestCase):
             aggregate(out,['part_a','part_c'],'smoke')
             self.assertEqual(len(schema.read(out/'fa1_fa2_comparison.csv')),4)
             self.assertEqual(len(schema.read(out/'fa1_cross_precision.csv')),2)
+            index=json.loads((out/'fa1_comparison_index.json').read_text())
+            self.assertEqual(index['tensor_core_baseline'],'fa1_ptx')
+            self.assertEqual(len(index['figures']),3)
+            files=[out/(item['figure']+'.'+ext) for item in index['figures'] for ext in ['png','pdf']]
+            before={p:hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
+            generate(out,load_tables(out),{'families':{'cuda_core':{'64':'skip'}}})
+            self.assertEqual(before,{p:hashlib.sha256(p.read_bytes()).hexdigest() for p in files})
             tables=load_tables(out/'parts/part_c');selection={'families':{'cuda_core':{'64':'skip'}}}
             broken=copy.deepcopy(tables)
             next(r for r in broken['summary'] if r['variant']=='fa1_ptx')['rounded_input_digest']='different'

@@ -45,8 +45,28 @@ def generate(out,tables,selection):
                 line=sorted([r for r in data if int(r['d'])==d and (r['baseline'],r['candidate'])==pair],key=lambda r:int(r['N']))
                 ax.plot([int(r['N']) for r in line],[float(r['speedup']) for r in line],marker='o',label=' / '.join(pair))
             ax.axhline(1,color='gray',linestyle='--');ax.set(title=f'Causal d={d}',xlabel='Sequence length',ylabel='FA1 median / FA2 median');ax.grid(alpha=.25);ax.legend(fontsize=7)
-        fig.suptitle('Own FA1/FA2 implementations; matched precision' if name=='fa1_fa2_comparison' else 'Cross precision: FA1 Tensor Core vs FA2 CUDA core; not equivalent accuracy',fontsize=10);fig.tight_layout()
+        fig.suptitle('FA1 / FA2 matched-precision speedup\nFA1 median / FA2 median' if name=='fa1_fa2_comparison' else 'Cross precision: FA1 Tensor Core / FA2 CUDA core\nDifferent input precision',fontsize=10);fig.tight_layout()
         for extension in ['png','pdf']:fig.savefig(folder/f'{name}.{extension}',dpi=160,metadata={'CreationDate':None,'ModDate':None} if extension=='pdf' else {'Software':'attention-fa1-comparison'})
         plt.close(fig);figures.append({'part':'part_c','figure':'plots/part_c/'+name,'description':'CSV includes exact case IDs, precision labels, medians and quartiles; no official-library parity claim.'})
-    (out/'fa1_comparison_index.json').write_text(json.dumps({'figures':figures,'data':['fa1_fa2_comparison.csv','fa1_cross_precision.csv'],'official_FA1_measured':False},indent=2)+'\n')
+    # Show absolute latency as well as ratios; duplicate baseline cases in
+    # historical WMMA comparisons must appear only once in each panel.
+    ds=sorted({int(r['d']) for r in matched})
+    precisions=sorted({r['baseline_precision'] for r in matched},reverse=True)
+    fig,axes=plt.subplots(len(precisions),len(ds),figsize=(5*len(ds),3.8*len(precisions)),squeeze=False)
+    for i,precision in enumerate(precisions):
+        for j,d in enumerate(ds):
+            ax=axes[i,j];cases={}
+            for row in matched:
+                if int(row['d'])!=d or row['baseline_precision']!=precision:continue
+                for role in ['baseline','candidate']:
+                    cases[row[role+'_case_id']]={'variant':row[role],'N':int(row['N']),'median':float(row[role+'_ms']),'q1':float(row[role+'_q1_ms']),'q3':float(row[role+'_q3_ms'])}
+            for variant in sorted({r['variant'] for r in cases.values()}):
+                line=sorted([r for r in cases.values() if r['variant']==variant],key=lambda r:r['N'])
+                ax.errorbar([r['N'] for r in line],[r['median'] for r in line],yerr=[[r['median']-r['q1'] for r in line],[r['q3']-r['median'] for r in line]],marker='o',capsize=3,label=variant)
+            ax.set(title=f'Causal d={d}, {precision} inputs',xlabel='Sequence length',ylabel='Forward latency (ms)',yscale='log');ax.grid(alpha=.25);ax.legend(fontsize=8)
+    fig.suptitle('Matched-precision FA1 / FA2 latency\nMedian and Q1–Q3; recorded configurations',fontsize=10);fig.tight_layout()
+    for extension in ['png','pdf']:fig.savefig(folder/f'fa1_fa2_latency.{extension}',dpi=160,metadata={'CreationDate':None,'ModDate':None} if extension=='pdf' else {'Software':'attention-fa1-comparison'})
+    plt.close(fig)
+    figures.append({'part':'part_c','figure':'plots/part_c/fa1_fa2_latency','description':'Matched FP32 and Tensor Core latency panels; median with Q1–Q3, using exact cases from fa1_fa2_comparison.csv. Quartiles are within-case spread, not confidence intervals.'})
+    (out/'fa1_comparison_index.json').write_text(json.dumps({'figures':figures,'data':['fa1_fa2_comparison.csv','fa1_cross_precision.csv'],'official_FA1_measured':False,'tensor_core_baseline':tc_baseline,'speedup_definition':'FA1 median / FA2 median','quartiles':'Q1–Q3 within-case timing spread, not confidence intervals'},indent=2)+'\n')
     return figures

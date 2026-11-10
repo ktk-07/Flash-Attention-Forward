@@ -211,6 +211,28 @@ def generate(out):
         fig.suptitle('Dense B versus causal C: different attention workloads');fig.tight_layout()
         for ext in ['png','pdf']:fig.savefig(folder/f'dense_causal_work.{ext}',metadata={'CreationDate':None,'ModDate':None} if ext=='pdf' else {'Software':'attention-evaluation'},dpi=160)
         plt.close(fig);index.append({'part':'combined','figure':'plots/combined/dense_causal_work','description':'Distinct dense/causal workloads on identical inputs; analytical pairs and measured traffic remain separate.'})
+    # Include retained native and supplementary figures in the combined
+    # index, not just figures drawn directly by this shared plotter.
+    indexed={item['figure'] for item in index}
+    for part in parts:
+        for directory in [out/'plots'/part,out/'supplementary'/part/'plots']:
+            for png in sorted(directory.glob('*.png')):
+                stem=str(png.with_suffix('').relative_to(out))
+                if stem in indexed:continue
+                formats=['png']+(['pdf'] if png.with_suffix('.pdf').exists() else [])
+                index.append({'part':part,'figure':stem,'formats':formats,'description':'Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle.'})
+                indexed.add(stem)
+    lines=['# Generated figures','','All paths refer to this bundle. Latency uses unprofiled medians; Q1–Q3 is within-case spread, not a confidence interval. Fixed-default progression, frozen comparisons and cross-precision tradeoffs are labelled separately. Historical plots retain their captured implementation.','']
+    for part in ['part_a','part_b','part_c','combined']:
+        group=[item for item in index if item['part']==part]
+        if not group:continue
+        lines += ['## '+part,'']
+        for item in group:
+            stem=Path(item['figure']);relative=Path(os.path.relpath(out/stem,out/'plots')).as_posix()
+            pdf=f' ([PDF]({relative}.pdf))' if (out/stem.with_suffix('.pdf')).exists() else ''
+            lines.append(f'- [{stem.name}]({relative}.png){pdf}: '+item['description'])
+        lines.append('')
+    (out/'plots/README.md').write_text('\n'.join(lines)+'\n')
     dump(out/'figure_index.json',{'figures':index,'parts_present':parts,'unavailable_parts':[p for p in ['part_a','part_b','part_c'] if p not in parts],'comparison_rows':len(comparison),'inputs':{f'{k}.csv':sha(out/f'{k}.csv') for k in schema.HEADERS}})
     return index
 if __name__=='__main__':

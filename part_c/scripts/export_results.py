@@ -403,7 +403,12 @@ def publish(study, out, supplementary=(), in_place=False, regenerate=False):
     links+=['','## Additional generated profiler plots','']+[f'- [{name}](plots/{name})' for name in generated]
     (extra/'README.md').write_text('\n'.join(links)+'\n')
     figure_index=out/'plots/README.md';figure_index.parent.mkdir(exist_ok=True)
-    figure_index.write_text('# Part C figure index\n\nThe seven native study figures are in [part_c/](part_c/). Fresh runs additionally include matched-precision FA1/FA2 and cross-precision comparison plots; see ../fa1_comparison_index.json and the corresponding CSVs. Additional profiler charts and preserved insights are indexed in [supplementary/part_c/](../supplementary/part_c/README.md).\n')
+    plot_lines=['# Part C figure index','','Plots use saved unprofiled timings; Nsight-instrumented durations never enter latency or speedup. Each PNG has a PDF counterpart. Native progression uses fixed defaults. FA1/FA2 comparisons preserve the recorded configuration policy; frozen PTX comparisons require matching study measurements. Historical bundles retain their recorded baselines.','','## Main figures','']
+    for png in sorted(plots.glob('*.png')):
+        plot_lines.append(f'- [{png.stem}](part_c/{png.name}) ([PDF](part_c/{png.stem}.pdf))')
+    if (out/'fa1_comparison_index.json').exists():plot_lines += ['','Matched latency and speedup inputs, exact case IDs/configurations and quartiles: [fa1_fa2_comparison.csv](../fa1_fa2_comparison.csv). Cross-precision ratios: [fa1_cross_precision.csv](../fa1_cross_precision.csv). Figure metadata: [fa1_comparison_index.json](../fa1_comparison_index.json).']
+    plot_lines += ['','Additional profiler charts and retained insights: [supplementary/part_c](../supplementary/part_c/README.md). Missing counters remain unavailable.']
+    figure_index.write_text('\n'.join(plot_lines)+'\n')
     (out/'ANALYSIS.md').write_text('# Part C report export\n\nThis bundle uses Part A column names with explicit precision, fingerprints and validation scope. All unprofiled timings and numerical checks are unchanged. See [native measured findings](raw/part_c/study/REPORT.md) and [supplementary profiler insights](supplementary/part_c/README.md).\n\nFused stage times, setup timing and inappropriate naive speedups are blank. Allocation fields measure explicit live buffers. Work.csv uses analytical valid pairs and source-derived CTA tile schedules, not measured executed FLOPs. The manifest records the actual oracle backend. Historical bundles keep their original reference provenance; fresh runs use the shared Part A CPU library.\n')
     if not audit['native_inventory_verified']:raise ValueError('Source changed during export')
     return audit
