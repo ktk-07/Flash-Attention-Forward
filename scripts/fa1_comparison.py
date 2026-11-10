@@ -4,9 +4,10 @@ from pathlib import Path
 
 def generate(out,tables,selection):
     out=Path(out);rows=[r for r in tables['summary'] if r['part']=='part_c' and r['experiment']=='proposal']
-    if not any(r['variant']=='fa1_wmma' for r in rows):return [] # Historical eight-kernel studies.
+    tc_baseline='fa1_ptx' if any(r['variant']=='fa1_ptx' for r in rows) else 'fa1_wmma'
+    if not any(r['variant']==tc_baseline for r in rows):return [] # Historical eight-kernel studies.
     if not selection.get('families'):raise ValueError('Missing frozen FA2 selection for FA1 comparisons')
-    baselines=[r for r in rows if r['variant'] in ['fa1','fa1_wmma']]
+    baselines=[r for r in rows if r['variant'] in ['fa1',tc_baseline]]
     shapes={tuple(r[k] for k in ['B','H','N','d','mode','pattern']) for r in baselines}
     matched=[];cross=[]
     def find(variant,key):
@@ -15,15 +16,19 @@ def generate(out,tables,selection):
         return found[0]
     for key in sorted(shapes):
         d=key[3];core=selection['families']['cuda_core'][d]
-        for baseline,candidate,contract in [('fa1',core,'FP32_inputs_accumulation_softmax_output'),('fa1_wmma','wmma','FP16_QKV_P;FP32_accumulation_softmax_output;normalisation_schedule_differs'),('fa1_wmma','ptx','FP16_QKV_P;FP32_accumulation_softmax_output;MMA_mapping_and_normalisation_differ'),('fa1_wmma',core,'cross_precision_FA1_FP16_vs_FA2_FP32_not_equivalent_precision')]:
+        pairs=[('fa1',core,'FP32_inputs_accumulation_softmax_output')]
+        if tc_baseline=='fa1_ptx':pairs.append((tc_baseline,'ptx','FP16_QKV_P;FP32_accumulation_softmax_output;same_m16n8k16_mapping;independently_tuned;schedule_and_normalisation_differ'))
+        else:pairs += [(tc_baseline,'wmma','FP16_QKV_P;FP32_accumulation_softmax_output;normalisation_schedule_differs'),(tc_baseline,'ptx','FP16_QKV_P;FP32_accumulation_softmax_output;MMA_mapping_and_normalisation_differ')]
+        pairs.append((tc_baseline,core,'cross_precision_FA1_FP16_vs_FA2_FP32_not_equivalent_precision'))
+        for baseline,candidate,contract in pairs:
             a,b=find(baseline,key),find(candidate,key)
             for record in [a,b]:
-                expected='FP16' if record['variant'] in ['fa1_wmma','wmma','ptx'] else 'FP32'
+                expected='FP16' if record['variant'] in ['fa1_ptx','fa1_wmma','wmma','ptx'] else 'FP32'
                 if any(record[field]!=expected for field in ['precision','input_precision']) or any(record[field]!='FP32' for field in ['accumulator_precision','output_precision']):raise ValueError('FA1 comparison numerical contract differs')
             if a['input_digest']!=b['input_digest']:raise ValueError('FA1 comparison base inputs differ')
             if a['precision']==b['precision']=='FP16' and a['rounded_input_digest']!=b['rounded_input_digest']:raise ValueError('FA1 comparison effective FP16 inputs differ')
             row={**dict(zip(['B','H','N','d','mode','pattern'],key)),'baseline':baseline,'baseline_config':a['config'],'candidate':candidate,'candidate_config':b['config'],'baseline_precision':a['precision'],'candidate_precision':b['precision'],'baseline_ms':a['forward_median_ms'],'baseline_q1_ms':a['forward_q1_ms'],'baseline_q3_ms':a['forward_q3_ms'],'candidate_ms':b['forward_median_ms'],'candidate_q1_ms':b['forward_q1_ms'],'candidate_q3_ms':b['forward_q3_ms'],'speedup':float(a['forward_median_ms'])/float(b['forward_median_ms']),'contract':contract,'input_digest':a['input_digest'],'baseline_case_id':a['case_id'],'candidate_case_id':b['case_id']}
-            (cross if baseline=='fa1_wmma' and candidate==core else matched).append(row)
+            (cross if baseline==tc_baseline and candidate==core else matched).append(row)
     for name,data in [('fa1_fa2_comparison.csv',matched),('fa1_cross_precision.csv',cross)]:
         with (out/name).open('w',newline='') as stream:
             writer=csv.DictWriter(stream,fieldnames=list(data[0]));writer.writeheader();writer.writerows(data)

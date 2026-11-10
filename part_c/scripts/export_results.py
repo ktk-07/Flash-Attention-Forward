@@ -58,13 +58,13 @@ def check_declared_files(folder, declared):
 
 def common(row, run_id, plan, selection):
     phase = PHASES[row['experiment']]
-    if row['experiment']=='default_main' and row['kernel'] in plan.get('fa1_baselines',[]):phase='proposal'
+    if row['experiment']=='default_main' and row['kernel'] in plan.get('fa1_baselines',[]) and row['kernel'] not in selection['variants']:phase='proposal'
     if row['experiment'] == 'default_main' and row['kernel'] in selection['variants']:
         if selection['variants'][row['kernel']][row['d']]['config'] == int(row['config']):
             phase = 'proposal'
     result = {field: '' for field in schema.COMMON}
     result.update(experiment=phase, precision=row['input_precision'], **{field: row[field] for field in ['B','H','N','d','pattern','input_precision','accumulator_precision','output_precision','input_digest','rounded_input_digest']})
-    result.update(mode='causal', variant=row['kernel'], run_id=run_id, part='part_c', config=f"{row['kernel']}"+(':kv_outer_shared_v2' if row['kernel']=='fa1' and plan.get('fa1_workspace_floats_per_query') else ':kv_outer_wmma_v1' if row['kernel']=='fa1_wmma' else '')+f":c{row['config']}:d{row['d']}", layout='BHNd_contiguous_row_major', generator=GENERATOR, seed=str(plan['seed']))
+    result.update(mode='causal', variant=row['kernel'], run_id=run_id, part='part_c', config=f"{row['kernel']}"+(':kv_outer_shared_v2' if row['kernel']=='fa1' and plan.get('fa1_workspace_floats_per_query') else ':kv_outer_wmma_v1' if row['kernel']=='fa1_wmma' else ':kv_outer_ptx_v1' if row['kernel']=='fa1_ptx' else '')+f":c{row['config']}:d{row['d']}", layout='BHNd_contiguous_row_major', generator=GENERATOR, seed=str(plan['seed']))
     result['case_id'] = schema.case_id(result)
     return result
 
@@ -129,13 +129,13 @@ def make_tables(study, run_id):
             raise ValueError('Config ID maps to different launch parameters')
         configs[ctx['config']] = {'variant': row['kernel'], 'd': int(row['d']), 'native_config': int(row['config']), 'launch': params}
         count = math.prod(int(row[k]) for k in ['B','H','N','d'])
-        fa1_bytes=4*plan.get('fa1_workspace_floats_per_query',0)*int(row['B'])*int(row['H'])*int(row['N']) if row['kernel'] in ['fa1','fa1_wmma'] else 0
+        fa1_bytes=4*plan.get('fa1_workspace_floats_per_query',0)*int(row['B'])*int(row['H'])*int(row['N']) if row['kernel'] in ['fa1','fa1_wmma','fa1_ptx'] else 0
         if int(row['explicit_live_device_bytes']) != count * (10 if row['input_precision'] == 'FP16' else 16)+fa1_bytes:
             raise ValueError('Explicit allocation ledger does not match the recorded precision')
         if row['mode'] == 'benchmark':
             tables['summary'].append({**ctx, **{k: row[k] for k in ['atol','rtol','max_absolute','max_relative','repeats','sequences_per_second','tokens_per_second','reference_scope']}, 'warmup': str(plan['warmups']), 'forward_median_ms': row['median_ms'], 'forward_q1_ms': row['q1_ms'], 'forward_q3_ms': row['q3_ms'], 'forward_iqr_ms': row['iqr_ms'], 'validation_status': row['status'], 'peak_workspace_allocated_bytes': row['explicit_live_device_bytes']})
             blocks = int(row['B'])*int(row['H'])*math.ceil(int(row['N'])/params['block_q'])
-            if row['kernel'] in ['fa1','fa1_wmma'] and fa1_bytes:blocks=int(row['B'])*int(row['H'])
+            if row['kernel'] in ['fa1','fa1_wmma','fa1_ptx'] and fa1_bytes:blocks=int(row['B'])*int(row['H'])
             tables['resources'].append({**ctx, 'stage': 'forward', 'blocks': str(blocks), 'threads': str(32*params['warps']), **{k: row[k] for k in ['registers_per_thread','shared_bytes','local_bytes_per_thread','active_blocks_per_sm']}, 'theoretical_occupancy_percent': row['occupancy_estimate_percent']})
             n = int(row['N']); heads = int(row['B'])*int(row['H'])
             work = {**ctx, 'valid_attention_pairs': str(heads*n*(n+1)//2), 'scheduled_tiles': '', 'skipped_tiles': '', 'evidence_kind': 'analytical_valid_attention_pairs'}
@@ -224,7 +224,7 @@ def import_profiles(study, manifest, timing_index, tables):
         symbol = values[names.index('Kernel Name')]
         raw_data = dict(zip(names, values))
         heads=int(first['B'])*int(first['H'])
-        qtiles=1 if first['kernel'] in ['fa1','fa1_wmma'] else math.ceil(int(first['N'])/int(first['block_q']))
+        qtiles=1 if first['kernel'] in ['fa1','fa1_wmma','fa1_ptx'] else math.ceil(int(first['N'])/int(first['block_q']))
         dims=lambda name:tuple(int(v) for v in raw_data[name].strip('()').split(','))
         if dims('Grid Size')!=(heads,qtiles,1) or dims('Block Size')!=(32*int(first['warps']),1,1):raise ValueError('Profile launch geometry mismatch')
         state_values = []
@@ -377,17 +377,18 @@ def publish(study, out, supplementary=(), in_place=False, regenerate=False):
         'skip':'tile_skip::casual_flash_attention_forward_gpu_optimised_for_cuda_core',
         'vector':'vector_load::casual_flash_attention_forward_gpu_optimised_for_cuda_core',
         'wmma':'flash_attention_wmma_fused','ptx':'flash_attention_v2_tensor_core_ptx_mma_fully_fused'}
+    if 'fa1_ptx' in fa1_plan.get('kernels',[]):symbols['fa1_ptx']='flash_attention_v1_ptx_mma'
     if 'fa1_wmma' in fa1_plan.get('kernels',[]):symbols['fa1_wmma']='flash_attention_v1_wmma'
     implementations={}
     for variant,symbol in symbols.items():
-        tensor=variant in ['fa1_wmma','wmma','ptx']
-        filename='flash_attention_1_tensor_core.cu' if variant=='fa1_wmma' else 'flash_attention_1.cu' if variant=='fa1' else 'flash_attention_2_tensor_core.cu' if tensor else 'flash_attention_2_cuda_core.cu'
+        tensor=variant in ['fa1_ptx','fa1_wmma','wmma','ptx']
+        filename='flash_attention_1_tensor_core.cu' if variant in ['fa1_ptx','fa1_wmma'] else 'flash_attention_1.cu' if variant=='fa1' else 'flash_attention_2_tensor_core.cu' if tensor else 'flash_attention_2_cuda_core.cu'
         relative='part_c/src/'+filename
         implementations[variant]={'symbol':symbol,'source':'raw/part_c/study/source_snapshot/'+relative,'source_sha256':native_manifest['sources'][relative], 'input_precision':'FP16' if tensor else 'FP32','accumulator_precision':'FP32','output_precision':'FP32','softmax_precision':'FP32','probability_operand_precision':'FP16' if tensor else 'FP32'}
     manifest={'schema_version':schema.VERSION,'native_plot_processor_sha256':native_plot_processor_sha256,'exporter':'part_c_to_part_a_v1','grid':json.loads((native/'plan.json').read_text()).get('grid','full'),'run_id':run_id,'part':'part_c','implementations':implementations,'export_kind':'format_adaptation_not_a_new_GPU_measurement','measurement_started_utc':json.loads((native/'manifest.json').read_text()).get('started_utc',''),'native_binary_sha256':json.loads((native/'manifest.json').read_text())['binary_sha256'],'native_source':'raw/part_c/study','supplementary_datasets':historical,'native_inventory':declared_native,'supplementary_inventory':{name:inventory(out/name) for name in historical},'source_columns_preserved_in_raw':list(schema.read(native/'measurements.csv')[0]),'experiment_mapping':PHASES,'selected_default_config_promoted_to_proposal':True,'mapping':{'kernel':'variant','mode':'native execution mode replaced by causal attention mode; native value retained in raw','median_ms':'forward_median_ms','q1_ms':'forward_q1_ms','q3_ms':'forward_q3_ms','iqr_ms':'forward_iqr_ms'},'profiling':{'captures':audit['profile_captures'],'all_raw_metric_names_units_and_original_values_retained':True,'verified_binary_reports':audit['verified_binary_profile_reports'],'missing_binary_reports':audit['missing_binary_profile_reports'],'instrumented_times_excluded_from_samples':True,'historical_profiles_are_supplementary_not_relabelled_as_current':historical},'reference_backend':json.loads((native/'plan.json').read_text()).get('reference_backend','historical Part C FP64 oracle'),'final_abc_integration_complete':False,'processing_sha256':{s.name:sha(s) for s in source_copy.iterdir() if s.is_file()}}
     manifest['study_kernels']=fa1_plan.get('kernels',KERNELS)
     manifest['fa1_baselines']=fa1_plan.get('fa1_baselines',[])
-    manifest['required_profile_captures']=24 if 'fa1_wmma' in fa1_plan.get('fa1_baselines',[]) else 12
+    manifest['required_profile_captures']=6*(len(fa1_plan.get('fa1_baselines',[]))+2)
     generate_fa1_comparisons(out,tables,selection)
     manifest['fa1_implementation']=fa1_plan.get('fa1_implementation','historical_query_parallel_scalar')
     manifest['fa1_workspace_floats_per_query']=fa1_plan.get('fa1_workspace_floats_per_query',0)

@@ -79,7 +79,7 @@ The saved analysis includes source shared actual/ideal/excessive wavefronts. His
 
 ## Profiling frozen configurations
 
-The bounded study profiles both fixed FA1 baselines and its frozen d=64 FA2 family winners. This is separate from the all-kernel fixed-default profiler:
+The bounded study profiles FP32 FA1, tuned PTX FA1, its frozen d=64 FA2 CUDA-core winner and tuned PTX FA2. This is separate from the all-kernel fixed-default profiler:
 
 ```bash
 bash part_c/profile.sh --frozen part_c/results/my_bounded_study
@@ -101,7 +101,7 @@ no saved source snapshots or counter records are relabelled. Profiling still
 selects one forward after validation and five warmups (skip 6): initialisation
 is inside FA1's forward, not an additional launch.
 
-New WMMA FA1 plans record `fa1_wmma_implementation=kv_outer_wmma_v1`.
+Earlier WMMA FA1 plans record `fa1_wmma_implementation=kv_outer_wmma_v1`.
 Its shared arrays are static. Frozen profiling exports static and dynamic
 shared bytes and their sum for both FA1 baselines and FA2 targets.
 Legacy plans with two targets still require twelve captures. Offline processing
@@ -116,3 +116,5 @@ bash part_c/profile.sh --frozen /path/to/smoke/study --build /path/to/matching/b
 Use a study without an existing profiling directory. This records the study's
 small sequence lengths and B/H in the profile plan. It validates the pipeline;
 it is not evidence for the final N256–4096 grid.
+
+Fresh default plans now use `fa1_ptx_implementation=kv_outer_ptx_v1`. Its kernels share `flash_attention_1_tensor_core.cu` with the supplementary WMMA implementation. PTX FA1 uses static shared arrays and one CTA/head; the frozen config comes from the same four-candidate budget as PTX FA2. Historical WMMA-aware plans keep their recorded targets.

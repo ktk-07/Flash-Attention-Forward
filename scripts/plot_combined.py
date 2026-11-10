@@ -5,11 +5,8 @@ os.environ.setdefault("MPLCONFIGDIR","/tmp/attention-matplotlib")
 from pathlib import Path
 import results_schema as schema
 from workflow import dump,sha
-<<<<<<< Updated upstream
 from ncu_csv import metric_aliases
-=======
 from fa1_comparison import generate as generate_fa1_comparisons
->>>>>>> Stashed changes
 
 def write_rows(path,rows):
     if not rows:return

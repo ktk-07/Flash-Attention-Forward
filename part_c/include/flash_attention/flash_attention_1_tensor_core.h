@@ -10,4 +10,13 @@ LaunchConfig launch_flash_attention_1_tensor_core(
     Shape shape, const DevicePointers& buffers, FlashAttention1Workspace workspace,
     bool causal = true, cudaStream_t stream = nullptr,
     KernelResources* resources = nullptr);
+
+// SM80+: K/V outer, Q inner; normalised O and FP32 m/l in global memory.
+// FP16 Q/K/V/P, FP32 accumulation/softmax/output, same MMA mapping as PTX FA2.
+// Configs 0..3 match FA2 PTX: (BQ,BK,warps)=(32,32,2),(16,32,1),
+// (32,16,2),(16,16,1). One CTA per head. Caller owns workspace and stream.
+LaunchConfig launch_flash_attention_1_ptx(
+    Shape shape,const DevicePointers& buffers,FlashAttention1Workspace workspace,
+    int config=0,bool causal=true,cudaStream_t stream=nullptr,
+    KernelResources* resources=nullptr);
 }

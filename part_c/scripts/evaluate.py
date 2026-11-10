@@ -11,11 +11,13 @@ TC_CONFIGS=[[32,32,2],[16,32,1],[32,16,2],[16,16,1]]
 def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 def dump(path,value):path.write_text(json.dumps(value,indent=2)+"\n")
 def main():
+    global VARIANTS
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--build',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
     p.add_argument('--grid',choices=['full','smoke'],default='full');p.add_argument('--analyze-only',action='store_true');a=p.parse_args();out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
     if a.analyze_only:analyze(out);return
     if (out/'plan.json').exists():raise SystemExit('Choose a new output directory: existing studies are immutable.')
+    VARIANTS={**VARIANTS,'fa1_ptx':4}
     plan={'seed':5206,'generator':'Part A SplitMix64, Q then K then V','mode':'causal','layout':'BHNd contiguous','warmups':5,'repeats':20,
           'core_configs':CORE_CONFIGS,'tensor_configs':TC_CONFIGS,'tuning_N':[256,1024],'main_N':[256,512,1024,2048,4096],'d':[32,64,128],
           'selection':'per variant and d: geometric mean of median latency over tuning N; tie by config index; freeze before main',
@@ -24,7 +26,7 @@ def main():
           'memory':'isolated process; explicit live Q/K/V/O plus FA1 m/l ledger; cudaMemGetInfo before/after allocation and first launch is an observed delta, not true peak',
           'timing':'CUDA events around forward launch only; no allocation/copy/reference/resource queries; unprofiled; sequential cases; default clocks/cache',
           'limitations':['Two tuning lengths also occur in main grid; 512/2048/4096 held out from config selection.','No speedup comparison with historical Part A measurements from a different GPU.','FP16 Tensor Core and FP32 CUDA Core are different precision paths.']}
-    plan.update(kernels=['fa1','fa1_wmma','scalar','warp','tiled','skip','vector','wmma','ptx'],memory_baselines=['fa1','fa1_wmma'],fa1_baselines=['fa1','fa1_wmma'],fa1_wmma_implementation='kv_outer_wmma_v1',fa1_implementation='kv_outer_shared_fp32_v2',fa1_workspace_floats_per_query=2,reference_backend='part_a_shared_fp64',shared_oracle_linked=True,grid=a.grid,B=4,H=8,validation_N=[1,17,33,65])
+    plan.update(candidate_counts=VARIANTS,kernels=['fa1','fa1_ptx','scalar','warp','tiled','skip','vector','wmma','ptx'],memory_baselines=['fa1','fa1_ptx'],fa1_baselines=['fa1','fa1_ptx'],fa1_ptx_implementation='kv_outer_ptx_v1',fa1_ptx_source='flash_attention_1_tensor_core.cu',fa1_wmma_implementation='kv_outer_wmma_v1',fa1_implementation='kv_outer_shared_fp32_v2',fa1_workspace_floats_per_query=2,reference_backend='part_a_shared_fp64',shared_oracle_linked=True,grid=a.grid,B=4,H=8,validation_N=[1,17,33,65])
     if a.grid=='smoke':plan.update(B=1,H=1,d=[64],main_N=[33,65],tuning_N=[17,33],validation_N=[1,17,33])
     dump(out/'plan.json',plan)
     binary=a.build.resolve()/'part_c_evaluation'
@@ -80,7 +82,7 @@ def main():
             cfg=frozen['skip'][str(d)]['config']
             # Match *all* launch knobs so this isolates scalar vs float4 loading.
             for kernel in ['skip','vector']:case('matched_load',kernel,cfg,[plan['B'],plan['H'],n,d])
-            for kernel in plan['memory_baselines']:case('memory',kernel,0,[plan['B'],plan['H'],n,d],'memory')
+            for kernel in plan['memory_baselines']:case('memory',kernel,frozen[kernel][str(d)]['config'] if kernel in frozen else 0,[plan['B'],plan['H'],n,d],'memory')
             for family in winners:
                 kernel=winners[family][str(d)];cfg=frozen[kernel][str(d)]['config']
                 case('memory',kernel,cfg,[plan['B'],plan['H'],n,d],'memory')
@@ -89,11 +91,13 @@ def main():
     analyze(out)
 
 def analyze(out):
+    global VARIANTS
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     import numpy as np
     plan=json.loads((out/'plan.json').read_text());
+    VARIANTS=plan.get('candidate_counts',{'skip':5,'vector':5,'wmma':4,'ptx':4})
     ds=plan['d'];ns=plan['main_N'];
     rows=list(csv.DictReader((out/'measurements.csv').open()));frozen=json.loads((out/'frozen_selection.json').read_text());groups={}
     for r in rows:groups.setdefault((r['experiment'],r['kernel'],int(r['config']),int(r['N']),int(r['d']),r['pattern'],int(r['B']),int(r['H'])),[]).append(r)
@@ -119,7 +123,7 @@ def analyze(out):
     figs=out/'figures';figs.mkdir(exist_ok=True)
     def save(fig,name):fig.tight_layout();fig.savefig(figs/f'{name}.png',dpi=180);fig.savefig(figs/f'{name}.pdf',metadata={'CreationDate':None,'ModDate':None});plt.close(fig)
     ns=plan['main_N']
-    for name,variants,base in [('cuda_core_progression',['fa1','scalar','warp','tiled','skip','vector'],'fa1'),('tensor_core_progression',(['fa1_wmma','wmma','ptx'] if 'fa1_wmma' in plan.get('kernels',[]) else ['wmma','ptx']),'fa1_wmma' if 'fa1_wmma' in plan.get('kernels',[]) else 'wmma')]:
+    for name,variants,base in [('cuda_core_progression',['fa1','scalar','warp','tiled','skip','vector'],'fa1'),('tensor_core_progression',([k for k in ['fa1_ptx','fa1_wmma','wmma','ptx'] if k in plan['kernels']] if plan.get('kernels') else ['wmma','ptx']),'fa1_ptx' if 'fa1_ptx' in plan.get('kernels',[]) else 'fa1_wmma' if 'fa1_wmma' in plan.get('kernels',[]) else 'wmma')]:
         fig,axes=plt.subplots(1,len(ds),figsize=(5*len(ds),4),squeeze=False)
         axes=axes[0]
         for ax,d in zip(axes,ds):
@@ -161,7 +165,7 @@ def analyze(out):
         ax.plot(ns,[plan.get('B',4)*plan.get('H',8)*n*n*8/2**20 for n in ns],linestyle='--',label='FP32 S+P storage model')
         ax.set(title=f'd={d}',xlabel='Sequence length',ylabel='Explicit live device storage (MiB)',yscale='log');ax.legend();ax.grid(alpha=.3)
     save(fig,'device_memory')
-    fig,axes=plt.subplots(1,4,figsize=(16,4))
+    fig,axes=plt.subplots(1,len(VARIANTS),figsize=(4*len(VARIANTS),4))
     for ax,(k,count) in zip(axes,VARIANTS.items()):
         data=[[math.exp(statistics.mean(math.log(float(find('tuning',k,d,n,c)['median_ms'])) for n in plan['tuning_N'])) for d in plan['d']] for c in range(count)]
         norm=np.asarray(data)/np.min(data,axis=0);im=ax.imshow(norm,aspect='auto',vmin=1);ax.set(title=k,xlabel='Head dimension',ylabel='Configuration');ax.set_xticks(range(len(ds)),ds);fig.colorbar(im,ax=ax,label='Latency / best')
@@ -173,7 +177,7 @@ def analyze(out):
         if key in fingerprints and fingerprints[key]!=value:raise ValueError('input hash mismatch')
         fingerprints[key]=value
         expected=int(r['B'])*int(r['H'])*int(r['N'])*int(r['d'])*(10 if r['input_precision']=='FP16' else 16)
-        if r['kernel'] in ['fa1','fa1_wmma']:expected+=4*plan.get('fa1_workspace_floats_per_query',0)*int(r['B'])*int(r['H'])*int(r['N'])
+        if r['kernel'] in ['fa1','fa1_wmma','fa1_ptx']:expected+=4*plan.get('fa1_workspace_floats_per_query',0)*int(r['B'])*int(r['H'])*int(r['N'])
         if int(r['explicit_live_device_bytes'])!=expected:raise ValueError('allocation ledger mismatch')
     manifest=json.loads((out/'manifest.json').read_text());source_ok=all(digest(out/'source_snapshot'/path)==sha for path,sha in manifest['sources'].items())
     audit={'passed':not failures and source_ok,'validation_cases':len(validation),'benchmark_cases':sum(r['mode']=='benchmark' for r in summaries),'samples':sum(r['mode']=='benchmark' for r in rows),'memory_cases':sum(r['mode']=='memory' for r in summaries),'source_snapshot_hashes_match':source_ok,'input_hashes_consistent':True,'allocation_ledger_matches':True,'plan_hash_matches_frozen':digest(out/'plan.json')==frozen['plan_sha256']}
@@ -189,7 +193,7 @@ def analyze(out):
     if len(summaries)!=sum(expected.values())+expected_frozen:raise ValueError('Unexpected study cases')
     dump(out/'audit.json',audit)
     report=['# Part C bounded evaluation','',f'Correctness: {len(validation)} full small/tail/pattern checks; {audit["benchmark_cases"]} sampled benchmark checks; {audit["memory_cases"]} sampled memory checks. All outputs checked finite.',
-            '', f"Selection was frozen after tuning and before the main grid. Family winners are selected only among skip/vector and WMMA/PTX; both FA1 baselines use fixed config 0. Tuning lengths: {plan['tuning_N']}; reporting lengths: {ns}; held-out reporting lengths: {sorted(set(ns)-set(plan['tuning_N']))}.", '', '## Frozen configurations','', '| d | CUDA core | Tensor core |','|---|---|---|']
+            '', f"Selection was frozen after tuning and before the main grid. Family winners are selected only among skip/vector and WMMA/PTX; FP32 FA1 uses fixed config 0; PTX FA1 and FA2 each use four candidates. Tuning lengths: {plan['tuning_N']}; reporting lengths: {ns}; held-out reporting lengths: {sorted(set(ns)-set(plan['tuning_N']))}.", '', '## Frozen configurations','', '| d | CUDA core | Tensor core |','|---|---|---|']
     for d in plan['d']:
         c=frozen['families']['cuda_core'][str(d)];t=frozen['families']['tensor_core'][str(d)];report.append(f'| {d} | {c}, config {frozen["variants"][c][str(d)]["config"]} | {t}, config {frozen["variants"][t][str(d)]["config"]} |')
     report+=['',f'## Largest reporting N={max(ns)}','', '| d | CUDA ms | Tensor ms | Core / tensor |','|---|---|---|---|']
@@ -208,7 +212,7 @@ def analyze(out):
             r=find('memory',k,d,max(ns))
             report.append(f'| {d} | {k} | {int(r["explicit_live_device_bytes"])/2**20:.1f} | {int(r["observed_device_delta_bytes"])/2**20:.1f} |')
     if plan.get('fa1_workspace_floats_per_query'):
-        report+=['','FA1 in this run is the CUDA-core Algorithm-1 schedule: K/V outer, Q inner, one CTA/head, shared Q/K/V/S/O, global m/l. Its live allocation adds 8*B*H*N bytes; it is not the historical query-parallel scalar baseline. The WMMA FA1 baseline uses the same K/V-outer state schedule, half Q/K/V/P and FP32 accumulators/softmax/O. Both baselines add global m/l; neither is the official FA1 library. FA2-style kernels are unchanged. Do not reuse old FA1 progression ratios.']
+        report+=['','FA1 in this run is the CUDA-core Algorithm-1 schedule: K/V outer, Q inner, one CTA/head, shared Q/K/V/S/O, global m/l. Its live allocation adds 8*B*H*N bytes; it is not the historical query-parallel scalar baseline. The Tensor Core FA1 baseline uses the K/V-outer state schedule, half Q/K/V/P and FP32 accumulators/softmax/O; its implementation is identified in plan.json. Both baselines add global m/l; neither is the official FA1 library. FA2-style kernels are unchanged. Do not reuse old FA1 progression ratios.']
     report+=['','## Interpretation limits','','The matched-load study changes scalar versus float4 loading with the same launch configuration. Other progression steps combine changes and are not isolated causal ablations. Config tuning changes resource use without changing kernel algorithms.','', 'Resource queries are available for tiled/skip/vector/WMMA/PTX. Raw scalar/warp zero defaults are unavailable placeholders; summary.csv leaves those fields blank. FA1 resources are also unavailable in this study.', '', 'Memory plots show live explicit Q/K/V/O allocations plus FA1 m/l where recorded, not DRAM traffic or total process memory. FP32 core uses 16 bytes/element; FP16 inputs with FP32 output use 10. The S+P line is an analytical materialized-storage model, not a measured Part A result. cudaMemGetInfo deltas include allocation granularity and concurrent device activity; only three observations are made. Resource occupancy is an API estimate, not achieved Nsight occupancy.','', 'Tensor Core paths use FP16 Q/K/V and round probabilities for PV; CUDA Core uses FP32. Error is checked against the corresponding rounded-input FP64 oracle. These are precision-labelled performance comparisons.','', 'Cases run in a fixed sequential order on one laptop GPU with unmanaged clocks. Twenty repetitions characterize within-case spread, not independent-session uncertainty; close winners may change on a fresh run. No confidence interval or universal winner is claimed.', '', 'See plan.json, commands.jsonl, cases/, measurements.csv, summary.csv, comparison.csv, matched_ablation.csv, manifest.json, frozen_selection.json and audit.json. Historical profiling remains a separate fixed-default study; its counters do not describe tuned configurations.']
     if plan.get('fa1_workspace_floats_per_query'):
         report=[line.replace('FA1 resources are also unavailable in this study.','FA1 resource queries include dynamic shared storage.') for line in report]

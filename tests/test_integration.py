@@ -98,6 +98,32 @@ class IntegrationTests(unittest.TestCase):
             tables['summary']=[r for r in tables['summary'] if r['variant']!='fa1']
             schema.write(out/'parts/part_c/summary.csv','summary',tables['summary'])
             with self.assertRaises(ValueError):aggregate(out,['part_a','part_c'],'smoke')
+    def test_ptx_fa1_baseline_aggregate_and_require_matched_inputs(self):
+        from fa1_comparison import generate
+        with tempfile.TemporaryDirectory() as temp:
+            out=Path(temp)
+            for part in ['part_a','part_c']:
+                folder=out/'parts'/part;folder.mkdir(parents=True);tables=fixture(part)
+                if part=='part_c':
+                    for name,rows in tables.items():
+                        rows.extend(dict(r,variant='fa1' if r['variant']=='skip' else 'fa1_ptx',config='baseline') for r in list(rows) if r['variant'] in ['skip','wmma'])
+                        for row in rows:row['case_id']=schema.case_id(row)
+                    (folder/'configs').mkdir();dump(folder/'configs/part_c.json',{'frozen_selection':{'families':{'cuda_core':{'64':'skip'},'tensor_core':{'64':'wmma'}}}})
+                for name,rows in tables.items():schema.write(folder/f'{name}.csv',name,rows)
+                dump(folder/'manifest.json',{'schema_version':1,'shared_cpu_reference_linked':True,'device':{'uuid':'GPU-test-fixture'},**({'fa1_baselines':['fa1','fa1_ptx']} if part=='part_c' else {})});dump(folder/'audit.json',{'passed':True})
+            aggregate(out,['part_a','part_c'],'smoke')
+            self.assertEqual(len(schema.read(out/'fa1_fa2_comparison.csv')),4)
+            self.assertEqual(len(schema.read(out/'fa1_cross_precision.csv')),2)
+            tables=load_tables(out/'parts/part_c');selection={'families':{'cuda_core':{'64':'skip'}}}
+            broken=copy.deepcopy(tables)
+            next(r for r in broken['summary'] if r['variant']=='fa1_ptx')['rounded_input_digest']='different'
+            with self.assertRaisesRegex(ValueError,'effective FP16'):generate(out,broken,selection)
+            broken=copy.deepcopy(tables)
+            next(r for r in broken['summary'] if r['variant']=='fa1_ptx')['accumulator_precision']='FP16'
+            with self.assertRaisesRegex(ValueError,'numerical contract'):generate(out,broken,selection)
+            tables['summary']=[r for r in tables['summary'] if r['variant']!='fa1']
+            schema.write(out/'parts/part_c/summary.csv','summary',tables['summary'])
+            with self.assertRaises(ValueError):aggregate(out,['part_a','part_c'],'smoke')
     def test_missing_b_fails_without_writing(self):
         with tempfile.TemporaryDirectory() as temp:
             # Missing-B rejection must use a fixture now that B exists in-tree.

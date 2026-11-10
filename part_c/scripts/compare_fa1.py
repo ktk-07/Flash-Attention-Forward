@@ -28,7 +28,7 @@ def analyze(out):
     for case in plan['cases']:
         file=raw/'cases'/case['file'];rows=schema.read(file)
         if len(rows)!=20 or {int(r['repeat']) for r in rows}!=set(range(20)):raise ValueError('Missing/duplicate repetitions')
-        row=rows[0];variant=row['kernel'];n=int(row['N']);d=int(row['d']);heads=int(row['B'])*int(row['H']);tc=variant in ['fa1_wmma','wmma','ptx'];fa1=variant in ['fa1','fa1_wmma']
+        row=rows[0];variant=row['kernel'];n=int(row['N']);d=int(row['d']);heads=int(row['B'])*int(row['H']);tc=variant in ['fa1_ptx','fa1_wmma','wmma','ptx'];fa1=variant in ['fa1','fa1_wmma','fa1_ptx']
         if variant!=case['kernel'] or any(int(row[k])!=case[k] for k in ['B','H','N','d']) or row['config']!='0' or row['pattern']!='random':raise ValueError('Unexpected case metadata')
         if row['mode']!='benchmark' or row['input_precision']!=('FP16' if tc else 'FP32') or row['accumulator_precision']!='FP32' or row['output_precision']!='FP32':raise ValueError('Pilot numerical contract differs from implementation')
         for r in rows:
@@ -53,10 +53,11 @@ def analyze(out):
         tables['memory'].append({**ctx,'explicit_live_device_bytes':str(expected),'auxiliary_global_bytes':str(8*heads*n if fa1 else 0),'observed_device_delta_bytes':row['observed_device_delta_bytes'],'measurement':'explicit_live_QKVO_plus_FA1_state_if_applicable_not_process_peak'})
         tables['work'].append({**ctx,'valid_attention_pairs':str(heads*n*(n+1)//2),'evidence_kind':'analytical_valid_pairs_not_executed_instructions'})
         inventory[str(file.relative_to(out))]=sha(file)
-    expected_cases={(kernel,*[str(x) for x in shape]) for kernel in KERNELS for shape in plan['shapes']}
+    expected_cases={(kernel,*[str(x) for x in shape]) for kernel in plan.get('kernels',KERNELS) for shape in plan['shapes']}
     if set(by_shape)!=expected_cases:raise ValueError('Incomplete pilot grid')
     audit=schema.validate(tables);comparisons=[];tradeoffs=[]
     pairs=[('fa1','skip','matched_FP32'),('fa1_wmma','wmma','matched_FP16_QKV_FP32_accum_softmax_output_normalisation_schedule_differs'),('fa1_wmma','ptx','matched_FP16_QKV_FP32_accum_softmax_output_and_different_MMA_mapping')]
+    if 'fa1_ptx' in plan.get('kernels',[]):pairs.append(('fa1_ptx','ptx','matched_FP16_same_PTX_MMA_mapping_fixed_defaults'))
     for shape in plan['shapes']:
         key=[str(x) for x in shape]
         for baseline,candidate,contract in pairs+[('fa1','fa1_wmma','cross_precision_hardware_plus_input_precision_not_FA2_speedup')]:
@@ -90,7 +91,7 @@ def analyze(out):
     plt.close(fig)
     report=['# FA1/FA2 pilot','','All kernels are this project\'s implementations. The official FA1 package was not measured and performance parity is not established. The default small grid is a pilot, not the final experiment. Configurations are fixed defaults; no speedup-based case filtering or winner selection.','','| N | d | Baseline | Candidate | Speedup |','|---|---|---|---|---|']
     for row in comparisons:report.append(f"| {row['N']} | {row['d']} | {row['baseline']} | {row['candidate']} | {row['speedup']:.3f}x |")
-    report += ['','FP32 FA1/skip is a matched FP32 comparison. FA1 WMMA versus FA2 WMMA/PTX uses identical FP16-rounded inputs, FP32 accumulation/state/output and FP16 probability operands. Normalised versus unnormalised intermediate state and probability-rounding history can differ, so bitwise equality is not expected. WMMA versus PTX changes fragment mapping as well as scheduling.','', 'precision_tradeoffs.csv separately records FP32-to-Tensor-Core FA1 ratios; these are not FA2 improvements. Samples use five warmups and twenty CUDA-event repetitions outside allocation/transfers/reference work. IQR describes within-case spread only. Every timed case has sampled FP64 checks and all-output finiteness. Small dedicated tests additionally check full output, m/l and causal isolation.','', 'Review source hashes, binaries, command logs and cases under raw/part_c/fa1_pilot/. Nsight counters are not collected by this timing-only pilot; resource occupancy is theoretical. Both FA1 baselines also appear in the standard nine-kernel workflow; this pilot uses its own fixed configurations. Historical saved data remain unchanged.','', 'Offline: bash part_c/run.sh --fa1-pilot --analyze-only '+str(out)]
+    report += ['','FP32 FA1/skip is a matched FP32 comparison. FA1 WMMA versus FA2 WMMA/PTX uses identical FP16-rounded inputs, FP32 accumulation/state/output and FP16 probability operands. Normalised versus unnormalised intermediate state and probability-rounding history can differ, so bitwise equality is not expected. WMMA versus PTX changes fragment mapping as well as scheduling.','', 'precision_tradeoffs.csv separately records FP32-to-Tensor-Core FA1 ratios; these are not FA2 improvements. Samples use five warmups and twenty CUDA-event repetitions outside allocation/transfers/reference work. IQR describes within-case spread only. Every timed case has sampled FP64 checks and all-output finiteness. Small dedicated tests additionally check full output, m/l and causal isolation.','', 'Review source hashes, binaries, command logs and cases under raw/part_c/fa1_pilot/. Nsight counters are not collected by this timing-only pilot; resource occupancy is theoretical. The standard workflow uses FP32 FA1 and tuned PTX FA1; WMMA FA1 is supplementary. This explicit pilot retains WMMA and uses fixed config 0 for all variants. Historical saved data remain unchanged.','', 'Offline: bash part_c/run.sh --fa1-pilot --analyze-only '+str(out)]
     (out/'ANALYSIS.md').write_text('\n'.join(report)+'\n')
     inventory={str(path.relative_to(out)):sha(path) for path in sorted(raw.rglob('*')) if path.is_file()}
     dump(out/'manifest.json',{'schema_version':schema.VERSION,'part':'part_c','experiment':'fa1_pilot','run_id':plan['run_id'],'grid':plan['grid'],'device':plan['device'],'shared_cpu_reference_linked':True,'official_FA1_measured':False,'profile_requested':False,'sources':plan['sources'],'binary_sha256':plan['binary_sha256'],'native_inputs':inventory,'numerical_contracts':{'FP32':'FP32 QKV/accum/state/output','FP16':'FP16 QKV/P operands; FP32 accum/state/output'},'processing_sha256':sha(Path(__file__))})
@@ -102,10 +103,11 @@ def main():
     a=p.parse_args()
     if a.analyze_only:print(json.dumps(analyze(a.analyze_only),indent=2));return
     if not a.device or ',' in a.device:p.error('Select one GPU')
+    fresh_kernels=KERNELS+['fa1_ptx']
     arch=architecture(a.arch,a.device,a.dry_run);out=a.output.resolve();build=a.build.resolve();w=Workflow(out,a.device,a.dry_run,False);raw=out/'raw/part_c/fa1_pilot'
     try:
         w.run('gpu',['nvidia-smi','-q']);w.run('configure',['cmake','-S',ROOT/'part_c','-B',build,'-DCMAKE_BUILD_TYPE=Release',f'-DCMAKE_CUDA_ARCHITECTURES={arch}']);w.run('build',['cmake','--build',build,'--parallel','2'])
-        for flag,label in [([], 'fa1_fp32'),(['--tensorcore'],'fa1_wmma')]:w.run(label+'_invariants',[build/'part_c_fa1_test',*flag,'--output',raw/'correctness'/label])
+        for flag,label in [([], 'fa1_fp32'),(['--tensorcore'],'fa1_wmma'),(['--ptx'],'fa1_ptx')]:w.run(label+'_invariants',[build/'part_c_fa1_test',*flag,'--output',raw/'correctness'/label])
         w.run('all_kernel_regression',[build/'part_c_runner','--suite','correctness','--output',raw/'correctness/all_kernels'])
         for tool in ['memcheck','racecheck','synccheck','initcheck']:w.run('fa1_wmma_'+tool,['compute-sanitizer','--tool',tool,'--error-exitcode','3',build/'part_c_fa1_test','--tensorcore','--smoke','--output',raw/'safety'/tool])
         w.run('binary_inspection',[sys.executable,ROOT/'part_c/scripts/inspect_binary.py',build/'part_c_runner',raw/'binary_inspection'])
@@ -113,13 +115,15 @@ def main():
         if not a.dry_run:
             functions=schema.read(raw/'binary_inspection/tensor_core_instructions.csv');new=[r for r in functions if 'flash_attention_v1_wmma' in r['symbol']]
             if len(new)!=18 or not all(int(r['static_hmma_instruction_count'])>0 for r in new):raise ValueError('FA1 WMMA Tensor Core instructions were not verified')
+            ptx=[r for r in functions if 'flash_attention_v1_ptx_mma' in r['symbol']]
+            if len(ptx)!=40 or not all(int(r['static_hmma_instruction_count'])>0 for r in ptx):raise ValueError('FA1 PTX Tensor Core instructions were not verified')
             raw.mkdir(parents=True,exist_ok=True);sources={}
             for name in FILES:
                 path=ROOT/name;dest=raw/'source_snapshot'/name;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(path.read_bytes());sources[name]=sha(path)
-            plan={'run_id':out.name,'grid':a.grid,'device':device_info(a.device),'architecture':arch,'shapes':shapes,'kernels':KERNELS,'config':0,'sources':sources,'binary_sha256':sha(build/'part_c_evaluation'),'cases':cases,'order':'ascending N per d; kernel order rotated per shape','tuning':'none; fixed defaults; small pilot first','profile_requested':False,'official_FA1':'not measured; own CUDA-core/WMMA implementations only'}
+            plan={'run_id':out.name,'grid':a.grid,'device':device_info(a.device),'architecture':arch,'shapes':shapes,'kernels':fresh_kernels,'config':0,'sources':sources,'binary_sha256':sha(build/'part_c_evaluation'),'cases':cases,'order':'ascending N per d; kernel order rotated per shape','tuning':'none; fixed defaults; small pilot first','profile_requested':False,'official_FA1':'not measured; own CUDA-core/WMMA/PTX implementations only'}
             dump(raw/'plan.json',plan)
         for index,shape in enumerate(shapes):
-            order=KERNELS[index%len(KERNELS):]+KERNELS[:index%len(KERNELS)]
+            order=fresh_kernels[index%len(fresh_kernels):]+fresh_kernels[:index%len(fresh_kernels)]
             for kernel in order:
                 name=kernel+'_'+'_'.join(map(str,shape))+'.csv';w.run(name[:-4],[build/'part_c_evaluation',kernel,0,*shape,'random','benchmark',raw/'cases'/name]);cases.append({'file':name,'kernel':kernel,**dict(zip(['B','H','N','d'],shape))})
         if not a.dry_run:

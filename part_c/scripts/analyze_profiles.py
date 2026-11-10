@@ -70,7 +70,7 @@ for case in sorted((out/'cases').iterdir()):
     names,units,values=raw
     data=dict(zip(names,values));unitmap=dict(zip(names,units))
     expected_y=(meta['N']+(4 if meta['kernel']=='warp' else 32)-1)//(4 if meta['kernel']=='warp' else 32)
-    if meta['kernel'] in ['fa1','fa1_wmma'] and plan.get('fa1_grid')=='one_CTA_per_batch_head':expected_y=1
+    if meta['kernel'] in ['fa1','fa1_wmma','fa1_ptx'] and plan.get('fa1_grid')=='one_CTA_per_batch_head':expected_y=1
     actual_grid=tuple(int(v) for v in data['Grid Size'].strip('()').split(','))
     if actual_grid!=(meta['B']*meta['H'],expected_y,1):raise ValueError(f'Wrong profiled grid: {case}')
     with (case/'validation/correctness.csv').open() as f:checks=list(csv.DictReader(f))

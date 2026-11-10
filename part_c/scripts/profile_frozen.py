@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Profile both fixed FA1 baselines and frozen FA2 family winners, separately from timing."""
+"""Profile FA1 baselines and selected FA2 core/PTX configurations, separately from timing."""
 import argparse,csv,hashlib,json,math,statistics,subprocess
 from pathlib import Path
 p=argparse.ArgumentParser(description=__doc__);p.add_argument('study',type=Path);p.add_argument('--build',type=Path,default=Path('/tmp/part_c-evaluation-build'));p.add_argument('--analyze-only',action='store_true');p.add_argument('--smoke',action='store_true',help='profile the small study shapes; test evidence, not full-grid profiling');a=p.parse_args()
@@ -10,7 +10,8 @@ def family_targets():
 if not a.analyze_only:
     if out.exists():raise SystemExit('Profiling directory exists; use --analyze-only or a fresh study')
     out.mkdir();(out/'cases').mkdir();(out/'profile_frozen.py').write_bytes(Path(__file__).read_bytes())
-    targets=[{'role':k,'kernel':k,'config':0} for k in study_plan.get('fa1_baselines',[])]+family_targets()
+    targets=[{'role':k,'kernel':k,'config':selection['variants'][k]['64']['config'] if k in selection['variants'] else 0} for k in study_plan.get('fa1_baselines',[])]+family_targets()
+    if 'fa1_ptx' in study_plan.get('fa1_baselines',[]):targets[-1]={'role':'matched_FA2_PTX','kernel':'ptx','config':selection['variants']['ptx']['64']['config']}
     lengths=study_plan['main_N'] if a.smoke else [256,4096]
     if any(n not in study_plan['main_N'] for n in lengths):raise ValueError('Profile lengths must exist in the measured study; use --smoke for a smoke study')
     plan={'targets':targets,'B':study_plan.get('B',4),'H':study_plan.get('H',8),'selection_sha256':sha(a.study/'frozen_selection.json'),'binary_sha256':sha(binary),'study_binary_match':sha(binary)==json.loads((a.study/'manifest.json').read_text())['binary_sha256'],'launch_skip':7,'explanation':'one warm-module forward, one validation forward, five warmups, then first timed forward; all reset work stays in forward','repeats':3,'N':lengths,'d':64,'cache_control':'all','clock_control':'none','smoke':a.smoke,'fa1_total_shared_bytes':bool(study_plan.get('fa1_baselines'))}
@@ -47,7 +48,7 @@ for case in sorted((out/'cases').iterdir()):
     assert len(raw)==3 and raw[0][0]=='ID'
     data=dict(zip(raw[0],raw[2]));r=json.loads((case/'identity.json').read_text());first=checks[0]
     assert all(str(r[k])==first[k] for k in ['kernel','config','N','d'])
-    b,h=int(first['B']),int(first['H']);qtiles=1 if r['kernel'] in ['fa1','fa1_wmma'] else (r['N']+int(first['block_q'])-1)//int(first['block_q'])
+    b,h=int(first['B']),int(first['H']);qtiles=1 if r['kernel'] in ['fa1','fa1_wmma','fa1_ptx'] else (r['N']+int(first['block_q'])-1)//int(first['block_q'])
     assert tuple(int(v) for v in data['Grid Size'].strip('()').split(','))==(b*h,qtiles,1)
     assert tuple(int(v) for v in data['Block Size'].strip('()').split(','))==(32*int(first['warps']),1,1)
     for alias,key in metrics.items():r[alias]=numeric(data.get(key,''))

@@ -67,7 +67,9 @@ record configure cmake -S part_c -B "$task_build" -DCMAKE_BUILD_TYPE=Release -DC
 record build cmake --build "$task_build" --parallel 2 || exit 1
 record source_hashes sha256sum part_c/src/flash_attention_1.cu part_c/src/flash_attention_1_tensor_core.cu part_c/src/flash_attention_2_cuda_core.cu part_c/src/flash_attention_2_tensor_core.cu part_c/include/flash_attention/*.h part_c/tests/*.cpp part_c/tests/*.h part_c/tests/kernel_bodies.json part_c/CMakeLists.txt "$task_build/part_c_runner"
 record fa1_invariants "$task_build/part_c_fa1_test" --output "$task_run/fa1_invariants" || exit 1
-record fa1_wmma_invariants "$task_build/part_c_fa1_test" --tensorcore --output "$task_run/fa1_wmma_invariants" || exit 1
+for task_config in 0 1 2 3; do
+    record "fa1_ptx_c${task_config}_invariants" "$task_build/part_c_fa1_test" --ptx --config "$task_config" --output "$task_run/fa1_ptx_c${task_config}_invariants" || exit 1
+done
 record correctness "$task_build/part_c_runner" --suite correctness --output "$task_run/correctness" || exit 1
 record benchmark "$task_build/part_c_runner" --suite benchmark --grid full --output "$task_run/benchmark" || exit 1
 for task_tool in memcheck racecheck synccheck initcheck; do

@@ -59,7 +59,8 @@ def main():
         run('build',['cmake','--build',build,'--parallel','2'])
         run('shared_reference_contract',[build/'shared_reference/attention_reference_test'])
         run('fa1_invariants',[build/'part_c_fa1_test','--output',out/'raw/part_c/fa1_invariants'])
-        run('fa1_wmma_invariants',[build/'part_c_fa1_test','--tensorcore','--output',out/'raw/part_c/fa1_wmma_invariants'])
+        for config in range(4):
+            run(f'fa1_ptx_c{config}_invariants',[build/'part_c_fa1_test','--ptx','--config',str(config),'--output',out/f'raw/part_c/fa1_ptx_c{config}_invariants'])
         run('input_contract',[build/'part_c_input_contract'])
         run('default_correctness',[build/'part_c_runner','--suite','correctness','--output',out/'raw/part_c/default_correctness'])
         for tool in ['memcheck','racecheck','synccheck','initcheck']:
