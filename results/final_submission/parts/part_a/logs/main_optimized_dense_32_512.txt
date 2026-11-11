@@ -1,0 +1,4 @@
+4,8,512,32,dense,naive,16,128 median_ms=5.26592 IQR_ms=0.0360959
+4,8,512,32,dense,tiled,16,128 median_ms=2.18056 IQR_ms=0.03912
+4,8,512,32,dense,parallel,16,128 median_ms=4.1016 IQR_ms=0.0940319
+4,8,512,32,dense,optimized,16,128 median_ms=0.921504 IQR_ms=0.053248

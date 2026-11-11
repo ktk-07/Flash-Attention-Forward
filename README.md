@@ -1,35 +1,30 @@
 # CEG5206 Team Project — FlashAttention Forward
 
-## Part B: exact notebook execution for A/C reviewers
+**NUS CEG5206 — Algorithms & Performance Optimization for Computing**  
+AY2026/2027 Semester 1 · Group 1
 
-The measured dense B implementation and recorded smoke/full runs are now in
-`part_b/`. Start with [part_b/CROSS_CHECK.md](part_b/CROSS_CHECK.md).
+CUDA C++ implementations of materialised attention (Part A), dense fused FlashAttention (Part B) and causal fused FlashAttention (Part C). The project studies tiling, online softmax, fusion, causal tile skipping, memory behaviour and mixed-precision Tensor Core execution.
+
+**Documentation:** this README describes the repository, shared interfaces, run commands, plots and evidence status. [README.txt](README.txt) provides the submission reproduction checklist. The full-run handoff and packaging commands are in [README.txt](README.txt), supported by [prepare_submission.py](scripts/prepare_submission.py). Implementation details are in the [Part A](part_a/README.md), [Part B](part_b/README.md) and [Part C](part_c/README.md) READMEs.
+
+**Current status:** the full-grid A/B/C run in [results/final_submission](results/final_submission/) completed on the RTX 3070 Ti Laptop GPU and passed the saved-result audit and CPU-only regeneration: 1,657 passing correctness records, 15,000 timing samples and 138 profiler captures (A108/B6/C24). See [verification findings](results/final_submission/VERIFICATION.md). The bundle contains 41 PNG/PDF figure pairs. Performance includes slowdowns against optimized Part A; fusion alone is not a guaranteed speedup. Final report/video and the separate missing historical B smoke recording remain outstanding.
+
+The scope follows the approved FlashAttention proposal, Project Briefing and Team Project Rubrics. **Briefing deadline:** Friday, 13 November 2026, 11:59 PM. Submission requires a report PDF, an accessible 10–15-minute video link, the repository link and a final commit hash or release tag.
+
+**Navigation:** [Repository layout](#repository-layout) · [Setup](#2-open-the-project-and-install-analysis-dependencies) · [Inputs](#3-inputs-and-computation-contract) · [Tests](#4-build-and-run-the-available-tests) · [Run A/B/C](#5-run-the-project) · [Integration and outputs](#6-shared-integration-and-results) · [Measurement](#7-measurement-conventions) · [Saved evidence](#8-read-the-results) · [Offline analysis](#9-recreate-figures-without-rerunning-cuda) · [Submission](#10-submission-and-outstanding-scope)
+
+## Reproduce the full A/B/C experiment
+
+Complete the [setup](#2-open-the-project-and-install-analysis-dependencies), then run this command from the repository root:
 
 ```bash
-# Verify pinned source/input/reference data without a GPU.
-python3 part_b/scripts/reproduce_notebook.py --grid full --check-only
-# Rebuild and replay the same 83-case smoke plan on your GPU, without retuning.
-bash part_b/reproduce.sh --grid smoke --output results/b_crosscheck_smoke
-# Replay all 165 full-grid cases / 1,800 timing samples.
-bash part_b/reproduce.sh --grid full --output results/b_crosscheck_full
+bash run_all.sh --parts a,b,c --grid full --device 0 \
+  --output results/new_full_run
 ```
 
-Replay preserves the recorded code, inputs, case order and launch choices.
-`crosscheck.json` states numerical replay success; `audit.passed=false` remains
-explicit because replay does not collect sanitizer/profile evidence. Timings on
-other systems are separate observations. Use the normal root A/B/C workflow for
-new accepted same-machine comparisons; its acceptance checks are unchanged.
+This builds and evaluates all three parts on GPU 0, including correctness checks, representative sanitizers, bounded tuning, benchmarks, memory/resource measurements, profiling and plot generation. CUDA, Compute Sanitizer and Nsight Compute with GPU-counter access are required. Use a fresh output directory; the verified `results/final_submission/` bundle is already supplied and should be preserved.
 
-
-**Documentation:** This `README.md` describes the project, repository structure, implementation conventions and evaluation status. For step-by-step instructions to reproduce the available runs, use [README.txt](README.txt). Section 6 documents the implemented A/C workflow and the exact Part B integration contract.
-
-NUS CEG5206 — Algorithms & Performance Optimization for Computing, AY2026/2027 Semester 1, Group 1.
-
-CUDA C++ implementations of materialised attention, dense fused FlashAttention and causal fused FlashAttention. The project studies tiling, online softmax, kernel fusion, causal tile skipping and GPU memory behaviour. Mixed precision and Tensor Cores are the optional extension.
-
-The scope follows the approved FlashAttention proposal, Project Briefing and Team Project Rubrics.
-
-**Deadline stated in the briefing:** Friday, 13 November 2026, 11:59 PM. Submission requires a report PDF, an accessible 10–15-minute video link, the repository link and a final commit hash or release tag.
+Aggregated CSVs are written to `results/new_full_run/`, complete individual bundles to `parts/part_a/`, `parts/part_b/` and `parts/part_c/` beneath that directory, and figures to `plots/part_a/`, `plots/part_b/`, `plots/part_c/` and `plots/combined/`. See [Section 5](#5-run-the-project) for the smoke check and individual runs, and [Section 6](#6-shared-integration-and-results) for the complete output layout.
 
 ## Team responsibilities
 
@@ -39,46 +34,87 @@ The scope follows the approved FlashAttention proposal, Project Briefing and Tea
 | B | Zhang Yichun | Dense fused forward; online softmax, tiled Q/K/V and output accumulation | Materialised indexing and memory access |
 | C | Kyaw Tun Khine | Causal fused forward; future-tile skipping, diagonal masking and optimisation | Causal correctness and performance interpretation |
 
-**Integration owner: Kyaw Tun Khine.** The A/C integration below updates shared helpers and host runners; it does not require Lyu Sihan to rewrite or reintegrate Part A. Zhang Yichun supplies Part B through the documented adapter contract.
+**Integration owner: Kyaw Tun Khine.** A, B and C retain separate GPU implementations and runners, connected through shared input, correctness and result conventions. Part B is supplied by Zhang Yichun; its source-pinned replay is documented in [CROSS_CHECK.md](part_b/CROSS_CHECK.md).
 
-Each member contributes testing, tuning, profiling and analysis. Record actual contributions in the final report. AI assistance must be declared as required by the briefing; Part A and this Part C evaluation received Codex assistance and require team review.
+Each member contributes testing, tuning, profiling and analysis. Record actual contributions in the final report. AI assistance in Part A, Part B implementation/report preparation and Part C evaluation must be reviewed and disclosed as required by the briefing. Each member should confirm their actual contributions and assistance received.
 
 ## Repository layout
 
 ```text
-README.md                         # project overview, conventions and result index
-README.txt                        # executable reproduction instructions
-run.sh                            # shared A/B/C pipeline; B safety/profiling acceptance pending
-run_all.sh                        # compatibility alias for run.sh
-scripts/run_all.py                # command logging, CSV collection and audit
+README.md                                   # overview, shared conventions and result/figure index
+README.txt                                  # submission reproduction checklist
+run.sh                                      # sequential A/B/C evaluation and aggregation
+run_all.sh                                  # compatibility alias for run.sh
+scripts/
+  run_all.py                                # builds, runner orchestration and aggregate audit
+  results_schema.py                         # shared seven-table CSV schema and validation
+  workflow.py                               # command logging, GPU identity and provenance
+  ncu_csv.py                                # Nsight CSV parsing and metric aliases
+  plot_combined.py                          # common per-part and combined plots/indexes
+  prepare_submission.py                   # source audit, full-run checks and ZIP packaging
+  fa1_comparison.py                         # matched FA1/FA2 latency and speedup figures
 part_a/
-  common/                         # layouts, deterministic inputs and FP64 oracle
-  gpu_baseline/                   # materialised CUDA implementations
-  cpu_reference/                  # independent FP64 oracle
-  run.sh                          # standalone canonical evaluation and analysis
-  scripts/                        # host workflow and canonical export
-  main.cpp                        # independent benchmark/test CLI
-  results/                        # saved RTX 5060 Ti measurements
+  common/                                   # tensor types, deterministic inputs, reference API
+  cpu_reference/                            # independent FP64 reference CMake library
+  gpu_baseline/                             # materialised QK, softmax and PV CUDA kernels
+  tests/                                    # shared reference agreement tests
+  scripts/                                  # standard workflow and canonical export
+  main.cpp                                  # materialised benchmark/test executable
+  CMakeLists.txt
+  run.sh                                    # standalone Part A evaluation
+  plot_results.py                           # report-figure regeneration wrapper
   README.md
+  results/                                  # retained RTX 5060 Ti measurements
+part_b/
+  include/flash_attention/
+    dense_flash_attention.h                 # public dense-attention declarations
+  src/
+    dense_flash_attention.cu                # streaming, tiled and float4 FP32 definitions
+  tests/
+    evaluation_runner.cpp                   # oracle checks, A cross-checks, timings/resources
+    test_adapter.py                         # canonical export and acceptance checks
+    test_reference_replay.py                # pinned source/input/replay checks
+  scripts/
+    run_standard.py                         # fresh build/test/tune/profile/export workflow
+    export_results.py                       # native B records to the shared CSV schema
+    reproduce_notebook.py                   # exact recorded plan replay; no retuning
+    analyze_delivery.py                     # retained-data verification and report assets
+  notebooks/
+    FlashAttention_Part_B_Lab.ipynb
+    Analyze_Retained_Full_Run.ipynb
+  CMakeLists.txt
+  run.sh, run.cmd                           # fresh evaluation: Bash / Windows wrappers
+  reproduce.sh, reproduce.cmd               # diagnostic exact-replay wrappers
+  EXECUTION_REFERENCE.json                  # pinned reference/source/evidence identity
+  CROSS_CHECK.md                            # A/C reviewer replay instructions
+  CROSS_REVIEW.md                           # static cross-review notes and limitations
+  README.md
+  results/                                  # retained notebook evidence; not auto-aggregated
 part_c/
-  include/flash_attention/        # public declarations and shared types
-  src/                            # FA1, FA2 CUDA-core and Tensor Core definitions
-  tests/                          # runners, shared support and input-contract check
-  scripts/                        # tuning, plotting, auditing and profiling helpers
-  run.sh                          # standalone canonical evaluation; legacy paths retained
-  evaluate.sh                     # bounded-study build/run wrapper
-  profile.sh                      # default or frozen-winner Nsight workflow
-  requirements-analysis.txt       # pinned plotting dependencies
-  results/                        # retained raw data, metadata, figures and reports
-  README.md
-  PROFILING.md
+  include/flash_attention/                  # public declarations and shared CUDA types
+  src/
+    flash_attention_1.cu                    # FP32 FA1 baseline
+    flash_attention_1_tensor_core.cu        # PTX FA1 and supplementary WMMA FA1
+    flash_attention_2_cuda_core.cu
+    flash_attention_2_tensor_core.cu        # WMMA/PTX FA2
+  tests/                                    # runners, FA1 invariants and input-contract checks
+  scripts/                                  # tuning, export, plotting, audits and profiling
+  CMakeLists.txt
+  run.sh                                    # standalone standard workflow; legacy modes retained
+  evaluate.sh, profile.sh                   # native study and separate profiler workflows
+  requirements-analysis.txt                 # pinned NumPy/Matplotlib dependencies
+  README.md, PROFILING.md
+  results/                                  # retained historical studies and profiler evidence
+tests/                                      # CPU-only shared integration/plotting checks
+results/<run_id>/                           # new standalone or combined experiment bundles
+extra/                                      # ignored private scratch; excluded from submission
 ```
 
-Part B now implements dense FP32 streaming, tiled and float4 fused kernels with the shared generator, FP64 oracle and seven-table adapter. See [part_b/README.md](part_b/README.md). Its retained local diagnostic measurements passed numerical checks, but sanitizer attachment and performance-counter access were blocked on the development host; these bundles deliberately fail final acceptance. A complete common-machine run is still required.
+Declarations live in headers; CUDA definitions live in `.cu` files. Part B's public namespace is `dense_attention`. Both FA1 Tensor Core implementations share Part C's Tensor Core source/header; WMMA FA1 is supplementary. Integration links the shared reference and standardizes host interfaces while each part retains its kernel source.
 
 ## 1. Software and platform requirements
 
-The documented Part C workflow uses Linux, Bash, a CUDA-capable NVIDIA GPU, a C++17 compiler, CMake and Python. The tested GPU is an RTX 3070 Ti Laptop with SM86. The named runners detect the selected GPU architecture by default; `--arch` overrides it. The integrated Tensor Core paths require SM80 or newer. Part A's saved results were collected separately on an RTX 5060 Ti.
+The root A/B/C workflow uses Linux, Bash, a CUDA-capable NVIDIA GPU, a C++17 compiler, CMake and Python. The tested GPU is an RTX 3070 Ti Laptop with SM86. The named runners detect the selected GPU architecture by default; `--arch` overrides it. The integrated Tensor Core paths require SM80 or newer. Part A's saved results were collected separately on an RTX 5060 Ti. Part B's retained notebook run used Windows, an RTX 4070 Ti (SM89), CUDA 12.9/nvcc 12.9.41 and MSVC; see [Part B](part_b/README.md) for its separate Windows workflow and measured environment.
 
 | Software | Recorded version / purpose |
 |---|---|
@@ -131,7 +167,7 @@ Strides above count elements, not bytes. K is stored as `[N,d]` per head; the tr
 | Oracle | Independent CPU FP64 dot products, stable softmax and accumulation |
 | FP16 inputs | Round the same generated values, then validate against the rounded-input oracle |
 
-The new Part C study checks Part A/C input bytes for equality and records input fingerprints. Historical Part C regression/profile data uses its older mt19937 stream and retains that label. Equal seeds alone do not imply equal tensors.
+All standard runners use the shared generator and record input fingerprints; Part C additionally has a bitwise Part A/C input-contract test. Historical Part C regression/profile data uses its older mt19937 stream and retains that label. Equal seeds alone do not imply equal tensors.
 
 ## 4. Build and run the available tests
 
@@ -144,122 +180,129 @@ cmake --build /tmp/part_c-evaluation-build --parallel 2
   --suite correctness --output part_c/results/my_correctness
 ```
 
-The default regression checks all eight variants, including tails, unusual head dimensions and deterministic patterns. Unsupported PTX dimensions are explicit skips. The bounded study separately validates every candidate configuration before tuning. Full small-case outputs are checked; large performance cases check queries 0, N/2 and N−1 in every head plus finiteness of every output. Sampled checks are not labelled full validation.
+The default regression checks all nine variants (including FP32 and PTX FA1 baselines), including tails, unusual head dimensions and deterministic patterns. Unsupported PTX dimensions are explicit skips. The bounded study separately validates every candidate configuration before tuning. Full small-case outputs are checked; large performance cases check queries 0, N/2 and N−1 in every head plus finiteness of every output. Sampled checks are not labelled full validation.
+
+Fresh Part C runs include FP32 FA1 and tuned PTX FA1 throughout correctness, main-grid timing, memory, profiling and plots. `fa1_fa2_comparison.csv` records matched-precision ratios against frozen FA2 configurations; `fa1_cross_precision.csv` labels FP16 FA1 versus FP32 FA2 separately. Both have PNG/PDF figures in `plots/part_c/`. These compare our implementations, not official FA1 performance. Full C profiling now contains 24 captures: both FA1 baselines and the frozen d=64 FA2 CUDA-core winner and PTX FA2, two lengths and three repetitions. Historical bundles keep their recorded coverage. WMMA FA1 remains available as supplementary evidence. Both PTX implementations receive the same four-configuration tuning budget. See [Part C](part_c/README.md) for precision/state details.
 
 CPU-only integration/export regression checks (no CUDA access required):
 
 ```bash
 python3 -m unittest discover -s tests -v
 python3 -m unittest discover -s part_c/tests -p 'test_*.py' -v
+python3 -m unittest discover -s part_b/tests -p 'test_*.py' -v
 cmake -S part_a -B /tmp/attention-cpu-check -DPART_A_ENABLE_CUDA=OFF
 cmake --build /tmp/attention-cpu-check --target attention_reference_test --parallel 2
 /tmp/attention-cpu-check/cpu_reference/attention_reference_test
 ```
 
-## 5. Run the available integration
+## 5. Run the project
 
-Use fresh output directories. All GPU work runs sequentially on one selected device. Full runs include correctness, sanitizers, bounded tuning, the final grid, memory/resource evidence, fresh Nsight captures, standardized tables and plots.
+Run commands from the repository root after setup. Choose a **fresh output directory** for each experiment. GPU work runs sequentially on one selected physical device.
+
+### Complete A/B/C workflow
 
 ```bash
-# Check commands without creating files or accessing the GPU.
-bash run.sh --parts a,c --arch 86 --output results/ac_preview --dry-run
+# Preview the full plan without GPU access, builds or output creation.
+bash run.sh --arch 86 --output results/abc_preview --dry-run
 
-# Small integration check, including correctness and sanitizers; no profiling.
+# Test the combined pipeline with correctness, sanitizers, tuning and plots.
+bash run.sh --grid smoke --output results/abc_smoke
+
+# Full common-machine experiment, including fresh profiling.
+bash run_all.sh --parts a,b,c --grid full --device 0 \
+  --output results/new_full_run
+```
+
+Full runs execute tests, required sanitizer checks, bounded tuning, frozen main-grid timing, memory/resource studies, profiling, export and combined analysis. Smoke uses B=H=1, d64, reporting N33/65 and tuning N17/33; it omits profiling and is not final report evidence. The full grid is defined in Section 3. Do not bypass failed safety checks to label a diagnostic run complete.
+
+To run an explicit subset through the same collector:
+
+```bash
 bash run.sh --parts a,c --grid smoke --output results/ac_smoke
-
-# Full A/C evaluation with fresh profiling.
-bash run.sh --parts a,c --output results/ac_full
-
-# Same canonical workflow, independently.
-bash part_a/run.sh --output results/a_only
-bash part_c/run.sh --output results/c_only
-
-# Regenerate the combined analysis from saved child tables, without CUDA.
-bash run.sh --analyze-only results/ac_full
-# Re-extract one part's native data and regenerate its figures.
-bash part_a/run.sh --analyze-only results/a_only
-bash part_c/run.sh --analyze-only results/c_only
-
-# After Part B implements Section 6, examiner's complete run:
-bash run.sh --output results/final_submission
+bash run.sh --parts b --grid smoke --output results/b_root_smoke
 ```
 
-`run_all.sh` forwards to the same root runner. Options: `--device INDEX_OR_UUID`, `--arch SM` (default `auto`), `--build-root PATH` (root) / `--build PATH` (individual), `--grid full|smoke`, `--no-profile`, `--dry-run`. `--no-profile` explicitly omits fresh hardware counters and is recorded as incomplete profiling evidence. Smoke uses B=H=1, d=64, reporting N=33/65 and tuning N=17/33; it is not report data. Full uses the common grid in Section 3.
+The audit records the requested parts and marks subsets as incomplete A/B/C evidence. `run_all.sh` forwards to the same root runner.
 
-Part C's older positional, `--study` and `--complete` workflows remain supported; see [part_c/README.md](part_c/README.md). Keep their native outputs for additional studies. Do not mix their historical measurements into a new common-machine run.
-
-### Examiner: run and inspect one part independently
-
-Part A and Part C already have standalone runners. Neither requires Part B or another part's GPU executable/results. They do use the shared CPU reference source in this repository, so keep the repository intact and complete the environment setup in Section 2 first.
-
-From the **repository root**, run whichever part you want:
+### Run one part independently
 
 ```bash
 bash part_a/run.sh --output results/a_only
+bash part_b/run.sh --output results/b_only
 bash part_c/run.sh --output results/c_only
 ```
 
-Alternatively, enter the individual directory. Run the following blocks separately, each starting from the repository root:
+Add `--grid smoke` for a short pipeline check. Full evaluation is the default. All three runners use the shared CPU reference source, so keep the repository intact; they do not require other parts' saved GPU results. B additionally links A's naive CUDA pipeline for supplementary small cross-checks.
+
+You may instead enter the part directory; for example, starting from the repository root:
 
 ```bash
-cd part_a
-bash run.sh --output ../results/a_only
+cd part_b
+bash run.sh --grid smoke --output ../results/b_only_smoke
 ```
+
+Output paths are relative to the invoking directory. This is an alternative to the root-level standalone command, not an extra required run.
+
+| Option | Meaning |
+|---|---|
+| `--output PATH` | New bundle destination; existing experiment bundles are preserved |
+| `--device INDEX_OR_UUID` | One physical GPU, selected consistently for all parts |
+| `--arch auto\|SM` | Detect architecture by default; override with, for example, `86` or `89` |
+| `--build-root PATH` / `--build PATH` | Root / standalone build storage |
+| `--grid full\|smoke` | Final experimental grid / small pipeline check |
+| `--no-profile` | Explicitly omit fresh counters; record the omission |
+| `--dry-run` | Print the plan without creating results or running commands |
+| `--analyze-only BUNDLE` | Re-extract saved data and regenerate analysis without CUDA |
+
+Part B also offers `--no-sanitize` for **diagnostic** experiments; its audit remains incomplete and root aggregation rejects those bundles. Part C's older positional, `--study`, `--complete` and explicit `--fa1-pilot` modes remain available; see [Part C](part_c/README.md). Windows Part B commands and notebooks are documented in [Part B](part_b/README.md).
+
+### Part B exact notebook replay for reviewers
+
+The replay tools preserve recorded source, input patterns, case order and frozen launch choices; they do not retune for your GPU. See [CROSS_CHECK.md](part_b/CROSS_CHECK.md).
 
 ```bash
-cd part_c
-bash run.sh --output ../results/c_only
+# Verify the pinned source, input/reference identity and retained evidence; no GPU.
+python3 part_b/scripts/reproduce_notebook.py --grid full --check-only
+# Replay the original 83-case smoke or 165-case full plan on your GPU.
+bash part_b/reproduce.sh --grid smoke --output results/b_crosscheck_smoke
+bash part_b/reproduce.sh --grid full --output results/b_crosscheck_full
 ```
 
-These are equivalent ways to run the same standalone workflows; do not execute both alternatives into the same output directory. Output paths are resolved relative to the directory where you invoke the command. Choose a fresh name for each run. Add `--grid smoke` for a small pipeline check; full is the default and includes profiling. Add `--no-profile` only when you explicitly intend to omit fresh counter evidence.
+The full replay has 90 timing cases / 1,800 samples. Inspect `crosscheck.json` for numerical replay success and `comparison_to_reference.csv` for separately labelled original/local observations. Replay intentionally has `audit.passed=false` because it does not collect safety/profiler evidence. Use `part_b/run.sh` for fresh tuning and acceptance, then the root runner for same-machine A/B/C comparisons.
 
-After a standalone run, open the files below using a text/CSV viewer and an image/PDF viewer. No web server is required.
+### Inspect a standalone or combined run
 
-| What to inspect | Part A standalone | Part C standalone |
+For a standalone run, start at `results/a_only/`, `b_only/` or `c_only/`. For a combined run, the same complete bundles live under `results/<run_id>/parts/part_a/`, `part_b/` and `part_c/`.
+
+| Files within a bundle | What to inspect |
+|---|---|
+| `audit.json`, `run_status.json` | Accepted validation, safety/profile scope and completion |
+| `summary.csv` | Forward medians, quartiles, throughput and numerical error |
+| `samples.csv`, `correctness.csv` | Individual timings and full/sampled oracle checks |
+| `resources.csv`, `profiles.csv`, `memory.csv`, `work.csv` | Hardware resources, counters, storage and analytical work |
+| `configs/part_<letter>.json`, `manifest.json`, `device.json` | Frozen selection, source/binary provenance and GPU identity |
+| `plots/part_<letter>/` | Individual figures and available plotted CSV data |
+| `ANALYSIS.md`, available figure indexes | Findings and figure navigation; B also writes `REPORT.md` |
+| `raw/part_<letter>/`, `commands.jsonl`, `logs/` | Native records, source snapshots and executed commands |
+| `supplementary/part_c/`, `plots/README.md` | Additional C profiling evidence and generated plot links |
+
+Root additionally writes aggregate CSVs, `comparison.csv`, combined plots and `plots/README.md`; no rerun is needed to inspect one child part. Section 6 defines the interfaces and output layout, and Section 9 gives offline regeneration commands.
+
+## 6. Shared integration and results
+
+### Implementation and verification status
+
+| Component | Current implementation | Evidence boundary |
 |---|---|---|
-| Validation and run completion | `results/a_only/audit.json`, `run_status.json` | `results/c_only/audit.json`, `run_status.json` |
-| Timing/error/throughput summary | `results/a_only/summary.csv` | `results/c_only/summary.csv` |
-| Individual timings and numerical checks | `results/a_only/samples.csv`, `correctness.csv` | `results/c_only/samples.csv`, `correctness.csv` |
-| Resource, profiler, memory and work tables | `resources.csv`, `profiles.csv`, `memory.csv`, `work.csv` under `results/a_only/` | Same four tables under `results/c_only/` |
-| Main figures and plotted data | `results/a_only/plots/part_a/` | `results/c_only/plots/part_c/` |
-| Findings and figure navigation | `results/a_only/ANALYSIS.md`, `figure_index.json` | `results/c_only/ANALYSIS.md`, `plots/README.md` |
-| Native evidence and additional studies | `results/a_only/raw/part_a/` | `results/c_only/raw/part_c/`, `supplementary/part_c/` |
-| Commands and diagnostic output | `results/a_only/commands.jsonl`, `logs/` | `results/c_only/commands.jsonl`, `logs/` |
+| Part A | Materialised FP32 kernels plus WMMA/PTX; shared FP64 oracle and canonical adapter | Full common-machine run passed 728 correctness records and 108 profiler captures; historical standalone evidence remains separate |
+| Part B | Dense FP32 streaming, tiled and float4 kernels; standard runner, pinned replay and canonical adapter | Full common-machine run passed 165 correctness records, 32 sanitizer checks and six profiler captures |
+| Part C | FP32 FA1, tuned PTX FA1, FA2 CUDA-core/WMMA/PTX; native and standard workflows | Full common-machine run passed 764 canonical correctness records and 24 profiler captures; FA1 invariants and representative sanitizer checks are retained |
+| Root runner | Builds A/B/C, runs each separately and validates/aggregates canonical tables | Full-grid same-machine A/B/C execution, saved-result audit and offline regeneration passed |
+| Plotting | Individual, combined, matched FA1/FA2 and supplementary figures | All 41 full-run PNG/PDF figure pairs are indexed and readable; native re-extraction and combined regeneration passed |
 
-Paths in this table are relative to the repository root. Saved standalone Part A results and historical Part C results are separate from these new output bundles. Check validation scope, GPU identity and precision labels before using a value in the report.
+Existing B replay/diagnostic bundles are not accepted final comparisons. Existing A/B/C historical measurements came from different GPUs and cannot be divided to claim a same-machine optimisation speedup. Private smoke/debug evidence stays in ignored `extra/`; final retained report evidence belongs under a fresh public `results/<run_id>/` bundle.
 
-To regenerate an individual's saved figures/tables without executing GPU kernels, run from the repository root:
-
-```bash
-bash part_a/run.sh --analyze-only results/a_only
-bash part_c/run.sh --analyze-only results/c_only
-```
-
-For a **root combined run**, individual bundles instead live under `results/<run_id>/parts/part_a/` and `parts/part_c/`, with the same internal structure. Root also publishes per-part report figures at `results/<run_id>/plots/part_a/` and `plots/part_c/`, plus combined figures at `plots/combined/`. To inspect one part from that run, open its child bundle; no rerun is necessary.
-
-Part B must provide the equivalent standalone commands and result structure when implemented; see Section 6. It is not executable in this checkout yet.
-
-## 6. Implemented integration and Part B handoff
-
-The integration owner has connected A and C. GPU kernels remain in their own directories and separate executables. Neither part runs another part's GPU executable for correctness. Both link the reusable `attention_reference` CMake target from [part_a/cpu_reference/CMakeLists.txt](part_a/cpu_reference/CMakeLists.txt).
-
-### Checked completion checklist
-
-Checked against this checkout on 8 November 2026. The earlier list describing the shared oracle, root runner and combined plotting as pending is superseded by the implementation below. Integration is owned by Kyaw Tun Khine; no additional Part A integration task is assigned to Lyu Sihan.
-
-| Requested work | Current status | Implementation / verification |
-|---|---|---|
-| 1. Part A shared interfaces | Implemented | [`attention_reference` library](part_a/cpu_reference/CMakeLists.txt), [output-only full/sampled oracle](part_a/cpu_reference/sampled_reference.cpp), [agreement tests](part_a/tests/reference_test.cpp), per-case O validation/fingerprints in [main.cpp](part_a/main.cpp), and [canonical export](part_a/scripts/export_results.py). |
-| 2. Part B | Implemented; final safety/profiling acceptance pending | Dense FP32 kernels, shared-oracle validation, bounded tuning and seven-table adapter are in `part_b/`. Diagnostic results deliberately fail final acceptance when sanitizers are omitted. |
-| 3. Part C shared correctness linkage | Implemented | [Active test support](part_c/tests/test_support.cpp) calls the shared generator, pattern transformations, fingerprint and FP64 output reference; all active runners link the library through [CMake](part_c/CMakeLists.txt). Original kernel bodies are unchanged. Historical scratch/legacy tests retain their provenance and are not the shared comparison path. |
-| 4. Root experiment pipeline | Implemented for available parts | [run.sh](run.sh) invokes [scripts/run_all.py](scripts/run_all.py); standalone A/C workflows perform tests, sanitizers, tuning, timing, memory/resources, optional fresh profiling and export. Aggregation validates the requested grid and tables. Individual parts and CPU-only analysis are supported. [run_all.sh](run_all.sh) is now an alias, not a separate prototype. |
-| 5. Combined plotting and analysis | Implemented | [plot_combined.py](scripts/plot_combined.py) generates applicable standardized comparisons and preserves individual figures. A/B and dense-B/causal-C paths are tested with temporary synthetic fixtures only; actual B measurements remain unavailable. |
-| 6. Final common-machine experiment | Pending | After B passes its standalone and joint smoke checks, execute the complete full-grid A/B/C workflow with profiling. Review its actual outputs before writing final performance conclusions. |
-
-**Verification scope:** the retained A/C GPU smoke run passed correctness, representative sanitizers, bounded tuning, timing, export and aggregation: 140 timing cases / 2,800 samples. It explicitly records `grid=smoke`, `all_three_parts_present=false` and no fresh profiling grid. CPU-only regeneration from the moved bundle reproduced 40 PNG/PDF figures byte for byte. The CPU regression suites cover schema rejection, fingerprints/GPU identity, missing B, offline exports and the future B plotting contract. A separate small real Part A Nsight capture verified QK/softmax/PV capture ordering and launch geometry.
-
-**Still unverified as a complete experiment:** a fresh integrated full-grid run including all requested profiler captures, and any real B execution. Existing historical profiler records and the small capture do not substitute for that run. Private smoke/debug evidence stays in ignored `extra/integration_validation/`; final report evidence belongs under a new public `results/<run_id>/` bundle.
-
+All three runners link the `attention_reference` target from [part_a/cpu_reference/CMakeLists.txt](part_a/cpu_reference/CMakeLists.txt). Part B's CMake also links A's actual naive materialised pipeline for supplementary small GPU comparisons; those buffers are freed before B timing and excluded from B's allocation ledger. The shared FP64 oracle remains the correctness authority.
 
 ### Shared input and correctness contract
 
@@ -275,117 +318,27 @@ identical generated Q/K/V ── shared CPU reference ── expected O
 
 `attention::reference(input, causal)` returns full S/P/O and is retained for small materialised tests. `attention::reference_output(input, causal, sampled)` computes O without allocating quadratic S/P. Its full and sampled modes are checked against the original reference in both dense and causal modes; CPU tests include future-K/V isolation, tails and deterministic patterns. Large GPU cases check query rows 0, floor(N/2), N−1 in every head and check every output for finiteness. Record full versus sampled scope and checked elements. Sampling is not exhaustive large-output validation.
 
-A checks S/P/O for its small suite. C checks full O for its small suite and every tuning candidate, including boundary and stress patterns. Every accepted timing row has a passing O record for the exact implementation, configuration and effective inputs. FP32 tolerances are atol=rtol=1e-4; the existing FP16 experiment uses atol=0.002, rtol=0.02. Do not widen these automatically to hide failures. GPU-to-GPU comparisons may be added as supplementary checks; CPU-reference comparisons establish correctness.
+A checks S/P/O for its small suite. B and C check full O for small cases and validate tuning candidates, including boundary and stress patterns. B also runs supplementary small GPU-to-GPU checks against A's materialised pipeline; these do not replace the shared FP64 oracle. Every accepted timing row has a passing O record for the exact implementation, configuration and effective inputs. FP32 tolerances are atol=rtol=1e-4; the existing FP16 experiment uses atol=0.002, rtol=0.02. Do not widen these automatically to hide failures. GPU-to-GPU comparisons may be added as supplementary checks; CPU-reference comparisons establish correctness.
 
-### Part B: instructions for Zhang Yichun and the coding agent
+### Standard runner and adapter conventions
 
-Implement only B's dense fused kernels and its adapter. A/C integration and root aggregation are already maintained by Kyaw; no copying of A/C kernels or historical results is required.
+These are implemented interfaces for all parts and the maintenance contract for future changes:
 
-1. Create `part_b/include/`, `part_b/src/`, `part_b/tests/`, `part_b/scripts/`, `part_b/CMakeLists.txt` and `part_b/run.sh`. Use normal declarations in headers and definitions in CUDA source files. Preserve useful standalone development tests under an appropriate `extra/` location when they are not submission evidence.
-2. Link the shared oracle with `add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../part_a/cpu_reference ${CMAKE_CURRENT_BINARY_DIR}/shared_reference)` and `target_link_libraries(YOUR_RUNNER PRIVATE attention_reference CUDA::cudart)`. Include the shared generator/header. Use `causal=false` for dense references; no causal mask is applied to B.
-3. Accept the same CLI: `--output NEW_DIR --build DIR --arch auto|SM --device INDEX_OR_UUID --grid full|smoke --no-profile --dry-run --analyze-only BUNDLE`. No output directory overwriting. Select one device consistently via `CUDA_VISIBLE_DEVICES`; save its physical UUID using `scripts/workflow.py:device_info`. `--dry-run` must not create files or require GPU access. `--analyze-only` must not execute CUDA or require a build directory.
-4. Use the shared inputs, row-major layout, patterns and FP64 checks above. Include N=1, tails around tile boundaries, multiple batches/heads, uniform attention, constant V and finite stress logits. For each accepted candidate/main case validate outside timing, checking all O values for finiteness and recording full/sample counts. Run Compute Sanitizer memcheck/racecheck/synccheck/initcheck on representative kernels and frozen winners. Keep failing candidates visible and stop if required FP32 coverage cannot pass.
-5. Match the full grid B4,H8,N256/512/1024/2048/4096,d32/64/128, mode dense. Smoke is B1,H1,N33/65,d64. Tune on N256/1024 (smoke N17/33), per d, using a small documented candidate list. Freeze the choice before main measurements using geometric mean forward latency and deterministic tie-breaking. Publish one frozen winner as `variant=selected` for FP32 main rows, retaining its actual kernel name, symbol and launch configuration in `configs/part_b.json` and the manifest. Other variants can also be emitted with distinct names.
-6. Take five warmups and 20 CUDA-event forward samples per accepted case; repeat indices 0–19. Exclude allocation, copies, CPU checks, resource queries, file writing and profilers. Fused QK/softmax/PV breakdown cells stay blank. Emit explicit live allocation and auxiliary-memory ledgers, analytical dense valid-pair count B×H×N², resource queries and fresh representative N256/4096,d64 Nsight captures (three repetitions), separately from timing. Import raw Nsight CSV with `--print-units base`; preserve every exported metric name/unit/value. Retain unavailable counters with blank values and reasons.
-7. Export exactly the seven headers in [scripts/results_schema.py](scripts/results_schema.py), using its `case_id`, `write` and `validate`. Do not invent a second public schema. Native B-specific files and additional experiments stay under `raw/part_b/` and `supplementary/part_b/`. Write `configs/part_b.json`, `audit.json`, `manifest.json`, command logs and per-part plots. Required manifest fields: `schema_version=1`, `part=part_b`, `grid`, `shared_cpu_reference_linked=true`, `device` containing physical `uuid`, `profile_requested`, source/binary hashes and a registry describing numerical precision and selected kernels. The audit must set `passed=true` only after validation and record `profile_captures` (at least six when profiling is requested: two lengths × three captures). Never claim shared linkage unless the compiled runner actually links it.
-8. Test `bash part_b/run.sh --grid smoke --output /tmp/b_smoke`, CPU-only analyze mode, and `bash run.sh --parts a,b,c --grid smoke --output /tmp/abc_smoke`. Root already discovers `part_b/run.sh`, requires dense FP32 grid coverage, validates the schema/input/GPU identity and plots `variant=selected` against A-dense. Fix B's adapter rather than changing shared semantics to make an invalid run pass. After acceptance, run the final full experiment on the same machine for all three parts.
-
-Part B may add FP16/Tensor Core experiments, but FP32 dense coverage is required. Preserve precision labels and unsupported shapes; do not compare B-dense output with C-causal output as equal operations. Their workload/traffic comparison is a separate study.
-
-#### Planned Part B files and result destinations
-
-Part B is implemented in the layout below. Its commands and evidence limitations are documented in `part_b/README.md`. The integration contract remains authoritative.
-
-```text
-part_b/                           # implemented dense fused kernels and adapter
-  CMakeLists.txt                  # builds B kernels/runner; links attention_reference
-  README.md                       # B algorithms, variants, commands and limitations
-  run.sh                          # same named CLI as part_a/run.sh and part_c/run.sh
-  include/flash_attention/
-    dense_flash_attention.h       # public declarations; add headers as needed
-  src/
-    dense_flash_attention.cu      # definitions; separate variants into .cu files as needed
-  tests/
-    test_reference_replay.py       # pinned source/input and CPU-only replay guards
-    evaluation_runner.cpp         # validated tuning, timing and memory cases
-  scripts/
-    run_standard.py               # builds, tests, tunes, profiles and exports
-    export_results.py             # native B records -> shared seven-table schema
-  results/                        # optional retained B-local studies, not auto-imported
-```
-
-Do not hard-code `part_b/results/` as the destination. Like A and C, B must write its complete standalone bundle to the `--output` path supplied by its caller:
-
-```bash
-# Once B exists: independent B smoke run.
-bash part_b/run.sh --grid smoke --output results/b_smoke
-# Equivalent B-only execution through the root workflow; includes aggregation.
-bash run.sh --parts b --grid smoke --output results/b_root_smoke
-# Complete shared-machine run: root invokes all three runners, then aggregates.
-bash run.sh --output results/final_submission
-```
-
-For the first command, B writes:
-
-```text
-results/b_smoke/
-  correctness.csv
-  samples.csv
-  summary.csv
-  resources.csv
-  profiles.csv
-  memory.csv
-  work.csv
-  manifest.json, audit.json, run_status.json, commands.jsonl
-  configs/part_b.json             # bounded candidates and frozen selection
-  logs/                          # build/test/benchmark/profiler command output
-  raw/part_b/                    # native records, source provenance and profile exports
-  plots/part_b/                  # B figures and their plotted data
-  supplementary/part_b/          # any additional B evidence/figures
-```
-
-With the complete root command, the same B bundle instead goes to `results/final_submission/parts/part_b/`, alongside equivalent A/C bundles. Root supplies that path automatically; B must not choose a separate default directory during a root run.
-
-Aggregation is automatic in `scripts/run_all.py`: read the seven canonical tables from each child bundle → validate schemas, numerical checks, grid, GPU and fingerprints → assign the joint run identity → write merged tables at `results/final_submission/*.csv`. Native records remain in the child bundles. Root copies retained per-part figures/supplementary files and invokes `scripts/plot_combined.py` to produce main figures under `plots/part_a/`, `plots/part_b/`, `plots/part_c/`, combined figures under `plots/combined/`, and the matched ratios in `comparison.csv`.
-
-An independent `results/b_smoke/` run is not automatically merged into an earlier A/C run. Use the root all-parts command for the final comparison dataset; do not concatenate historical CSVs or copy them into a new run. Regenerate a completed joint bundle with `bash run.sh --analyze-only results/final_submission`.
-
-#### B adapter details required by the existing collector
-
-These conventions let B plug into the current root runner without rewriting A/C or the collector:
-
-| Boundary | Exact convention |
+| Boundary | Convention |
 |---|---|
-| Build | Root configures `cmake -S part_b -B <build> -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=<SM>` before measurements; standalone B must also configure/build itself. |
-| Shared imports | Python helpers live in root `scripts/`: `results_schema.py`, `workflow.py`, `ncu_csv.py` and `plot_combined.py`. Resolve paths from the script location, not the caller's working directory. |
-| Common labels | `part=part_b`, `mode=dense`, `layout=BHNd_contiguous_row_major`, `generator=splitmix64-fp32-v1`, `seed=5206`; FP32 input/accumulator/output labels are `FP32`. |
-| Frozen main series | `experiment=proposal`, `variant=selected`; exactly one selected FP32 row per required shape. A configuration selected for each d is reused across that d's reporting lengths. |
-| Other experiments | Use `experiment=tuning` for candidates; retain all additional variants/experiments under distinct case identities and in native files. Never publish failed/unchecked timings as accepted summaries. |
-| Identity | Represent every common field as its CSV string value (including dimensions and seed; blanks are empty strings), then set `case_id=results_schema.case_id(row)`. JSON integers in the identity would hash differently after CSV readback. All tables for that case share those common fields; stage/profile-repeat fields do not alter its identity. |
-| Required CSVs | Always write all seven tables using `results_schema.HEADERS` / `write`, including a header when a table has no applicable rows. Empty profiling is allowed only when explicitly skipped; it is not complete profiling evidence. |
-| Profiler evidence paths | `source_report` is relative to the standalone bundle, for example `raw/part_b/profiles/<case>/raw.csv`; the target must exist. Root prefixes the child-bundle location automatically. |
-| Re-analysis | Rebuild canonical tables and figures from retained native records without changing their values, order or case identities. Root compares child CSV hashes before and after re-extraction. Preserve immutable source data and configuration freezes. |
+| Build | Separate `part_<letter>/CMakeLists.txt`, kernel library and executable; standalone runner builds itself and root can prebuild each part |
+| Helpers | Reuse `scripts/results_schema.py`, `workflow.py`, `ncu_csv.py` and the common plotter; resolve repository paths from script locations |
+| Labels | `part=part_a\|part_b\|part_c`, `mode=dense\|causal`, `layout=BHNd_contiguous_row_major`, `generator=splitmix64-fp32-v1`, seed `5206`; actual precision labels remain explicit |
+| Selection | Freeze configuration per implementation/d before the reporting grid; B exposes its FP32 winner as `variant=selected` in `configs/part_b.json` |
+| Identity | Build `case_id` from the shared string-valued common fields; every table preserves its case identity, fingerprints and exact configuration |
+| Export | Always write all seven schema headers, even for an explicitly empty profiling table; never publish failed/unchecked timings as accepted summaries |
+| Provenance | Record schema version, source/binary hashes, actual shared-oracle linkage, physical GPU UUID, grid and profiling request in manifest/audit records |
+| Profiling | Keep instrumented runs separate; preserve raw metric names/units, unavailable reasons and bundle-relative evidence paths |
+| Re-analysis | Rebuild public tables from retained native records without changing measured values or case identity; root checks child CSV hashes before/after extraction |
 
-Minimum metadata structure (replace illustrative values with actual measurements/provenance):
+Part B's five bounded candidates cover streaming W4/BK32, tiled W4/BK32, vector W4/BK32, tiled W8/BK32 and vector W4/BK64. Its selected-kernel full profiling grid is N256/4096,d64 with three repetitions (six captures). Part C separately profiles FP32 FA1, frozen PTX FA1, frozen FA2 CUDA-core and frozen PTX FA2 (24 captures). Actual accepted capture counts are recorded in the bundle audits.
 
-```json
-{
-  "schema_version": 1,
-  "part": "part_b",
-  "grid": "full",
-  "shared_cpu_reference_linked": true,
-  "device": {"uuid": "GPU-<actual-uuid>"},
-  "profile_requested": true,
-  "sources": {"part_b/src/<kernel>.cu": "<actual-sha256>"},
-  "binary_sha256": "<actual-sha256>",
-  "implementation_registry": {"selected": "<actual kernel, precision and selection policy>"}
-}
-```
-
-`audit.json` must include `passed` as a JSON Boolean and `profile_captures` as an integer. A full profiling run must provide at least six real selected-kernel captures (N256/4096 × three repetitions); a smoke or `--no-profile` run sets `profile_requested=false` and records the omission. `configs/part_b.json` must retain the bounded candidate settings, tuning observations and frozen per-d selection. The seven CSVs are the machine interface; extra B-specific detail can be retained alongside them without changing their headers.
-
-Acceptance order for B: standalone smoke → standalone CPU-only re-analysis → joint A/B/C smoke → complete full A/B/C run. The existing temporary-fixture test exercises the schema/plots only; it does not validate B's kernels.
-
+Root rejects incompatible schemas, failed audits, incomplete requested grids, invalid numerical joins, differing GPU UUIDs/input fingerprints and missing requested profiler captures. A standalone B run is not automatically merged into an earlier A/C bundle. Use the root all-parts run for final comparisons; keep native additional studies separate.
 
 ### Standard public tables
 
@@ -417,31 +370,57 @@ Root aggregation checks exact headers, schema version, passing output checks, 20
 
 ```text
 results/<run_id>/
-  manifest.json, commands.jsonl, run_status.json
+  manifest.json, commands.jsonl, run_status.json, ANALYSIS.md
   correctness.csv, samples.csv, summary.csv
   resources.csv, profiles.csv, memory.csv, work.csv
-  comparison.csv                 # matched cross-part speedups and contracts
-  audit.json, aggregation_audit.json, ANALYSIS.md, figure_index.json
-  configs/                       # per-part configuration registries and freezes
-  parts/part_a/                  # full standalone bundle, including raw/part_a/
-  parts/part_b/                  # created only when B participates
-  parts/part_c/                  # full native study, safety checks, counters, insights
-  plots/part_a/                  # main figures and their plotted CSV data
-  plots/part_b/
-  plots/part_c/
-  plots/combined/                # applicable same-input cross-part comparisons
-  supplementary/part_c/          # retained additional profiling and analysis
+  comparison.csv                  # matched cross-part ratios and contracts
+  fa1_fa2_comparison.csv           # matched FP32 and PTX FA1/FA2 cases
+  fa1_cross_precision.csv          # separately labelled FP16-FA1/FP32-FA2 ratios
+  audit.json, aggregation_audit.json, figure_index.json
+  configs/                        # each part's launch registry/frozen selection
+  parts/
+    part_a/                       # complete standalone bundle with raw/part_a/
+    part_b/                       # complete standalone bundle with raw/part_b/
+    part_c/                       # complete standalone bundle with raw/part_c/
+  plots/
+    README.md                     # clickable index of generated PNG/PDF files
+    part_a/                       # individual figures and plotted data
+    part_b/
+    part_c/
+    combined/                     # applicable shared-input comparisons
+  supplementary/part_c/           # additional retained profiling/analysis
 ```
 
-Each standalone bundle has the same seven canonical CSVs at its root. Keeping complete child bundles preserves extra results needed for the report. Private scratch/history stays in ignored `extra/`; numerical evidence does not.
+Only requested parts are included. Standalone bundles have the same seven canonical CSVs at their own root and write native evidence under `raw/part_<letter>/`; their destination is the supplied `--output` path, not a hard-coded part-local folder. Root preserves the complete child bundles, aggregates validated rows and copies applicable figures. See [the schema](scripts/results_schema.py) and each part's README for native details.
 
-[plot_combined.py](scripts/plot_combined.py) consumes canonical tables only. It generates per-part FP32/FP16 kernel progression with IQR, throughput/storage, tuning and materialised stage breakdowns, plus applicable A-causal/C-causal and A-dense/B-dense comparisons. Once B is present it also generates dense-B versus causal-C latency, analytical valid-pair counts and available measured DRAM traffic, explicitly labelling them as different workloads. C additionally regenerates its native CUDA progression, Tensor Core progression, frozen core-versus-Tensor-Core, controlled scalar/vector-load ablation, tuning, memory and profiler figures. Full numerical data and native profiler metrics remain available for further report analysis. Missing parts/counters are declared, not plotted as fabricated zeros. FP16 A/C comparisons use FP32 accumulation/output and label their different probability rounding order.
+[plot_combined.py](scripts/plot_combined.py) consumes canonical tables only. It generates per-part FP32/FP16 kernel progression with IQR, throughput/storage, tuning and materialised stage breakdowns, plus applicable A-causal/C-causal and A-dense/B-dense comparisons. When B participates it also generates dense-B versus causal-C latency, analytical valid-pair counts and available measured DRAM traffic, explicitly labelling them as different workloads. C additionally regenerates its native CUDA progression, Tensor Core progression, frozen core-versus-Tensor-Core, controlled scalar/vector-load ablation, tuning, memory and profiler figures. Full numerical data and native profiler metrics remain available for further report analysis. Missing parts/counters are declared, not plotted as fabricated zeros. FP16 A/C comparisons use FP32 accumulation/output and label their different probability rounding order.
+
+Part B standalone output includes `plots/part_b/latency.{png,pdf}` and `memory.{png,pdf}` with plotted CSV data. Root aggregation adds its common FP32 progression, throughput/storage, numerical-error, tuning and available counter figures. The separate `analyze_delivery.py` command creates `part_b_latency.png`, `part_b_loading_memory.png` and `part_b_tuning.png` from retained diagnostic evidence.
+
+The current FA1/FA2 figure set is listed below. Paths are relative to the selected output bundle. All common figures have PNG/PDF versions. `plots/README.md` links every indexed image/PDF; `figure_index.json` includes common, retained native and supplementary figures; Part C's `plots/README.md` links its actual generated images.
+
+| Figure / location | Interpretation and configuration policy |
+|---|---|
+| `plots/part_c/cuda_core_progression` | Fixed-default FP32 progression, starting at FP32 FA1 |
+| `plots/part_c/tensor_core_progression` | Fixed-default PTX FA1, WMMA FA2 and PTX FA2; implementation progression, not a single-feature ablation |
+| `plots/part_c/kernel_progression_fp32`, `kernel_progression_fp16` | Canonical reporting-grid latency with quartiles; frozen configurations for tuned variants |
+| `plots/part_c/fa1_fa2_latency` | Direct FP32 FA1/core-FA2 and PTX FA1/PTX FA2 latency panels, median and Q1–Q3 |
+| `plots/part_c/fa1_fa2_comparison` | Matched-precision FA1 median / FA2 median; PTX configurations independently frozen |
+| `plots/part_c/fa1_cross_precision` | PTX FA1 / FP32 FA2, explicitly different input precision |
+| `plots/part_c/frozen_family_comparison` | Selected FA2 CUDA-core versus Tensor Core; FP32/FP16 tradeoff |
+| `plots/part_c/frozen_tuning_speedup`, `tuning_heatmap`, `tuning` | Default-versus-frozen gains and bounded candidate search, including PTX FA1 |
+| `plots/part_c/matched_vector_load` | Controlled scalar/vector load comparison with matching launch knobs |
+| `plots/part_c/device_memory`, `throughput_and_memory`, `numerical_error` | Allocated storage (including FA1 m/l), throughput and checked numerical error |
+| `supplementary/part_c/plots/` | Achieved occupancy, eligible warps, Tensor Core activity, sampled warp states, shared wavefronts and memory traffic for recorded profiler targets |
+| `plots/combined/` | Applicable A/B/C comparisons; Part A WMMA/PTX stay separately labelled; dense/causal work is not output equivalence |
+
+The root runner adds the common `kernel_progression_*`, `throughput_and_memory`, `numerical_error` and `tuning` plots. A standalone C export supplies the seven native figures, three FA1 comparison figures and available profiler charts; its own `plots/README.md` lists that actual set.
+
+`fa1_fa2_comparison.csv` supplies exact case IDs, configurations, medians and quartiles for both matched speedup and latency figures. `fa1_cross_precision.csv` is separate. Quartiles describe within-case timing spread, not confidence intervals; speedup curves are ratios of medians. Native fixed-default progression and frozen primary comparisons answer different questions. Optional WMMA FA1 appears only in explicit supplementary/pilot runs or historical bundles.
+
+The scripts are updated for fresh experiments. Existing historical result folders keep their original kernels, timings and captured processors; they are not final plots for the new PTX baseline. Smoke and pilot plots verify the pipeline but do not replace the full-grid report experiment. No final-grid performance data are fabricated during offline regeneration.
 
 Offline root analysis checks the recorded child table hashes, invokes each child’s native re-extraction/analysis, rechecks table hashes, aggregates, copies retained supplementary evidence and regenerates common figures. Individual analyze modes re-extract native data; C also regenerates native/supplementary plots. Large binary Nsight reports are optional for CSV-only figure reproduction and remain checksummed evidence for deeper inspection.
-
-### Status and final collection
-
-A/B/C software integration is implemented; Part B safety/profiling acceptance and the final full common-machine experiment remain outstanding. Smoke runs exercise the pipeline, not report performance. A requested A/C subset can pass its audit while `all_three_parts_present=false`. `--no-profile` leaves the absence of fresh counters explicit. Completing A/C does not complete the report, video or final submission.
 
 ## 7. Measurement conventions
 
@@ -463,49 +442,93 @@ Part A provides WMMA and direct PTX materialised baselines with FP16 Q/K/V/P and
 
 ## 8. Read the results
 
-| Location | Contents |
+The report's common-machine measurements are retained in [results/final_submission/](results/final_submission/). Validation scope, uncertainty and reproduction checks are documented in [VERIFICATION.md](results/final_submission/VERIFICATION.md). The table below summarizes baseline/candidate median latency ratios over the 15 main-grid shapes; a ratio greater than one favours the candidate. Configurations were frozen using the designated tuning lengths.
+
+| Baseline / candidate | Ratio range | Geometric mean |
+|---|---:|---:|
+| A optimized dense FP32 / B selected dense FP32 | 0.205–0.703× | 0.428× |
+| A optimized causal FP32 / C frozen CUDA-core FA2 | 0.547–1.179× | 0.781× |
+| A causal PTX / C causal PTX FA2 | 1.182–6.131× | 2.483× |
+| C FP32 FA1 / C frozen CUDA-core FA2 | 4.083–6.554× | 5.290× |
+| C PTX FA1 / C PTX FA2 | 3.032–13.079× | 6.433× |
+
+The FP32 fused implementations reduce intermediate storage, but do not consistently reduce latency relative to optimized materialised A on this GPU. C's query-resident FA2 implementations improve on the corresponding FA1 baselines across the measured grid. The A/C PTX comparison includes their different probability-rounding order. These observations establish the performance trade-offs; attribution to instruction issue, memory access or residency requires the accompanying profiler and source analysis. Quartiles describe within-case timing variation, and the geometric means do not establish uncertainty across independent sessions.
+
+Earlier studies remain separate historical/local evidence:
+
+| Location | Contents and scope |
 |---|---|
-| [part_a/results/](part_a/results/) | Completed FP32 and mixed-precision materialised results on RTX 5060 Ti |
-| [part_c/results/layout_validation/](part_c/results/layout_validation/) | Previous fixed-default correctness, benchmarks, sanitizers and figures |
-| [part_c/results/standardized/](part_c/results/standardized/) | Part A-format saved-data export, retaining native counters and supplementary source/SASS evidence |
-| [part_c/results/bounded_evaluation/](part_c/results/bounded_evaluation/) | New common-input bounded study, frozen selection, matched ablation and memory |
-| [part_c/results/nsight_analysis/](part_c/results/nsight_analysis/) | 48 historical fixed-default captures, source/SASS analysis and corrected wavefront interpretation |
+| [part_a/results/](part_a/results/) | RTX 5060 Ti materialised study: 180 main configurations, 96 tuning configurations and 108 profiled kernel captures; standalone evidence |
+| [part_b/results/notebook_full_20261110_044740/](part_b/results/notebook_full_20261110_044740/) | Exact measured RTX 4070 Ti notebook evidence: 165 numerical PASS records, 90 timing cases and 1,800 samples; sanitizer/profiler omission keeps `audit.passed=false` |
+| [part_b/EXECUTION_REFERENCE.json](part_b/EXECUTION_REFERENCE.json) | Pinned B source/dependency/reference identity for exact replay |
+| [part_c/results/layout_validation/](part_c/results/layout_validation/) | Historical fixed-default correctness, benchmarks, sanitizers and figures |
+| [part_c/results/standardized/](part_c/results/standardized/) | Historical saved-data format adaptation, retaining counters and source/SASS evidence |
+| [part_c/results/bounded_evaluation/](part_c/results/bounded_evaluation/) | Historical eight-kernel common-input study, frozen selection, matched-load ablation and memory; predates PTX FA1 |
+| [part_c/results/nsight_analysis/](part_c/results/nsight_analysis/) | 48 historical fixed-default captures with source/SASS analysis and corrected wavefront interpretation |
 
-The bounded study writes per-case CSVs, `measurements.csv`, `summary.csv`, `comparison.csv`, `matched_ablation.csv`, configuration/plan/source manifests, exact command records, `audit.json`, `REPORT.md`, and PNG/PDF figures. Its figures cover CUDA-core progression, Tensor Core progression, frozen family comparison, tuning, matched loading and device storage. Profiling and additional verification live in separate subdirectories.
+The historical C bounded study passed 288 full candidate checks, 318 sampled benchmark checks (6,360 samples) and 30 sampled memory checks. At N4096,B4/H8, its CUDA-core versus PTX FA2 timings were:
 
-The recorded bounded study passed 288 full candidate checks, 318 sampled benchmark checks (6,360 timing samples), and 30 sampled memory checks. At the held-out N=4096, B=4,H=8:
+| d | Frozen CUDA core | CUDA latency (ms) | PTX FA2 latency (ms) | Core / tensor |
+|---|---|---:|---:|---:|
+| 32 | `skip`, BQ16/BK32/4 warps | 65.716 | 5.042 | 13.03× |
+| 64 | `skip`, BQ32/BK32/8 warps | 107.663 | 12.153 | 8.86× |
+| 128 | `vector`, BQ32/BK32/8 warps | 150.936 | 36.106 | 4.18× |
 
-| d | Frozen CUDA core | Latency ms | Frozen PTX MMA ms | Core / tensor |
-|---|---|---|---|---|
-| 32 | `skip`, scalar loads, BQ16/BK32/4 warps | 65.716 | 5.042 | 13.03× |
-| 64 | `skip`, scalar loads, BQ32/BK32/8 warps | 107.663 | 12.153 | 8.86× |
-| 128 | `vector`, float4 loads, BQ32/BK32/8 warps | 150.936 | 36.106 | 4.18× |
+These are FP32-core versus FP16-input/FP32-output measurements on the recorded laptop GPU, **not FA1→FA2 speedups or final A/B/C results**. See [the historical report](part_c/results/bounded_evaluation/REPORT.md) for configurations, tuning gains and limits. The current matched PTX FA1/FA2 measurements are retained in `results/final_submission/fa1_fa2_comparison.csv`.
 
-These are FP32-core versus FP16-input/FP32-accumulator/output Tensor Core results on the recorded laptop GPU. PTX uses BQ32/BK16/2 warps. See the [measured report](part_c/results/bounded_evaluation/REPORT.md) for tuning gains, allocation measurements and limitations.
-
-Memory curves distinguish measured explicit storage from the analytical S+P storage model. Source-level excessive shared wavefronts establish a layout-conflict signal; aggregate L1 bank-conflict counters alone can include arbitration. The historical tiled/skip/vector captures show zero source excess, so those counters do not support calling their layouts bank-conflicted.
+Explicit storage, observed device deltas and profiler traffic remain distinct. The materialised S+P curve is an analytical model. Source-level excessive shared wavefronts support a layout investigation; aggregate conflict counters alone can include arbitration. The historical tiled/skip/vector captures show zero source excess, so they do not establish bank-conflicted layouts.
 
 ## 9. Recreate figures without rerunning CUDA
 
-Figure regeneration needs the saved CSVs. Full profile-integrity audits additionally need the checksummed `.ncu-rep` files; restore separately supplied reports to their recorded `cases/` paths before running those audits.
+The accepted bundle includes its original Nsight binaries in Git: 66 report files (36 A, six B and 24 C), totalling approximately 304 MiB. Each A report contains three kernel captures, so the files collectively retain 138 captures. Only `results/final_submission/` is exempted from the profiler-file ignore rules; reports from other experimental runs remain ignored. No separate profiler download is needed once these files are committed and pushed.
+
+After cloning the submitted revision and installing the Python analysis dependencies, validate and regenerate the supplied evidence from the repository root:
 
 ```bash
-python3 part_c/scripts/evaluate.py --build /tmp/part_c-evaluation-build \
-  --output part_c/results/bounded_evaluation --analyze-only
-python3 part_c/scripts/audit_evaluation.py part_c/results/bounded_evaluation
-python3 part_c/scripts/analyze_profiles.py part_c/results/nsight_analysis
-python3 part_c/scripts/interpret_profiles.py part_c/results/nsight_analysis
-python3 part_c/scripts/audit_profiles.py part_c/results/nsight_analysis
+python3 scripts/prepare_submission.py check --results results/final_submission
+bash run_all.sh --analyze-only results/final_submission
+python3 scripts/prepare_submission.py check --results results/final_submission
 ```
 
-See [part_c/PROFILING.md](part_c/PROFILING.md) for metric definitions, capture limitations and source analysis.
+These saved-data commands require neither an NVIDIA GPU nor Nsight installation. They read the supplied binary files for integrity checks and use the retained CSV exports for numerical processing and plots. Running a new full GPU experiment requires CUDA, Compute Sanitizer and Nsight Compute as described in Section 5, and produces new observations rather than identical timings.
+
+
+```bash
+# Re-extract each child, validate identities/hashes and regenerate joint figures.
+bash run.sh --analyze-only results/final_submission
+# Or process one completed standalone bundle.
+bash part_a/run.sh --analyze-only results/a_only
+bash part_b/run.sh --analyze-only results/b_only
+bash part_c/run.sh --analyze-only results/c_only
+# Verify retained B evidence and create its separate delivery report assets.
+python3 part_b/scripts/analyze_delivery.py --verify-only
+python3 part_b/scripts/analyze_delivery.py --output results/b_report_assets
+```
+
+These commands read saved measurements; they do not rerun CUDA kernels. Diagnostic B bundles retain a failing acceptance audit, so their standard re-extraction can exit nonzero even when numerical records are valid. Use the delivery-analysis/replay checks for their diagnostic evidence scope rather than treating them as accepted joint input.
+
+Preserve previous exports by using a copied bundle or a fresh result destination. Historical native datasets should use their captured processors/configurations; current source does not retroactively turn an old FA1 timing into a new PTX FA1 measurement. Saved CSVs suffice for available counter plots; full binary Nsight integrity/source audits additionally require the checksummed `.ncu-rep` files. See [Part C profiling](part_c/PROFILING.md) and [Part B cross-checking](part_b/CROSS_CHECK.md).
 
 ## 10. Submission and outstanding scope
 
-Retain raw benchmark CSVs, selected configurations, metadata, plotting scripts, readable figures and reproduction instructions. Include source and source/binary hashes; large raw Nsight reports can be supplied as a separate accessible artifact with checksums. Do not submit compiled build directories as results.
+The full-run operator should follow [README.txt, Steps 1–5](README.txt) using the integrator's reviewed source version. It specifies the one-machine command, smoke/counter preflight, expected profiler coverage (A108/B6/C24), full-grid acceptance and offline regeneration. No full experiment is launched by the source or archive checks.
 
-Part C's local evaluation does not complete the project-wide requirements. The remaining shared work includes acceptance of Part B sanitizer/profiler evidence, same-GPU A/B/C results, materialised-versus-fused validation, dense-versus-causal work/traffic analysis, the report, video, references and member contributions. The final comparison must include materialised versus fused latency/storage, dense versus causal work/traffic, bounded tuning and controlled optimisation comparisons. No fixed speedup target is required by the rubric; well-supported slowdowns and limitations are valid results.
+The CPU-only [submission helper](scripts/prepare_submission.py) provides:
 
-### Part A saved evaluation
+| Command | Purpose |
+|---|---|
+| `source-check --output extra/source_audit` | Copy maintained source/fixtures to a clean filesystem snapshot; run CPU tests and a dry plan without Git/GPU |
+| `check --results results/final_submission` | Require complete A/B/C full-grid tables, identities, profiler evidence and figures |
+| `pack ...` | Include maintained source, complete selected results and explicitly supplied final report, version and URLs; optionally split raw profiler binaries |
+| `verify-archive SOURCE.zip --profiles PROFILER.zip` | Verify transferred archive members and SHA-256 checksums |
 
-The saved Part A run covers 180 main configurations with all six variants, 96 tuning configurations and 108 profiled kernel captures on the RTX 5060 Ti. Correctness records passed. These standalone results are separate from the pending common-machine A/B/C evaluation. Part A report counters are kept compact; the readers accept current and older Nsight DRAM names. See [Part A](part_a/README.md) for commands and result scope.
+The missing historical Part B smoke recording remains Yichun's task. Source-audit replay tests report that unresolved dependency; final packaging refuses to hide it. The fresh integrated runner does not depend on that recording. `--allow-smoke` checking and `--validation-only` packaging are explicitly labelled preparation tests, not final report evidence.
+
+Archive outputs and audit copies belong under ignored `extra/` or a separate delivery location. The private `extra/main.tex` is excluded; the final PDF must be supplied explicitly. Report/video contents, actual contributions, AI disclosure, public link access and the reviewed commit require human confirmation. Nothing is uploaded or committed by the helper.
+
+
+
+Retain raw benchmark CSVs, selected configurations, metadata, plotting scripts, readable figures and reproduction instructions. Include source and source/binary hashes. The accepted final-run Nsight reports are included directly in Git; optional split archives remain available for other delivery formats. Do not submit compiled build directories as results.
+
+The full-grid results are now retained and verified. The remaining shared work includes interpreting materialised-versus-fused and dense-versus-causal results, the report, video, references, member contributions and restoring the separate historical B smoke recording. The final comparison must include materialised versus fused latency/storage, dense versus causal work/traffic, bounded tuning and controlled optimisation comparisons. No fixed speedup target is required by the rubric; well-supported slowdowns and limitations are valid results.
+

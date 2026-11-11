@@ -1,0 +1,9 @@
+{
+  "status": "completed_requested_parts",
+  "parts": [
+    "part_a",
+    "part_b",
+    "part_c"
+  ],
+  "grid": "full"
+}

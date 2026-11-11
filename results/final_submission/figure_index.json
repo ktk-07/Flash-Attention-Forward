@@ -1,0 +1,285 @@
+{
+  "figures": [
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/materialised_comparison",
+      "description": "Part A d=64 progression, medians and interquartile ranges. Tensor Core variants use FP16 operands and FP32 accumulation/output."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/kernel_progression_fp32",
+      "description": "All final-grid variants; median and interquartile range. Precision contracts remain separate."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/kernel_progression_fp16",
+      "description": "All final-grid variants; median and interquartile range. Precision contracts remain separate."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/throughput_and_memory",
+      "description": "Measured forward throughput; explicit allocation ledger, not a device-wide peak."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/numerical_error",
+      "description": "Errors from exact per-case CPU validation; full or sampled scope retained in CSV."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/tuning",
+      "description": "Bounded candidate sweep, grouped by mode and configuration. Selection rules and frozen configurations are retained."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/dram_traffic",
+      "description": "Median read/write traffic over three instrumented captures per stage. These cold-cache captures are separate from normal forward timing."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/profiler_counters",
+      "description": "Median raw Nsight counter across captures. MIO sample counts are not percentages or runtime fractions. Missing counters are omitted and retained in profiles.csv with reasons."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/stage_breakdown",
+      "description": "Independent stage passes; fused stages are unavailable, not zero."
+    },
+    {
+      "part": "part_b",
+      "figure": "plots/part_b/kernel_progression_fp32",
+      "description": "All final-grid variants; median and interquartile range. Precision contracts remain separate."
+    },
+    {
+      "part": "part_b",
+      "figure": "plots/part_b/throughput_and_memory",
+      "description": "Measured forward throughput; explicit allocation ledger, not a device-wide peak."
+    },
+    {
+      "part": "part_b",
+      "figure": "plots/part_b/numerical_error",
+      "description": "Errors from exact per-case CPU validation; full or sampled scope retained in CSV."
+    },
+    {
+      "part": "part_b",
+      "figure": "plots/part_b/tuning",
+      "description": "Bounded candidate sweep, grouped by mode and configuration. Selection rules and frozen configurations are retained."
+    },
+    {
+      "part": "part_b",
+      "figure": "plots/part_b/profiler_counters",
+      "description": "Median raw Nsight counter across captures. MIO sample counts are not percentages or runtime fractions. Missing counters are omitted and retained in profiles.csv with reasons."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/kernel_progression_fp32",
+      "description": "All final-grid variants; median and interquartile range. Precision contracts remain separate."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/kernel_progression_fp16",
+      "description": "All final-grid variants; median and interquartile range. Precision contracts remain separate."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/throughput_and_memory",
+      "description": "Measured forward throughput; explicit allocation ledger, not a device-wide peak."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/numerical_error",
+      "description": "Errors from exact per-case CPU validation; full or sampled scope retained in CSV."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/tuning",
+      "description": "Bounded candidate sweep, grouped by mode and configuration. Selection rules and frozen configurations are retained."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/profiler_counters",
+      "description": "Median raw Nsight counter across captures. MIO sample counts are not percentages or runtime fractions. Missing counters are omitted and retained in profiles.csv with reasons."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/fa1_fa2_comparison",
+      "description": "CSV includes exact case IDs, precision labels, medians and quartiles; no official-library parity claim."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/fa1_cross_precision",
+      "description": "CSV includes exact case IDs, precision labels, medians and quartiles; no official-library parity claim."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/fa1_fa2_latency",
+      "description": "Matched FP32 and Tensor Core latency panels; median with Q1\u2013Q3, using exact cases from fa1_fa2_comparison.csv. Quartiles are within-case spread, not confidence intervals."
+    },
+    {
+      "part": "combined",
+      "figure": "plots/combined/cross_part",
+      "description": "Separate dense FP32, causal FP32 and causal FP16 panels. Frozen selections on identical inputs; target variants and head dimensions are explicit. FP16 probability rounding order differs."
+    },
+    {
+      "part": "combined",
+      "figure": "plots/combined/materialised_fused_memory",
+      "description": "A dense, B dense and C causal explicit allocation ledgers, including separate C FA1 workspace. Capacity comparison across labelled workloads, not total process memory or traffic."
+    },
+    {
+      "part": "combined",
+      "figure": "plots/combined/dense_causal_work",
+      "description": "Distinct dense/causal workloads on identical inputs; analytical pairs and measured traffic remain separate."
+    },
+    {
+      "part": "part_b",
+      "figure": "plots/part_b/latency",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    },
+    {
+      "part": "part_b",
+      "figure": "plots/part_b/memory",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/cuda_core_progression",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/device_memory",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/frozen_family_comparison",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/frozen_tuning_speedup",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/matched_vector_load",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/tensor_core_progression",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    },
+    {
+      "part": "part_c",
+      "figure": "plots/part_c/tuning_heatmap",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    },
+    {
+      "part": "part_c",
+      "figure": "supplementary/part_c/plots/eligible_warps",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    },
+    {
+      "part": "part_c",
+      "figure": "supplementary/part_c/plots/occupancy",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    },
+    {
+      "part": "part_c",
+      "figure": "supplementary/part_c/plots/shared_wavefronts",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    },
+    {
+      "part": "part_c",
+      "figure": "supplementary/part_c/plots/tensor_activity",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    },
+    {
+      "part": "part_c",
+      "figure": "supplementary/part_c/plots/traffic",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    },
+    {
+      "part": "part_c",
+      "figure": "supplementary/part_c/plots/warp_states",
+      "formats": [
+        "png",
+        "pdf"
+      ],
+      "description": "Retained part-specific figure; source data, recorded configurations and processing provenance remain in the child bundle."
+    }
+  ],
+  "parts_present": [
+    "part_a",
+    "part_b",
+    "part_c"
+  ],
+  "unavailable_parts": [],
+  "comparison_rows": 60,
+  "inputs": {
+    "correctness.csv": "df977903c8b8076fbcbc5f4665d06bad2b793bf614c8570712bda48c39010899",
+    "samples.csv": "961d352bb21f907a19a7e33e4cd5ad5f987ccdf97c63dffd01d0778e9024f743",
+    "summary.csv": "3b0cf31c2cee539f7fa8f5c6bbb2bdacfee2e1ad3260dcf1bbe2df7770176f2f",
+    "resources.csv": "6aa8584ca36b3cf4705dea0fc62d930a2ee2482c0627b0305058fa43ea66ef0e",
+    "profiles.csv": "10a2e1bc83638821a55d49698d4cee78398e4a42a2c4b49bfbfa38d8b39bfca2",
+    "memory.csv": "e1ec9e50bacc31913fa70f912090b7a441c5884849a5576432271989b86715e4",
+    "work.csv": "f4914edee1fd99ef7e5b9f3d8c62d785621a64ba54528dd2b93b426289ead710"
+  }
+}

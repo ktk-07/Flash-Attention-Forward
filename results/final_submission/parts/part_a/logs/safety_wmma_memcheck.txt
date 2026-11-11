@@ -1,0 +1,4 @@
+========= COMPUTE-SANITIZER
+1,1,33,64,dense,wmma,16,256 median_ms=0.60416 IQR_ms=0.03912
+1,1,33,64,causal,wmma,16,256 median_ms=0.632768 IQR_ms=0.072696
+========= ERROR SUMMARY: 0 errors

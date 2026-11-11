@@ -2,6 +2,8 @@
 
 The ordinary benchmarks establish latency. This separate workflow collects hardware evidence for why variants differ: occupancy/resource limits, eligible warps, issue rates, warp states, branch uniformity and predication, DRAM/local/shared traffic, bank conflicts, scalar operations, and Tensor Core activity.
 
+The completed common-machine experiment retains 24 Part C captures under `../results/final_submission/parts/part_c/`: FP32 FA1, PTX FA1, the frozen CUDA-core FA2 winner and PTX FA2 at d64, N256/4096, with three repetitions. Generated counters and figures are retained in the child bundle and `../results/final_submission/supplementary/part_c/`. See [verification](../results/final_submission/VERIFICATION.md) for coverage and unavailable metrics. The optional all-variant workflow below has a broader capture plan and is not required to reproduce the completed experiment's figures.
+
 ## Capture and process
 
 From the repository root, with CUDA, Nsight Compute, CMake, a C++ compiler, Python 3.12, and an accessible NVIDIA GPU:
@@ -18,7 +20,7 @@ python3 part_c/scripts/analyze_source.py part_c/results/my_profile
 python3 part_c/scripts/interpret_profiles.py part_c/results/my_profile
 ```
 
-`profile_kernels.py` drives all eight maintained kernel variants at `B=4,H=8,d=64,N=256/4096`, with three independent captures per kernel/shape. The default uses SM86, matching the local Ampere GPU. This is a representative small/large study, not exhaustive profiling of all benchmark shapes.
+`profile_kernels.py` drives all nine maintained kernel variants (including both FA1 baselines; 54 captures) at `B=4,H=8,d=64,N=256/4096`, with three independent captures per kernel/shape. The default uses SM86, matching the local Ampere GPU. This is a representative small/large study, not exhaustive profiling of all benchmark shapes.
 
 The existing full small-case correctness suite runs first. Each capture also checks query rows `0,N/2,N-1` in every batch/head against CPU FP64 attention and checks all outputs for finiteness. Tensor Core references use identical FP16-rounded inputs.
 
@@ -79,7 +81,7 @@ The saved analysis includes source shared actual/ideal/excessive wavefronts. His
 
 ## Profiling frozen configurations
 
-The bounded study profiles its frozen d=64 family winners separately from the historical eight-kernel defaults:
+The bounded study profiles FP32 FA1, tuned PTX FA1, its frozen d=64 FA2 CUDA-core winner and tuned PTX FA2. This is separate from the all-kernel fixed-default profiler:
 
 ```bash
 bash part_c/profile.sh --frozen part_c/results/my_bounded_study
@@ -87,4 +89,34 @@ bash part_c/profile.sh --frozen part_c/results/my_bounded_study
 python3 part_c/scripts/profile_frozen.py part_c/results/my_bounded_study --analyze-only
 ```
 
-This uses the same evaluation binary hash recorded by the study, one module-warmup launch, one validation launch, five warmups, then `--launch-skip 7 --launch-count 1` to capture the first timed launch. All timings produced under Nsight are excluded from the unprofiled study. Three independent captures at N=256/4096 produce twelve raw reports and source-level actual/ideal/excessive shared wavefronts. The input sequence is the new Part A-compatible stream; historical profiles retain their older stream. Avoid treating cross-study counter differences as a precision-controlled or input-controlled ablation.
+This uses the same evaluation binary hash recorded by the study, one module-warmup launch, one validation launch, five warmups, then `--launch-skip 7 --launch-count 1` to capture the first timed launch. All timings produced under Nsight are excluded from the unprofiled study. Three independent captures per target at N=256/4096 produce 24 raw reports and source-level actual/ideal/excessive shared wavefronts. The input sequence is the new Part A-compatible stream; historical profiles retain their older stream. Avoid treating cross-study counter differences as a precision-controlled or input-controlled ablation.
+
+## FA1 schedule/version note
+
+Fresh all-kernel captures record `fa1_grid=one_CTA_per_batch_head` and
+`fa1_implementation=kv_outer_shared_fp32_v2`. FA1's grid is now `(B*H,1,1)`;
+Both FA1 baselines use that grid; FA2 kernels retain their query-tile grids. FP32 FA1 uses dynamic shared
+storage, so static shared bytes alone are not its shared-memory footprint.
+The maintained processor exports dynamic shared bytes separately. Historical
+plans without these flags retain their original query-parallel FA1 grid;
+no saved source snapshots or counter records are relabelled. Profiling still
+selects one forward after validation and five warmups (skip 6): initialisation
+is inside FA1's forward, not an additional launch.
+
+Earlier WMMA FA1 plans record `fa1_wmma_implementation=kv_outer_wmma_v1`.
+Its shared arrays are static. Frozen profiling exports static and dynamic
+shared bytes and their sum for both FA1 baselines and FA2 targets.
+Legacy plans with two targets still require twelve captures. Offline processing
+uses recorded target lists and capture counts, preserving historical coverage.
+
+To exercise the fresh four-target capture/processing path on a **smoke** study:
+
+```bash
+bash part_c/profile.sh --frozen /path/to/smoke/study --build /path/to/matching/build --smoke
+```
+
+Use a study without an existing profiling directory. This records the study's
+small sequence lengths and B/H in the profile plan. It validates the pipeline;
+it is not evidence for the final N256–4096 grid.
+
+Fresh default plans now use `fa1_ptx_implementation=kv_outer_ptx_v1`. Its kernels share `flash_attention_1_tensor_core.cu` with the supplementary WMMA implementation. PTX FA1 uses static shared arrays and one CTA/head; the frozen config comes from the same four-candidate budget as PTX FA2. Historical WMMA-aware plans keep their recorded targets.

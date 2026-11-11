@@ -1,0 +1,1 @@
+{"suite":"smoke","grid":"full","kernels":["fa1","fa1_ptx","scalar","warp","tiled","skip","vector","wmma","ptx"],"fa1_baselines":["fa1","fa1_ptx"]}

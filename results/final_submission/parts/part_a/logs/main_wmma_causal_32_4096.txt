@@ -1,0 +1,1 @@
+4,8,4096,32,causal,wmma,16,128 median_ms=36.9755 IQR_ms=0.161023

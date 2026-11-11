@@ -1,0 +1,19 @@
+gpu: nvidia-smi -q
+configure: cmake -S /home/buntr/Projects/Flash-Attention-CUDA/part_c -B /tmp/attention-builds/part_c -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=86
+build: cmake --build /tmp/attention-builds/part_c --parallel 2
+shared_reference_contract: /tmp/attention-builds/part_c/shared_reference/attention_reference_test
+fa1_invariants: /tmp/attention-builds/part_c/part_c_fa1_test --output /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/fa1_invariants
+fa1_ptx_c0_invariants: /tmp/attention-builds/part_c/part_c_fa1_test --ptx --config 0 --output /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/fa1_ptx_c0_invariants
+fa1_ptx_c1_invariants: /tmp/attention-builds/part_c/part_c_fa1_test --ptx --config 1 --output /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/fa1_ptx_c1_invariants
+fa1_ptx_c2_invariants: /tmp/attention-builds/part_c/part_c_fa1_test --ptx --config 2 --output /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/fa1_ptx_c2_invariants
+fa1_ptx_c3_invariants: /tmp/attention-builds/part_c/part_c_fa1_test --ptx --config 3 --output /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/fa1_ptx_c3_invariants
+input_contract: /tmp/attention-builds/part_c/part_c_input_contract
+default_correctness: /tmp/attention-builds/part_c/part_c_runner --suite correctness --output /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/default_correctness
+memcheck: compute-sanitizer --tool memcheck --error-exitcode 3 /tmp/attention-builds/part_c/part_c_runner --suite smoke --output /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/safety/memcheck
+racecheck: compute-sanitizer --tool racecheck --error-exitcode 3 /tmp/attention-builds/part_c/part_c_runner --suite smoke --output /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/safety/racecheck
+synccheck: compute-sanitizer --tool synccheck --error-exitcode 3 /tmp/attention-builds/part_c/part_c_runner --suite smoke --output /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/safety/synccheck
+initcheck: compute-sanitizer --tool initcheck --error-exitcode 3 /tmp/attention-builds/part_c/part_c_runner --suite smoke --output /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/safety/initcheck
+study: bash /home/buntr/Projects/Flash-Attention-CUDA/part_c/evaluate.sh /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/study
+frozen_safety: bash /home/buntr/Projects/Flash-Attention-CUDA/part_c/evaluate.sh --verify /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/study
+frozen_profiles: bash /home/buntr/Projects/Flash-Attention-CUDA/part_c/profile.sh --frozen /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/study --build /tmp/attention-builds/part_c
+standardize: /home/buntr/anaconda3/bin/python3 /home/buntr/Projects/Flash-Attention-CUDA/part_c/scripts/export_results.py --study /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/study --output /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c --in-place

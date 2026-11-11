@@ -1,0 +1,9 @@
+{
+  "part": "part_c",
+  "status": "completed_part_c",
+  "device": "0",
+  "architecture": "86",
+  "profiling_requested": true,
+  "shared_oracle_integration_pending": false,
+  "grid": "full"
+}

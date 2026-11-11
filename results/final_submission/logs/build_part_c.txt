@@ -1,0 +1,129 @@
+[  4%] Building CUDA object CMakeFiles/part_c_attention.dir/src/flash_attention_1.cu.o
+[  9%] Building CXX object shared_reference/CMakeFiles/attention_reference.dir/attention_reference.cpp.o
+[ 13%] Building CXX object shared_reference/CMakeFiles/attention_reference.dir/sampled_reference.cpp.o
+[ 18%] Linking CXX static library libattention_reference.a
+[ 18%] Built target attention_reference
+[ 22%] Building CXX object shared_reference/CMakeFiles/attention_reference_test.dir/home/buntr/Projects/Flash-Attention-CUDA/part_a/tests/reference_test.cpp.o
+[ 27%] Linking CXX executable attention_reference_test
+[ 27%] Built target attention_reference_test
+[ 31%] Building CUDA object CMakeFiles/part_c_attention.dir/src/flash_attention_1_tensor_core.cu.o
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_1_tensor_core.cu(181): warning #177-D: variable "stride_qs" was declared but never referenced
+      const int col=row,stride_qs=HEAD_DIM,stride_qh=1,stride_ks=HEAD_DIM,stride_kh=1;
+                        ^
+          detected during:
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_launch<D,BQ,BK,NW,Causal>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, cudaStream_t, part_c::KernelResources *) [with D=16, BQ=32, BK=32, NW=2, Causal=true]" at line 431
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_mode<D,BQ,BK,NW>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, __nv_bool, cudaStream_t, part_c::KernelResources *) [with D=16, BQ=32, BK=32, NW=2]" at line 436
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_configured<D>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, int, __nv_bool, cudaStream_t, part_c::KernelResources *) [with D=16]" at line 449
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_1_tensor_core.cu(181): warning #177-D: variable "stride_qh" was declared but never referenced
+      const int col=row,stride_qs=HEAD_DIM,stride_qh=1,stride_ks=HEAD_DIM,stride_kh=1;
+                                           ^
+          detected during:
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_launch<D,BQ,BK,NW,Causal>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, cudaStream_t, part_c::KernelResources *) [with D=16, BQ=32, BK=32, NW=2, Causal=true]" at line 431
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_mode<D,BQ,BK,NW>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, __nv_bool, cudaStream_t, part_c::KernelResources *) [with D=16, BQ=32, BK=32, NW=2]" at line 436
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_configured<D>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, int, __nv_bool, cudaStream_t, part_c::KernelResources *) [with D=16]" at line 449
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_1_tensor_core.cu(181): warning #177-D: variable "stride_ks" was declared but never referenced
+      const int col=row,stride_qs=HEAD_DIM,stride_qh=1,stride_ks=HEAD_DIM,stride_kh=1;
+                                                       ^
+          detected during:
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_launch<D,BQ,BK,NW,Causal>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, cudaStream_t, part_c::KernelResources *) [with D=16, BQ=32, BK=32, NW=2, Causal=true]" at line 431
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_mode<D,BQ,BK,NW>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, __nv_bool, cudaStream_t, part_c::KernelResources *) [with D=16, BQ=32, BK=32, NW=2]" at line 436
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_configured<D>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, int, __nv_bool, cudaStream_t, part_c::KernelResources *) [with D=16]" at line 449
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_1_tensor_core.cu(181): warning #177-D: variable "stride_kh" was declared but never referenced
+      const int col=row,stride_qs=HEAD_DIM,stride_qh=1,stride_ks=HEAD_DIM,stride_kh=1;
+                                                                          ^
+          detected during:
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_launch<D,BQ,BK,NW,Causal>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, cudaStream_t, part_c::KernelResources *) [with D=16, BQ=32, BK=32, NW=2, Causal=true]" at line 431
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_mode<D,BQ,BK,NW>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, __nv_bool, cudaStream_t, part_c::KernelResources *) [with D=16, BQ=32, BK=32, NW=2]" at line 436
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_configured<D>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, int, __nv_bool, cudaStream_t, part_c::KernelResources *) [with D=16]" at line 449
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_1_tensor_core.cu(182): warning #177-D: variable "stride_vs" was declared but never referenced
+      const int stride_vs=HEAD_DIM,stride_vh=1,stride_os=HEAD_DIM,stride_oh=1;
+                ^
+          detected during:
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_launch<D,BQ,BK,NW,Causal>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, cudaStream_t, part_c::KernelResources *) [with D=16, BQ=32, BK=32, NW=2, Causal=true]" at line 431
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_mode<D,BQ,BK,NW>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, __nv_bool, cudaStream_t, part_c::KernelResources *) [with D=16, BQ=32, BK=32, NW=2]" at line 436
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_configured<D>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, int, __nv_bool, cudaStream_t, part_c::KernelResources *) [with D=16]" at line 449
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_1_tensor_core.cu(182): warning #177-D: variable "stride_vh" was declared but never referenced
+      const int stride_vs=HEAD_DIM,stride_vh=1,stride_os=HEAD_DIM,stride_oh=1;
+                                   ^
+          detected during:
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_launch<D,BQ,BK,NW,Causal>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, cudaStream_t, part_c::KernelResources *) [with D=16, BQ=32, BK=32, NW=2, Causal=true]" at line 431
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_mode<D,BQ,BK,NW>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, __nv_bool, cudaStream_t, part_c::KernelResources *) [with D=16, BQ=32, BK=32, NW=2]" at line 436
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::fa1_ptx_configured<D>(part_c::Shape, const part_c::DevicePointers &, part_c::FlashAttention1Workspace, int, __nv_bool, cudaStream_t, part_c::KernelResources *) [with D=16]" at line 449
+
+[ 36%] Building CUDA object CMakeFiles/part_c_attention.dir/src/flash_attention_2_cuda_core.cu.o
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(173): warning #68-D: integer conversion resulted in a change of sign
+          float remote_val = __shfl_down_sync(FULL_MASK, val, offset);
+                                              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(178): warning #68-D: integer conversion resulted in a change of sign
+      return __shfl_sync(FULL_MASK, val, srclane, width);
+                         ^
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(185): warning #68-D: integer conversion resulted in a change of sign
+          float remote_val = __shfl_down_sync(FULL_MASK, val, offset);
+                                              ^
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(190): warning #68-D: integer conversion resulted in a change of sign
+      return __shfl_sync(FULL_MASK, val, srclane, width);
+                         ^
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(173): warning #68-D: integer conversion resulted in a change of sign
+          float remote_val = __shfl_down_sync(FULL_MASK, val, offset);
+                                              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(178): warning #68-D: integer conversion resulted in a change of sign
+      return __shfl_sync(FULL_MASK, val, srclane, width);
+                         ^
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(185): warning #68-D: integer conversion resulted in a change of sign
+          float remote_val = __shfl_down_sync(FULL_MASK, val, offset);
+                                              ^
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(190): warning #68-D: integer conversion resulted in a change of sign
+      return __shfl_sync(FULL_MASK, val, srclane, width);
+                         ^
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(408): warning #177-D: variable "NUM_KEY_GROUPS" was declared but never referenced
+      constexpr int NUM_KEY_GROUPS = (BLOCK_KV + WARP_SIZE - 1) / WARP_SIZE;
+                    ^
+          detected during:
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::launch_impl<D,BQ,BK,NW,TQ,TK>(part_c::CudaCoreVariant, part_c::Shape, const part_c::DevicePointers &, cudaStream_t, part_c::KernelResources *) [with D=7, BQ=32, BK=32, NW=4, TQ=3, TK=5]" at line 1302
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::configured<D>(part_c::CudaCoreVariant, part_c::Shape, const part_c::DevicePointers &, int, cudaStream_t, part_c::KernelResources *) [with D=7]" at line 1316
+
+/home/buntr/Projects/Flash-Attention-CUDA/part_c/src/flash_attention_2_cuda_core.cu(693): warning #177-D: variable "NUM_KEY_GROUPS" was declared but never referenced
+      constexpr int NUM_KEY_GROUPS = (BLOCK_KV + WARP_SIZE - 1) / WARP_SIZE;
+                    ^
+          detected during:
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::launch_impl<D,BQ,BK,NW,TQ,TK>(part_c::CudaCoreVariant, part_c::Shape, const part_c::DevicePointers &, cudaStream_t, part_c::KernelResources *) [with D=7, BQ=32, BK=32, NW=4, TQ=3, TK=5]" at line 1302
+            instantiation of "part_c::LaunchConfig part_c::<unnamed>::configured<D>(part_c::CudaCoreVariant, part_c::Shape, const part_c::DevicePointers &, int, cudaStream_t, part_c::KernelResources *) [with D=7]" at line 1316
+
+[ 40%] Building CUDA object CMakeFiles/part_c_attention.dir/src/flash_attention_2_tensor_core.cu.o
+[ 45%] Linking CUDA static library libpart_c_attention.a
+[ 45%] Built target part_c_attention
+[ 50%] Building CXX object CMakeFiles/part_c_evaluation.dir/tests/evaluation_runner.cpp.o
+[ 54%] Building CXX object CMakeFiles/part_c_runner.dir/tests/kernel_runner.cpp.o
+[ 59%] Building CXX object CMakeFiles/part_c_evaluation.dir/tests/test_support.cpp.o
+[ 63%] Building CXX object CMakeFiles/part_c_runner.dir/tests/test_support.cpp.o
+[ 68%] Linking CXX executable part_c_evaluation
+[ 68%] Built target part_c_evaluation
+[ 72%] Building CXX object CMakeFiles/part_c_input_contract.dir/tests/input_contract_test.cpp.o
+[ 77%] Linking CXX executable part_c_runner
+[ 81%] Building CXX object CMakeFiles/part_c_input_contract.dir/tests/test_support.cpp.o
+[ 81%] Built target part_c_runner
+[ 86%] Building CXX object CMakeFiles/part_c_fa1_test.dir/tests/flash_attention_1_test.cpp.o
+[ 90%] Linking CXX executable part_c_input_contract
+[ 90%] Built target part_c_input_contract
+[ 95%] Building CXX object CMakeFiles/part_c_fa1_test.dir/tests/test_support.cpp.o
+[100%] Linking CXX executable part_c_fa1_test
+[100%] Built target part_c_fa1_test

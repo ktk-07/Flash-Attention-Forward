@@ -1,0 +1,22 @@
+{
+  "default_regression_passes": 424,
+  "explicit_unsupported": 8,
+  "kernels": [
+    "fa1",
+    "fa1_ptx",
+    "scalar",
+    "warp",
+    "tiled",
+    "skip",
+    "vector",
+    "wmma",
+    "ptx"
+  ],
+  "sanitizer_runs": 16,
+  "sanitizer_failures": 0,
+  "kernel_bodies_match_current_manifest": true,
+  "fa1_implementation": "kv_outer_shared_fp32_v2",
+  "fa2_kernel_bodies_preserved": true,
+  "fa1_ptx_implementation": "kv_outer_ptx_v1",
+  "scope": "B1 H1 N33 d64 FA1 baselines and selected FA2 core/PTX; representative, not exhaustive sanitizer coverage"
+}

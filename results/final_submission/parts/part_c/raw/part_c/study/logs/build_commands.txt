@@ -1,0 +1,2 @@
+cmake -S part_c -B /tmp/attention-builds/part_c -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=86 
+cmake --build /tmp/attention-builds/part_c -j 2 

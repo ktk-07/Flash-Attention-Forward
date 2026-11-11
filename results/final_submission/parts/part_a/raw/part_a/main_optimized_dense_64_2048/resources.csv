@@ -1,0 +1,13 @@
+experiment,precision,B,H,N,d,mode,variant,tile,softmax_threads,stage,blocks,threads,registers_per_thread,shared_bytes,local_bytes_per_thread,active_blocks_per_sm,theoretical_occupancy_percent
+proposal,FP32,4,8,2048,64,dense,naive,16,128,QK,65535,256,39,0,0,6,100
+proposal,FP32,4,8,2048,64,dense,naive,16,128,softmax,256,256,37,0,0,6,100
+proposal,FP32,4,8,2048,64,dense,naive,16,128,PV,16384,256,38,0,0,6,100
+proposal,FP32,4,8,2048,64,dense,tiled,16,128,QK,65535,256,40,2112,0,6,100
+proposal,FP32,4,8,2048,64,dense,tiled,16,128,softmax,256,256,37,0,0,6,100
+proposal,FP32,4,8,2048,64,dense,tiled,16,128,PV,16384,256,40,2048,0,6,100
+proposal,FP32,4,8,2048,64,dense,parallel,16,128,QK,65535,256,39,0,0,6,100
+proposal,FP32,4,8,2048,64,dense,parallel,16,128,softmax,65535,128,24,512,0,12,100
+proposal,FP32,4,8,2048,64,dense,parallel,16,128,PV,16384,256,38,0,0,6,100
+proposal,FP32,4,8,2048,64,dense,optimized,16,128,QK,65535,256,40,2112,0,6,100
+proposal,FP32,4,8,2048,64,dense,optimized,16,128,softmax,65535,128,24,512,0,12,100
+proposal,FP32,4,8,2048,64,dense,optimized,16,128,PV,16384,256,40,2048,0,6,100

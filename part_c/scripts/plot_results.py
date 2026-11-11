@@ -25,7 +25,7 @@ if any(r["status"] != "PASS" for r in rows):
     raise SystemExit("Nonpassing timing rows are not eligible for plots")
 out = run / "figures"
 out.mkdir(exist_ok=True)
-labels = {"fa1": "FA1-style scalar", "scalar": "FA2 scalar", "warp": "Warp/query", "tiled": "Register tiled + skip", "skip": "Skip snapshot", "vector": "Vector Q/K/V", "wmma": "Fused WMMA", "ptx": "Fused PTX MMA"}
+labels = {"fa1": "FA1 FP32 (see run version)", "fa1_ptx": "FA1 PTX", "fa1_wmma": "FA1 WMMA (supplementary)", "scalar": "FA2 scalar", "warp": "Warp/query", "tiled": "Register tiled + skip", "skip": "Skip snapshot", "vector": "Vector Q/K/V", "wmma": "Fused WMMA", "ptx": "Fused PTX MMA"}
 colors = dict(zip(labels, plt.get_cmap("tab10").colors))
 
 def save(fig, name):
@@ -52,7 +52,7 @@ def progression(ids, name, title):
     save(fig, name)
 
 progression(["fa1","scalar","warp","tiled","skip","vector"], "c1_cuda_core_progression", "CUDA-core progression — FP32 inputs / accumulation / output")
-progression(["wmma","ptx"], "c2_tensor_core_progression", "Tensor Core progression — FP16 inputs; FP32 accumulation / output")
+progression([k for k in ["fa1_ptx","fa1_wmma","wmma","ptx"] if any(r["kernel"]==k for r in rows)], "c2_tensor_core_progression", "Tensor Core progression — FP16 inputs; FP32 accumulation / output")
 
 # Exploratory winner selection on the specified small tuning subset. This is
 # explicitly not a frozen, separately tuned performance claim.
@@ -61,8 +61,8 @@ for k in labels:
     subset = [r for r in select(k) if int(r["N"]) in (256,1024)]
     if len(subset)==2:
         scores[k] = math.exp(sum(math.log(float(r["median_ms"])) for r in subset)/2)
-cuda_ids=[k for k in scores if k not in ("wmma","ptx")]
-tensor_ids=[k for k in scores if k in ("wmma","ptx")]
+cuda_ids=[k for k in scores if k not in ("fa1_ptx","fa1_wmma","wmma","ptx")]
+tensor_ids=[k for k in scores if k in ("fa1_ptx","fa1_wmma","wmma","ptx")]
 if not cuda_ids or not tensor_ids:
     raise SystemExit("Need measured CUDA and Tensor Core tuning-subset rows")
 best_cuda=min(cuda_ids,key=lambda k:(scores[k],k))

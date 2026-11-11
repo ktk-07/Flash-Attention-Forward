@@ -1,0 +1,4 @@
+========= COMPUTE-SANITIZER
+1,1,33,64,dense,optimized,16,256 median_ms=57.3117 IQR_ms=9.93997
+1,1,33,64,causal,optimized,16,256 median_ms=51.3039 IQR_ms=4.72269
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)

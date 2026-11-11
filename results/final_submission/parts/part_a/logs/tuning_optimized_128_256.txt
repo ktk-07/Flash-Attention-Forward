@@ -1,0 +1,8 @@
+4,8,256,128,dense,optimized,8,256 median_ms=1.02386 IQR_ms=0.048376
+4,8,256,128,dense,optimized,16,256 median_ms=0.82944 IQR_ms=0.019176
+4,8,256,128,dense,optimized,32,256 median_ms=0.94208 IQR_ms=0.024632
+4,8,256,128,dense,optimized,16,128 median_ms=0.729984 IQR_ms=0.00870401
+4,8,256,128,causal,optimized,8,256 median_ms=0.826336 IQR_ms=0.02404
+4,8,256,128,causal,optimized,16,256 median_ms=0.68864 IQR_ms=0.0336
+4,8,256,128,causal,optimized,32,256 median_ms=0.798608 IQR_ms=0.0034
+4,8,256,128,causal,optimized,16,128 median_ms=0.575488 IQR_ms=0.00364798

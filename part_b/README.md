@@ -3,7 +3,7 @@
 **A/C reviewers:** see [CROSS_CHECK.md](CROSS_CHECK.md) for source-pinned replay of the exact recorded notebook case order, inputs and launch configurations. `reproduce.sh` reuses the frozen winners; `run.sh` performs a new local tuning/acceptance study.
 
 This directory contains the **measured streaming/tiled/float4 implementation**
-used in the user's full notebook run `20261110_044740_8e7cd654`. Public namespace:
+used in the recorded notebook run `20261110_044740_8e7cd654`. Public namespace:
 `dense_attention`. It is different from the other b0-b3 implementation previously
 in the checkout. Its results must not be assigned to that other implementation.
 
@@ -41,7 +41,15 @@ subject to resources; float4 requires d divisible by four. BK64/d256 is outside
 the bounded study. No Tensor Core, asynchronous-copy or double-buffered path
 is claimed for this implementation. B allocates no global S/P or auxiliary array.
 
-## Retained results and evidence status
+## Common-machine results
+
+The integrated RTX 3070 Ti Laptop run is retained in [../results/final_submission/parts/part_b/](../results/final_submission/parts/part_b/). It passed 165 correctness records, 32 sanitizer checks and six profiler captures, and contains 90 timing cases with 1,800 samples. The selected configurations are vector W4/BK64 at d32, vector W4/BK32 at d64 and streaming W4/BK32 at d128.
+
+Against optimized materialised A on identical dense FP32 inputs, the A/B median-latency ratio is 0.205–0.703×, with geometric mean 0.428× across the 15 main-grid shapes. B uses linear Q/K/V/O storage and avoids global S/P, but is slower across this grid. Determining whether instruction dependencies, memory access or resource limits dominate requires source-correlated profiling; the latency result alone does not establish the cause. Do not substitute historical timings from another GPU for this comparison.
+
+The per-part figures are in `../results/final_submission/plots/part_b/`; joint comparisons are in `plots/combined/` under the same root. See [verification findings](../results/final_submission/VERIFICATION.md) for reference scope and timing variability.
+
+## Historical notebook results and evidence status
 
 `results/notebook_full_20261110_044740/` contains the exact full-run evidence:
 165 PASS records (75 full, 90 sampled), 75 small direct A/B CUDA comparisons,
@@ -55,7 +63,7 @@ RTX 4070 Ti SM89 and driver 621.01. See native logs for the exact commands.
 The notebook's historical reference run used a different toolkit; those older
 reference values are not substituted for this full run.
 
-**This is diagnostic evidence.** The full run explicitly used `--no-sanitize
+**The historical notebook bundle is diagnostic evidence.** That run explicitly used `--no-sanitize
 --no-profile`, so `audit.passed=false`. Zero numerical failures does not establish
 memory/race safety. No fresh counter captures, measured DRAM savings, measured
 active-warp occupancy or same-machine A/B/C speedup are claimed. Retained source
@@ -97,8 +105,8 @@ python part_b/scripts/run_standard.py --build build/part_b --arch 89 --grid smok
 The run.cmd wrapper forwards to the same Python CLI. The self-contained
 `notebooks/FlashAttention_Part_B_Lab.ipynb` also discovers the x64 compiler and
 creates an isolated build. Its saved outputs are an older smoke example; choose
-GRID=full and run all cells for fresh measurements. Your successful full run is
-retained separately in results/. If an older toolkit rejects your compiler,
+GRID=full and run all cells for fresh measurements. The recorded notebook full run is
+retained separately in the part-local results directory. If an older toolkit rejects your compiler,
 choose a compatible toolchain; the notebook's explicit unsupported-compiler
 workaround is not a general compatibility guarantee.
 
@@ -136,5 +144,6 @@ from B's ledger. CMake never copies or edits A/C kernels. New packaging/analysis
 files are distinguished from measured code in the delivery manifest.
 
 See CROSS_REVIEW.md for a static review of A indexing/accesses; it is not another
-member's signed review. Final sanitizer/profiler acceptance, common-machine
-comparisons, the group conclusion/video and contribution confirmation remain.
+member's signed review. The integrated common-machine run has passed sanitizer/profiler acceptance;
+results are linked above. Interpretation, report/video preparation and contribution
+confirmation remain submission work.

@@ -18,16 +18,22 @@ Both Tensor Core variants use FP16 Q/K/V/P and FP32 S, accumulation, softmax ari
 Requires CMake, a C++17 compiler, CUDA, Compute Sanitizer, Nsight Compute, NumPy and Matplotlib. Tensor Core paths require SM80 or newer. From the repository root:
 
 ```bash
-python3 part_a/scripts/run_standard.py --output build-a-run --publish part_a/results
+bash part_a/run.sh --output results/a_only
 ```
 
-Choose a fresh output directory. On Windows, use an x64 Visual Studio 2022 developer terminal, replace `python3` with `python`, and add `--arch 120 --build build-a`. CUDA and profiling tools must be on PATH.
+Choose a fresh output directory. On Windows, use an x64 Visual Studio 2022 developer terminal and invoke `python part_a/scripts/run_standard.py --output results/a_windows --arch 120 --build build-a` for the RTX 5060 Ti. CUDA and profiling tools must be on PATH.
 
 The full run checks small S/P/O, tunes bounded configurations and records the proposal grid with 5 warmups and 20 repetitions. Preparation, transfers, comparison and profiling are outside the CUDA-event timings. Forward and stage timings use separate passes.
 
-For a common-machine A/C evaluation: `bash run.sh --parts a,c --output results/ac_full`. Part B can join after integration.
+For a common-machine A/B/C evaluation, run `bash run_all.sh --parts a,b,c --output results/abc_full` from the repository root. Use a fresh destination; the completed submission measurements are already retained in `results/final_submission/`.
 
-## Results
+## Common-machine results
+
+The integrated RTX 3070 Ti Laptop run is retained in [../results/final_submission/parts/part_a/](../results/final_submission/parts/part_a/). It contains 180 main-grid configurations, 96 tuning configurations, 32 input-pattern configurations, 728 passing correctness records, 6,160 timing samples and 108 profiler captures. Part A provides the optimized same-mode baseline for the fused comparisons. The dense FP32 B/A latency ratio ranges from 1.42 to 4.87; C's frozen causal FP32 implementation has mixed outcomes relative to A. Numerical agreement and reduced auxiliary storage therefore do not by themselves establish a latency improvement.
+
+Use [the common comparison tables and verification](../results/final_submission/VERIFICATION.md) for report findings. Figure paths are `../results/final_submission/plots/part_a/` and `../results/final_submission/plots/combined/`. The earlier RTX 5060 Ti measurements below remain a separate experiment.
+
+## Historical standalone results
 
 The saved RTX 5060 Ti run completed 180 main configurations, 96 tuning configurations and 32 input-pattern configurations. All 728 correctness records passed. The saved data contains 6160 timing samples and 108 kernel profiling captures. All final configurations use tile=16 and 128 softmax threads. See `results/environment.txt` for the environment and selection method.
 

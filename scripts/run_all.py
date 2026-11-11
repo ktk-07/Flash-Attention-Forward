@@ -31,7 +31,7 @@ def aggregate(out,requested,grid):
         status=json.loads((bundle/'run_status.json').read_text()) if (bundle/'run_status.json').exists() else {}
         profile_requested[part]=manifest.get('profile_requested',status.get('profiling_requested',False))
         profile_captures[part]=audit.get('profile_captures',0)
-        if profile_requested[part] and profile_captures[part] < {'part_a':108,'part_b':6,'part_c':12}[part]:raise ValueError(part+' lacks requested fresh profiling captures')
+        if profile_requested[part] and profile_captures[part] < manifest.get('required_profile_captures',{'part_a':108,'part_b':6,'part_c':12}[part]):raise ValueError(part+' lacks requested fresh profiling captures')
         devices[part]=device
         if len({d['uuid'] for d in devices.values()})!=1:raise ValueError('Cannot combine measurements from different physical GPUs')
         main=[r for r in native['summary'] if r['experiment']=='proposal'];counts[part]=len(main)
@@ -42,7 +42,8 @@ def aggregate(out,requested,grid):
         for precision in ['FP32','FP16'] if part!='part_b' else ['FP32']:
             found={tuple(r[k] for k in ['B','H','N','d','mode']) for r in main if r['precision']==precision}
             if found!=expected:raise ValueError(f'{part}: incomplete {precision} {grid} grid')
-            required=(['naive','tiled','parallel','optimized'] if precision=='FP32' else ['wmma','ptx']) if part=='part_a' else (['skip','vector'] if precision=='FP32' else ['wmma','ptx']) if part=='part_c' else ['selected']
+            required=(['naive','tiled','parallel','optimized'] if precision=='FP32' else (['wmma','ptx'] if any(r['variant']=='wmma' for r in main) else ['tensorcore'])) if part=='part_a' else (['skip','vector'] if precision=='FP32' else ['wmma','ptx']) if part=='part_c' else ['selected']
+            if part=='part_c' and manifest.get('fa1_baselines'):required += ['fa1'] if precision=='FP32' else [k for k in manifest['fa1_baselines'] if k!='fa1']
             for variant in required:
                 covered={tuple(r[k] for k in ['B','H','N','d','mode']) for r in main if r['precision']==precision and r['variant']==variant}
                 if covered!=expected:raise ValueError(f'{part}: incomplete required variant {variant}')

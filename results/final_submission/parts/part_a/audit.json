@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "schema_version": 1,
+  "rows": {
+    "correctness": 728,
+    "samples": 6160,
+    "summary": 308,
+    "resources": 924,
+    "profiles": 1836,
+    "memory": 308,
+    "work": 308
+  },
+  "statistics_recomputed": true,
+  "timing_validation_joins_verified": true,
+  "effective_input_fingerprints_present": true,
+  "shared_cpu_reference_linked": true,
+  "profile_captures": 108,
+  "grid": "full"
+}

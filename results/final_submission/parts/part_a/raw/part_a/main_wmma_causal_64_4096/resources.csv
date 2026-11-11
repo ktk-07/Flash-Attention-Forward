@@ -1,0 +1,4 @@
+experiment,precision,B,H,N,d,mode,variant,tile,softmax_threads,stage,blocks,threads,registers_per_thread,shared_bytes,local_bytes_per_thread,active_blocks_per_sm,theoretical_occupancy_percent
+proposal,FP16,4,8,4096,64,causal,wmma,16,128,QK,65535,32,56,2048,0,16,33.333333333333336
+proposal,FP16,4,8,4096,64,causal,wmma,16,128,softmax,65535,128,28,512,0,12,100
+proposal,FP16,4,8,4096,64,causal,wmma,16,128,PV,32768,32,40,2048,0,16,33.333333333333336

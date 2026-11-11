@@ -1,0 +1,66 @@
+{
+  "figures": [
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/materialised_comparison",
+      "description": "Part A d=64 progression, medians and interquartile ranges. Tensor Core variants use FP16 operands and FP32 accumulation/output."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/kernel_progression_fp32",
+      "description": "All final-grid variants; median and interquartile range. Precision contracts remain separate."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/kernel_progression_fp16",
+      "description": "All final-grid variants; median and interquartile range. Precision contracts remain separate."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/throughput_and_memory",
+      "description": "Measured forward throughput; explicit allocation ledger, not a device-wide peak."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/numerical_error",
+      "description": "Errors from exact per-case CPU validation; full or sampled scope retained in CSV."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/tuning",
+      "description": "Bounded candidate sweep, grouped by mode and configuration. Selection rules and frozen configurations are retained."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/dram_traffic",
+      "description": "Median read/write traffic over three instrumented captures per stage. These cold-cache captures are separate from normal forward timing."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/profiler_counters",
+      "description": "Median raw Nsight counter across captures. MIO sample counts are not percentages or runtime fractions. Missing counters are omitted and retained in profiles.csv with reasons."
+    },
+    {
+      "part": "part_a",
+      "figure": "plots/part_a/stage_breakdown",
+      "description": "Independent stage passes; fused stages are unavailable, not zero."
+    }
+  ],
+  "parts_present": [
+    "part_a"
+  ],
+  "unavailable_parts": [
+    "part_b",
+    "part_c"
+  ],
+  "comparison_rows": 0,
+  "inputs": {
+    "correctness.csv": "ee4317e0afa8e96a42abbb30c66246d6be7dc99affa92aea88428d8d93df7252",
+    "samples.csv": "949138de1bf82ed5b1f3a2fbf6a67529852c868c81f72bc1a8e2cb08548e9268",
+    "summary.csv": "9907ab7b2eddfb92c29f6d08224cbf227e8e7ccf1127283247a69f4a6f73bd55",
+    "resources.csv": "d25d59eb4165ef5cbb1f37422c0069de67ffabb6cc35ea0285c7c5974597048a",
+    "profiles.csv": "8db2fbd7a96f0699328653182460e044ac96216d45ac4938f94bf55df90399cb",
+    "memory.csv": "e243af144aaa2ced9f24e60fbb4c197880f403195d07c0eeeddf1d567a2a1cba",
+    "work.csv": "ca2d8bacc63e304334fa8e152a9dddc722cfa92d287251c1e38c536c57d7711b"
+  }
+}

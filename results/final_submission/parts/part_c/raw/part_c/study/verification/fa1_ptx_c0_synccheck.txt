@@ -1,0 +1,3 @@
+========= COMPUTE-SANITIZER
+fa1_ptx cfg=0 33x64 validate PASS
+========= ERROR SUMMARY: 0 errors

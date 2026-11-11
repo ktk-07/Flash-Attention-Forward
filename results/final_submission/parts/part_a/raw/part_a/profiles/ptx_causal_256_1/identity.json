@@ -1,0 +1,15 @@
+{
+  "identity": [
+    "FP16",
+    "4",
+    "8",
+    "256",
+    "64",
+    "causal",
+    "ptx",
+    "16",
+    "128"
+  ],
+  "rep": 1,
+  "binary_sha256": "67202ebd3b552bd9b5ddb7170846cfc587f7272f7ea8b64ac8c5015c805cc12e"
+}

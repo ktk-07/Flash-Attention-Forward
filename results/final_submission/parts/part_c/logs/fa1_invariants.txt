@@ -1,0 +1,1 @@
+PASS: 236 CUDA-core dense/causal FA1 cases; full output, m/l invariants, poisoned and repeat state, tails, nondefault stream and causal isolation

@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "schema_version": 1,
+  "rows": {
+    "correctness": 165,
+    "samples": 1800,
+    "summary": 90,
+    "resources": 90,
+    "profiles": 1542,
+    "memory": 90,
+    "work": 90
+  },
+  "statistics_recomputed": true,
+  "timing_validation_joins_verified": true,
+  "effective_input_fingerprints_present": true,
+  "shared_cpu_reference_linked": true,
+  "profile_captures": 6,
+  "sanitizer_checks": 32,
+  "frozen_sanitizers_passed": true,
+  "failed_checks": 0,
+  "final_report_grid": true,
+  "profiling_complete": true
+}

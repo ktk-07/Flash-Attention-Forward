@@ -1,0 +1,6 @@
+Consolidate compiler generated dependencies of target attention_reference
+[ 23%] Built target attention_reference
+Consolidate compiler generated dependencies of target attention_reference_test
+[ 38%] Built target attention_reference_test
+Consolidate compiler generated dependencies of target attention
+[100%] Built target attention

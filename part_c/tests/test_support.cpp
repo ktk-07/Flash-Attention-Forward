@@ -1,6 +1,7 @@
 #include "test_support.h"
 #include "input_generation.hpp"
 #include "flash_attention/flash_attention_1.h"
+#include "flash_attention/flash_attention_1_tensor_core.h"
 #include "flash_attention/flash_attention_2_cuda_core.h"
 #include "flash_attention/flash_attention_2_tensor_core.h"
 #include <algorithm>
@@ -14,16 +15,18 @@
 #include <stdexcept>
 void check(cudaError_t e) { if(e!=cudaSuccess) throw std::runtime_error(cudaGetErrorString(e)); }
 std::size_t Shape::size() const { return std::size_t(b)*h*n*d; }
-const std::vector<std::string> kernels={"fa1","scalar","warp","tiled","skip","vector","wmma","ptx"};
-bool tensor(const std::string& id) { return id=="wmma" || id=="ptx"; }
-Buffers::Buffers(std::size_t n,bool tc,bool minimal) {
+const std::vector<std::string> kernels={"fa1","fa1_ptx","scalar","warp","tiled","skip","vector","wmma","ptx"};
+bool tensor(const std::string& id) { return id=="wmma" || id=="ptx" || id=="fa1_wmma" || id=="fa1_ptx"; }
+bool needs_fa1_workspace(const std::string& id) {return id=="fa1" || id=="fa1_wmma" || id=="fa1_ptx";}
+Buffers::Buffers(std::size_t n,bool tc,bool minimal,std::size_t fa1_query_rows):fa1_rows(fa1_query_rows) {
     try {
         if(!minimal || !tc) { check(cudaMalloc(&q,n*4));allocated_bytes+=n*4;check(cudaMalloc(&k,n*4));allocated_bytes+=n*4;check(cudaMalloc(&v,n*4));allocated_bytes+=n*4; }
         check(cudaMalloc(&o,n*4));allocated_bytes+=n*4;
+        if(fa1_rows) {check(cudaMalloc(&fa1_workspace,2*fa1_rows*sizeof(float)));allocated_bytes+=2*fa1_rows*sizeof(float);}
         if(!minimal || tc) { check(cudaMalloc(&hq,n*2));allocated_bytes+=n*2;check(cudaMalloc(&hk,n*2));allocated_bytes+=n*2;check(cudaMalloc(&hv,n*2));allocated_bytes+=n*2; }
     } catch(...) { release();throw; }
 }
-void Buffers::release() noexcept { cudaFree(q);cudaFree(k);cudaFree(v);cudaFree(o);cudaFree(hq);cudaFree(hk);cudaFree(hv);q=k=v=o=nullptr;hq=hk=hv=nullptr; }
+void Buffers::release() noexcept { cudaFree(fa1_workspace);fa1_workspace=nullptr;cudaFree(q);cudaFree(k);cudaFree(v);cudaFree(o);cudaFree(hq);cudaFree(hk);cudaFree(hv);q=k=v=o=nullptr;hq=hk=hv=nullptr; }
 Buffers::~Buffers() { release(); }
 Input::Input(Shape s,const std::string& pattern,bool canonical):q(s.size()),k(s.size()),v(s.size()),rq(s.size()),rk(s.size()),rv(s.size()),hq(s.size()),hk(s.size()),hv(s.size()) {
     if(canonical) {
@@ -72,8 +75,14 @@ Launch dispatch(const std::string& id, Shape s, Buffers& x,int config,part_c::Ke
     Launch result{};
     using C = part_c::CudaCoreVariant;
     using T = part_c::TensorCoreVariant;
-    if(id=="fa1" && config!=0) throw std::invalid_argument("FA1 supports config 0 only");
-    if(id=="fa1") result=part_c::launch_flash_attention_1(shape,buffers);
+    if((id=="fa1" || id=="fa1_wmma") && config!=0) throw std::invalid_argument("FA1 supports config 0 only");
+    if(needs_fa1_workspace(id)) {
+        if(!x.fa1_workspace || x.fa1_rows!=std::size_t(s.b)*s.h*s.n)throw std::invalid_argument("FA1 workspace must be allocated outside timing");
+        auto workspace=part_c::FlashAttention1Workspace{x.fa1_workspace,x.fa1_workspace+x.fa1_rows};
+        result=id=="fa1"?part_c::launch_flash_attention_1(shape,buffers,workspace,true,nullptr,resources)
+            :id=="fa1_ptx"?part_c::launch_flash_attention_1_ptx(shape,buffers,workspace,config,true,nullptr,resources)
+            :part_c::launch_flash_attention_1_tensor_core(shape,buffers,workspace,true,nullptr,resources);
+    }
     else if(id=="scalar") result=part_c::launch_flash_attention_2_cuda_core_configured(C::Scalar,shape,buffers,config,nullptr,resources);
     else if(id=="warp") result=part_c::launch_flash_attention_2_cuda_core_configured(C::WarpPerQuery,shape,buffers,config,nullptr,resources);
     else if(id=="tiled") result=part_c::launch_flash_attention_2_cuda_core_configured(C::Tiled,shape,buffers,config,nullptr,resources);

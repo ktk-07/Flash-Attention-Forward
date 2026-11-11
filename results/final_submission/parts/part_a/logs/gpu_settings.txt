@@ -1,0 +1,2 @@
+power.limit [W], clocks.current.sm [MHz], clocks.current.memory [MHz], pstate, temperature.gpu
+[N/A], 210 MHz, 405 MHz, P8, 55

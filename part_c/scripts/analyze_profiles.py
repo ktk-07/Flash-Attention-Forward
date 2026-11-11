@@ -23,6 +23,7 @@ METRICS={
  'issue_active_pct':'smsp__issue_active.avg.pct_of_peak_sustained_active',
  'registers_per_thread':'launch__registers_per_thread',
  'static_shared_bytes':'launch__shared_mem_per_block_static',
+ 'dynamic_shared_bytes':'launch__shared_mem_per_block_dynamic',
  'occupancy_limit_blocks':'launch__occupancy_limit_blocks',
  'occupancy_limit_registers':'launch__occupancy_limit_registers',
  'occupancy_limit_shared':'launch__occupancy_limit_shared_mem',
@@ -69,6 +70,7 @@ for case in sorted((out/'cases').iterdir()):
     names,units,values=raw
     data=dict(zip(names,values));unitmap=dict(zip(names,units))
     expected_y=(meta['N']+(4 if meta['kernel']=='warp' else 32)-1)//(4 if meta['kernel']=='warp' else 32)
+    if meta['kernel'] in ['fa1','fa1_wmma','fa1_ptx'] and plan.get('fa1_grid')=='one_CTA_per_batch_head':expected_y=1
     actual_grid=tuple(int(v) for v in data['Grid Size'].strip('()').split(','))
     if actual_grid!=(meta['B']*meta['H'],expected_y,1):raise ValueError(f'Wrong profiled grid: {case}')
     with (case/'validation/correctness.csv').open() as f:checks=list(csv.DictReader(f))
@@ -153,7 +155,7 @@ fig.suptitle('Spill/local traffic is not allocated workspace or necessarily DRAM
 save(fig,'memory_traffic')
 
 def fmt(v):return 'unavailable' if v is None else f'{v:.3g}'
-lines=['# Reproducible Nsight Compute analysis','',f"{len(samples)} captured kernels: all eight Part C variants, B=4,H=8,d=64,N=256/4096, {plan['repetitions']} independent profiles each. No Part A integration. All captures passed sampled CPU-FP64 validation before profiling. Full small-case correctness validation is also saved.",'',
+lines=['# Reproducible Nsight Compute analysis','',f"{len(samples)} captured kernels: {len(K)} Part C variants, B=4,H=8,d=64,N=256/4096, {plan['repetitions']} independent profiles each. No Part A integration. All captures passed sampled CPU-FP64 validation before profiling. Full small-case correctness validation is also saved.",'',
 '## Measurement contract','',
 'Each process performs one validated kernel launch, five warmups, then one target launch. Nsight uses `--launch-skip 6 --launch-count 1`. The exporter verifies the captured grid and the validation record. The `full` section set collects scheduler, occupancy, memory, source/branch, instruction, and roofline information. Explicit FP32 FADD/FMUL/FFMA counters are added. Raw `.ncu-rep`, raw-metric CSV, detail/rule CSV, all commands, environment, snapshots, and SHA256 hashes are retained.','',
 '`--cache-control all` flushes caches between replay passes. `--clock-control none` leaves GPU clocks unmanaged; measured frequencies and repeat ranges are saved. Profiler durations are not substituted for the normal warm-cache CUDA-event benchmark. Profile repeats measure counter/sampling variability; they do not make individual counter values bitwise deterministic.','',
@@ -178,7 +180,7 @@ for n in [256,4096]:
 lines+=['','NVIDIA explains arbitration in [shared-memory bank conflict metrics](https://forums.developer.nvidia.com/t/shared-memory-bank-conflicts-and-nsight-metric/115731/15).','','## Arithmetic intensity and operation counts','',
 'Useful attention work is `4*B*H*d*N*(N+1)/2` FLOPs (causal QK plus PV, excluding softmax). Dividing it by measured DRAM read+write bytes gives an algorithm-useful DRAM intensity. This includes the effects of caching and spills in measured traffic and does not count masked/padded work. It is not the executed Tensor Core FLOP count or a substitute for the appropriate hardware roofline in the raw report. Measured scalar FP32 operations are `2*FFMA + FADD + FMUL`; for Tensor Core kernels these exclude matrix operations. Compare intensity at the same memory level.','',
 '## Reading the results and choosing experiments','',
-'1. **Global-memory reuse:** compare `fa1` with `tiled/skip` at matching shapes. Shared Q/K/V staging and register reuse change the source-level access pattern; use DRAM and L1/local traffic plus issue metrics to determine which layer improved. A lower DRAM byte count by itself does not prove that bandwidth was limiting.','',
+'1. **Global-memory reuse:** compare `fa1` with `tiled/skip` at matching shapes. Check plan.json: the old FA1 is query-parallel scalar; the rewritten FA1 is K/V-outer with shared Q/K/V/S/O and global m/l. Shared staging, loop order and register reuse change the access pattern; use DRAM and L1/local traffic plus issue metrics to determine which layer improved. A lower DRAM byte count by itself does not prove that bandwidth was limiting.','',
 '2. **MIO and shared memory:** MIO throttle means pressure on the MIO instruction path, which also serves special math and dynamic branching. Short scoreboard signals dependencies that can involve shared memory but is not proof of bank conflicts. Use source-level excessive wavefronts to diagnose layout conflicts; aggregate conflict counters alone are insufficient. Reducing redundant shared-memory operations/register reuse is a separate hypothesis from eliminating bank conflicts.','',
 '3. **Latency hiding:** achieved occupancy is the measured resident-warp fraction; theoretical occupancy is the launch/resource ceiling. Neither equals utilisation or eligible warps. Inspect the register/shared/block/warp limits and eligible warps together. Higher occupancy alone is not a performance objective.','',
 '4. **Local traffic:** local load/store sectors indicate thread-local memory accesses, including spilled or dynamically indexed arrays. They do not all reach DRAM. Correlate with compiler stack/local resources and SASS/source lines before attributing every local transaction to register spilling. Scalar/register-array indexing is a concrete candidate for compile-time unrolling/specialisation experiments.','',
@@ -196,3 +198,10 @@ lines+=['','NVIDIA explains arbitration in [shared-memory bank conflict metrics]
 'Definitions follow NVIDIA\'s [Nsight Compute Profiling Guide](https://docs.nvidia.com/nsight-compute/ProfilingGuide/) and [Compute Triage Guide](https://docs.nvidia.com/nsight-compute/ComputeTriage/).','']
 (out/'ANALYSIS.md').write_text('\n'.join(lines))
 print(f'Analysed {len(samples)} validated profiles; missing metric entries: {len(missing)}')
+
+# Retain the actual processor for future deterministic offline audits.
+import shutil,hashlib
+processing=out/'processing';processing.mkdir(exist_ok=True)
+script=Path(__file__).resolve()
+if script!=processing/'analyze_profiles.py':shutil.copy2(script,processing/'analyze_profiles.py')
+(processing/'manifest.json').write_text(json.dumps({'script_sha256':hashlib.sha256(script.read_bytes()).hexdigest()},indent=2)+'\n')

@@ -1,0 +1,10 @@
+Consolidate compiler generated dependencies of target dense_attention
+Consolidate compiler generated dependencies of target attention_reference
+[ 30%] Built target dense_attention
+[ 38%] Built target attention_reference
+Consolidate compiler generated dependencies of target attention_reference_test
+Consolidate compiler generated dependencies of target part_b_materialised_check
+[ 53%] Built target attention_reference_test
+[ 84%] Built target part_b_materialised_check
+Consolidate compiler generated dependencies of target part_b_runner
+[100%] Built target part_b_runner

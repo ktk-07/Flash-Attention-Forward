@@ -1,0 +1,6 @@
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 31747 (/tmp/attention-builds/part_c/part_c_evaluation)
+==PROF== Profiling "flash_attention_v1_tiled" - 0 (1/1): 0%....50%....100% - 37 passes
+fa1 cfg=0 256x64 benchmark PASS
+==PROF== Disconnected from process 31747
+==PROF== Report: /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_c/raw/part_c/study/profiling/cases/fa1_c0_n256_r2/profile.ncu-rep

@@ -33,6 +33,18 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(self.audit['profile_captures'],12)
         self.assertEqual(sum(r['experiment']=='proposal' for r in self.tables['summary']),60)
 
+    def test_ptx_fa1_uses_frozen_configuration_only(self):
+        row=next(r for r in schema.read(NATIVE/'summary.csv') if r['kernel']=='ptx' and r['experiment']=='default_main')
+        row=dict(row,kernel='fa1_ptx',config='0')
+        plan=json.loads((NATIVE/'plan.json').read_text());plan.update(fa1_baselines=['fa1','fa1_ptx'],fa1_workspace_floats_per_query=2)
+        selection=copy.deepcopy(self.selection);selection['variants']['fa1_ptx']={row['d']:{'config':1}}
+        default=exporter.common(row,'same_run',plan,selection)
+        self.assertEqual(default['experiment'],'proposal_default')
+        frozen=exporter.common(dict(row,experiment='frozen_main',config='1'),'same_run',plan,selection)
+        self.assertEqual(frozen['experiment'],'proposal')
+        self.assertIn('kv_outer_ptx_v1:c1',frozen['config'])
+        self.assertNotEqual(default['case_id'],frozen['case_id'])
+
     def test_exact_native_latencies_and_fused_blanks(self):
         lookup={(r['kernel'],r['config'],r['B'],r['H'],r['N'],r['d'],r['pattern'],r['median_ms']) for r in schema.read(NATIVE/'summary.csv') if r['mode']=='benchmark'}
         for row in self.tables['summary']:
@@ -54,6 +66,15 @@ class ExportTests(unittest.TestCase):
         derived=[r for r in self.tables['profiles'] if r['metric']=='derived::mio_throttle_pct']
         self.assertEqual(len(derived),12)
         self.assertTrue(all(r['unit']=='%' for r in derived))
+
+    def test_fa1_revision_has_distinct_configuration_identity(self):
+        plan=json.loads((NATIVE/'plan.json').read_text())
+        row=next(r for r in schema.read(NATIVE/'summary.csv') if r['kernel']=='fa1')
+        old=exporter.common(row,'same_run',plan,self.selection)
+        current=exporter.common(row,'same_run',{**plan,'fa1_workspace_floats_per_query':2},self.selection)
+        self.assertNotEqual(old['config'],current['config'])
+        self.assertNotEqual(old['case_id'],current['case_id'])
+        self.assertIn('kv_outer_shared_v2',current['config'])
 
     def test_duplicate_repetitions_rejected(self):
         tables=copy.deepcopy(self.tables)

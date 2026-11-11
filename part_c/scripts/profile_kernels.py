@@ -24,10 +24,11 @@ if out.exists() and not a.resume: p.error('output already exists; use a fresh di
 out.mkdir(parents=True,exist_ok=True);(out/'logs').mkdir(exist_ok=True)
 sources=[Path('part_c/CMakeLists.txt'),Path('part_c/tests/kernel_runner.cpp'),Path('part_c/tests/test_support.cpp'),Path('part_c/tests/test_support.h'),Path('part_c/profile.sh')]
 sources+=sorted(Path('part_c/include/flash_attention').glob('*.h'))
-sources+=[Path('part_c/src')/f for f in ['flash_attention_1.cu','flash_attention_2_cuda_core.cu','flash_attention_2_tensor_core.cu']]
+sources+=[Path('part_c/src')/f for f in ['flash_attention_1.cu','flash_attention_1_tensor_core.cu','flash_attention_2_cuda_core.cu','flash_attention_2_tensor_core.cu']]
 sources += [Path('part_c/scripts')/f for f in ['profile_kernels.py','analyze_profiles.py']]
+sources += [Path('part_a')/name for name in ['common/input_generation.hpp','common/attention_types.hpp','cpu_reference/attention_reference.cpp','cpu_reference/sampled_reference.cpp','cpu_reference/CMakeLists.txt']]
 hashes={str(s):hashlib.sha256(s.read_bytes()).hexdigest() for s in sources}
-plan={'kernels':['fa1','scalar','warp','tiled','skip','vector','wmma','ptx'],'shapes':[[4,8,256,64],[4,8,4096,64]],'repetitions':a.repeats,'seed':5206,'warmups':5,'validation_launches':1,'profiled_launches':1,'launch_skip':6,'sections':'full','cache_control':'all','clock_control':'none','architecture':86,'source_hashes':hashes}
+plan={'fa1_implementation':'kv_outer_shared_fp32_v2','fa1_grid':'one_CTA_per_batch_head','fa1_ptx_implementation':'kv_outer_ptx_v1','fa1_baselines':['fa1','fa1_ptx'],'kernels':['fa1','fa1_ptx','scalar','warp','tiled','skip','vector','wmma','ptx'],'shapes':[[4,8,256,64],[4,8,4096,64]],'repetitions':a.repeats,'seed':5206,'warmups':5,'validation_launches':1,'profiled_launches':1,'launch_skip':6,'sections':'full','cache_control':'all','clock_control':'none','architecture':86,'source_hashes':hashes}
 manifest=out/'plan.json'
 if a.resume:
     if not manifest.exists() or json.loads(manifest.read_text())!=plan: p.error('resume plan/source mismatch')

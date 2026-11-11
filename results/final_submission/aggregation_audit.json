@@ -1,0 +1,48 @@
+{
+  "passed": true,
+  "schema_version": 1,
+  "rows": {
+    "correctness": 1657,
+    "samples": 15000,
+    "summary": 750,
+    "resources": 1366,
+    "profiles": 32658,
+    "memory": 512,
+    "work": 750
+  },
+  "statistics_recomputed": true,
+  "timing_validation_joins_verified": true,
+  "effective_input_fingerprints_present": true,
+  "requested_parts": [
+    "part_a",
+    "part_b",
+    "part_c"
+  ],
+  "requested_parts_complete": true,
+  "all_three_parts_present": true,
+  "grid": "full",
+  "final_report_grid": true,
+  "main_rows": {
+    "part_a": 180,
+    "part_b": 60,
+    "part_c": 90
+  },
+  "profiling_requested_by_part": {
+    "part_a": true,
+    "part_b": true,
+    "part_c": true
+  },
+  "profile_captures": {
+    "part_a": 108,
+    "part_b": 6,
+    "part_c": 24
+  },
+  "shared_cpu_reference_linked": true,
+  "physical_gpu_uuid": "GPU-f5bd2e3d-ddc7-7006-0401-dd3b93a77330",
+  "shared_input_fingerprints_verified": true,
+  "profiling_parts_with_counters": [
+    "part_a",
+    "part_b",
+    "part_c"
+  ]
+}

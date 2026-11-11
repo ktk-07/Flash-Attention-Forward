@@ -1,0 +1,6 @@
+{
+  "uuid": "GPU-f5bd2e3d-ddc7-7006-0401-dd3b93a77330",
+  "name": "NVIDIA GeForce RTX 3070 Ti Laptop GPU",
+  "driver_version": "565.90",
+  "compute_cap": "8.6"
+}

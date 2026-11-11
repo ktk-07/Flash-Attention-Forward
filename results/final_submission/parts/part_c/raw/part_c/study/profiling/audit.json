@@ -1,0 +1,53 @@
+{
+  "validated_captures": 24,
+  "expected_captures": 24,
+  "targets": [
+    {
+      "role": "fa1",
+      "kernel": "fa1",
+      "config": 0
+    },
+    {
+      "role": "fa1_ptx",
+      "kernel": "fa1_ptx",
+      "config": 0
+    },
+    {
+      "role": "cuda_core",
+      "kernel": "vector",
+      "config": 2
+    },
+    {
+      "role": "matched_FA2_PTX",
+      "kernel": "ptx",
+      "config": 2
+    }
+  ],
+  "all_pass": true,
+  "raw_report_sha256": {
+    "cases/fa1_c0_n256_r0/profile.ncu-rep": "74a7877ec3ecd0daf04a32af6d764d479f7c6c19c549607296d4201ccc871703",
+    "cases/vector_c2_n4096_r1/profile.ncu-rep": "087a2e8a6e7ddc8d501aa093e2f09c7d649bd18aa0f49bd2447e0664541f38e5",
+    "cases/vector_c2_n256_r0/profile.ncu-rep": "9f2e5a3d817e94ed96eaa989ab4c4789a25976221dc04f6b402506fdac2530c1",
+    "cases/ptx_c2_n4096_r2/profile.ncu-rep": "c6c9db626cac519bf27b696e56b0c56bd481f2b22dc4d7ff45e51aace999f45a",
+    "cases/fa1_c0_n4096_r0/profile.ncu-rep": "9ab0396f76390346d6bc1a363be3da7d37423c2a031ba05557b3c09f207e8a93",
+    "cases/fa1_c0_n4096_r1/profile.ncu-rep": "24446faa5106a39ee72422b326a6398104f5ead873b2fd726e8fcc79b43d70f5",
+    "cases/ptx_c2_n4096_r0/profile.ncu-rep": "444b5888c191c8a767baaa92d750bf73ea6a5dcc944e0590242e9f2b84a5d40e",
+    "cases/vector_c2_n4096_r2/profile.ncu-rep": "8132ac696e40ef153b7afda99fb05464bb5bc4ab281ab18b7c06ed13bbfab1a2",
+    "cases/fa1_c0_n256_r1/profile.ncu-rep": "a98c39b9f0c7bc6f198dafa9ddd297d4786f0617bda610a2e6457efb4c06fcd3",
+    "cases/vector_c2_n256_r2/profile.ncu-rep": "a0099db3e09196b83012f846d0c80c6158793d90d17c0bc647910c80a3bc5814",
+    "cases/fa1_ptx_c0_n256_r0/profile.ncu-rep": "08e9d67a7a68dcd3cdf3fc9ee7210578f97026821bbcaca699f426c22923c7e1",
+    "cases/fa1_ptx_c0_n256_r1/profile.ncu-rep": "97d3638ef4e74c692a923ea9427629b77ab9c0996d6dc2e4623afce4d0c1fb35",
+    "cases/vector_c2_n4096_r0/profile.ncu-rep": "ddfce08a65684891dc0fb27a2dadbabeb7b654f267a31772be4e200b7a03418f",
+    "cases/vector_c2_n256_r1/profile.ncu-rep": "182c70c5dd430bf617001697c6a511209621344ac2dcb341d6604ef27378972d",
+    "cases/fa1_c0_n4096_r2/profile.ncu-rep": "ea5a6444ef45dde5efa8694e1b15ae4757be2dd19b01f7559044b91058cb277f",
+    "cases/ptx_c2_n256_r0/profile.ncu-rep": "b18da069a5e0a9f08fd88ee0e8aab24672e32328105647214f5ae9e21a66264e",
+    "cases/fa1_ptx_c0_n256_r2/profile.ncu-rep": "1ca0061178615eecc24743fbfb7e8508385e373e124390be1f246ce531a89f1f",
+    "cases/ptx_c2_n256_r2/profile.ncu-rep": "57f5151197f32efeb10be39d74db0f0f5b6544b4a688382d0cf6dda047988380",
+    "cases/fa1_ptx_c0_n4096_r1/profile.ncu-rep": "25726013f61d8b21477e24d8e2ec305e43197cb9d96aca9097f612bcd44d2907",
+    "cases/fa1_ptx_c0_n4096_r2/profile.ncu-rep": "0d8d971d63a8751478a9584ed8d1819a641434128956710422b6038a1b6b422a",
+    "cases/ptx_c2_n4096_r1/profile.ncu-rep": "3354ae05f4a5d683db159a75b318cf5cff777a7083696e0f5d90ca658cce646b",
+    "cases/ptx_c2_n256_r1/profile.ncu-rep": "ba98f7715557fff1d7f68085e52e66d68405ea29faf5ea98b6e5b511c215e848",
+    "cases/fa1_c0_n256_r2/profile.ncu-rep": "855586fb2d5d698e09dde7202fd801617ec34931abd815ef67a9382f47b770ba",
+    "cases/fa1_ptx_c0_n4096_r0/profile.ncu-rep": "64651c8aa0bc5477756afa21459a23d3f68ec9a5c7b9d32bf8fed6ee0942ad04"
+  }
+}

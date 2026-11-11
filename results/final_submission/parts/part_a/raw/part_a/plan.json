@@ -1,0 +1,611 @@
+{
+  "run_id": "part_a",
+  "grid": "full",
+  "outputs": [
+    {
+      "path": "correctness_all",
+      "phase": "correctness"
+    },
+    {
+      "path": "correctness_wmma",
+      "phase": "correctness"
+    },
+    {
+      "path": "correctness_ptx",
+      "phase": "correctness"
+    },
+    {
+      "path": "pattern_uniform",
+      "phase": "correctness_pattern"
+    },
+    {
+      "path": "pattern_constant_v",
+      "phase": "correctness_pattern"
+    },
+    {
+      "path": "pattern_rising",
+      "phase": "correctness_pattern"
+    },
+    {
+      "path": "pattern_stress",
+      "phase": "correctness_pattern"
+    },
+    {
+      "path": "tuning_optimized_32_256",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_optimized_32_1024",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_optimized_64_256",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_optimized_64_1024",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_optimized_128_256",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_optimized_128_1024",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_wmma_32_256",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_wmma_32_1024",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_wmma_64_256",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_wmma_64_1024",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_wmma_128_256",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_wmma_128_1024",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_ptx_32_256",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_ptx_32_1024",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_ptx_64_256",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_ptx_64_1024",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_ptx_128_256",
+      "phase": "tuning"
+    },
+    {
+      "path": "tuning_ptx_128_1024",
+      "phase": "tuning"
+    },
+    {
+      "path": "main_optimized_dense_32_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_dense_32_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_dense_32_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_dense_32_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_dense_32_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_32_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_32_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_32_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_32_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_32_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_dense_64_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_dense_64_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_dense_64_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_dense_64_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_dense_64_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_64_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_64_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_64_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_64_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_64_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_dense_128_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_dense_128_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_dense_128_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_dense_128_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_dense_128_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_128_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_128_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_128_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_128_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_optimized_causal_128_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_32_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_32_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_32_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_32_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_32_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_32_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_32_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_32_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_32_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_32_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_64_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_64_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_64_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_64_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_64_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_64_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_64_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_64_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_64_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_64_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_128_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_128_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_128_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_128_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_dense_128_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_128_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_128_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_128_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_128_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_wmma_causal_128_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_32_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_32_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_32_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_32_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_32_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_32_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_32_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_32_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_32_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_32_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_64_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_64_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_64_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_64_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_64_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_64_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_64_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_64_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_64_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_64_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_128_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_128_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_128_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_128_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_dense_128_4096",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_128_256",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_128_512",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_128_1024",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_128_2048",
+      "phase": "proposal"
+    },
+    {
+      "path": "main_ptx_causal_128_4096",
+      "phase": "proposal"
+    }
+  ],
+  "selection": {
+    "optimized:dense:d32": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "optimized:causal:d32": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "optimized:dense:d64": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "optimized:causal:d64": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "optimized:dense:d128": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "optimized:causal:d128": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "wmma:dense:d32": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "wmma:causal:d32": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "wmma:dense:d64": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "wmma:causal:d64": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "wmma:dense:d128": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "wmma:causal:d128": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "ptx:dense:d32": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "ptx:causal:d32": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "ptx:dense:d64": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "ptx:causal:d64": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "ptx:dense:d128": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "ptx:causal:d128": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    }
+  },
+  "profile_requested": true,
+  "profiling_policy": {
+    "cache_control": "all",
+    "clock_control": "none",
+    "repetitions": 3,
+    "separate_instrumented_runs": true
+  },
+  "device": {
+    "uuid": "GPU-f5bd2e3d-ddc7-7006-0401-dd3b93a77330",
+    "name": "NVIDIA GeForce RTX 3070 Ti Laptop GPU",
+    "driver_version": "565.90",
+    "compute_cap": "8.6"
+  },
+  "B": 4,
+  "H": 8,
+  "d": [
+    32,
+    64,
+    128
+  ],
+  "main_N": [
+    256,
+    512,
+    1024,
+    2048,
+    4096
+  ],
+  "tuning_N": [
+    256,
+    1024
+  ],
+  "binary_sha256": "67202ebd3b552bd9b5ddb7170846cfc587f7272f7ea8b64ac8c5015c805cc12e",
+  "sources": {
+    "part_a/plot_results.py": "bf46872a4e8f514ac6b992a2a461f40539f4aa4faad02f3f618ed60bf3bb263b",
+    "part_a/run.sh": "8677aba0c5f6ad13cb4584c551232d9a02b75462cb37ac7d09d079e30658d33b",
+    "part_a/main.cpp": "7553a620fecbdfafd9d54bfc62a779a4d67b3e3edc8c4de183f689eb13f342fe",
+    "part_a/CMakeLists.txt": "e3f39318bf822943f24f0f90cdbb5721e9b159f6e3f592414968d7711c043e7c",
+    "part_a/validation/compare.hpp": "3d7bb31cd351ddf483a45977c1a7c9eaf68bac32957b83d0fe9264c1311f2052",
+    "part_a/tests/reference_test.cpp": "1fa649b19cbca9b387761b320a5f532a53f400c4f43ca4ef19088cb83f3987f8",
+    "part_a/cpu_reference/sampled_reference.cpp": "d9673860fe2c8919b6584d813f45a4dcd64ecce530942571d0436d784e385440",
+    "part_a/cpu_reference/CMakeLists.txt": "9e64058f864cb4759246b6654f0177e1522ef4e8c0b277e0531896b2a4ea82cf",
+    "part_a/cpu_reference/attention_reference.cpp": "1dde31fb30817af0ed8221b22626f6fe41b921a782b7ae164490331fee4be74f",
+    "part_a/gpu_baseline/softmax_parallel.cu": "74146886c1210950329da0411b042be668fab2e8b18b71378896a45298f3e651",
+    "part_a/gpu_baseline/qk.cu": "e973a16ca6bc5cfda0978e678fc66a21a5fd4d68cba94df470f1f8437fe946f9",
+    "part_a/gpu_baseline/matmul_tensorcore.cu": "7712e52905c5db1fd47255515012d82487a15035fe78d523c1588af6f10e234d",
+    "part_a/gpu_baseline/softmax.cu": "c6b3e0c75b3271b0b5b1bc002a1342de63db29043474c386ab9feb6ab6f105e9",
+    "part_a/gpu_baseline/matmul_tiled.cu": "10fde9e4f9d185127c1eb8ba0c2d1829f2b1b6590aa2bced416b4f2c513921b8",
+    "part_a/gpu_baseline/pv.cu": "93c485e701c0cfa91c25cafd7b32ae33415df20fe53ed5b89e6bb5d409b7f3a2",
+    "part_a/common/attention_types.hpp": "cde504f1079a7138a232725c0dfac98b6ba29bd516c097f40858b54d84fd611e",
+    "part_a/common/input_generation.hpp": "d5bf1b3b0eff0b5dd2816f6db0b1570a28f61b63e54fda885790a744dd80cda6",
+    "part_a/scripts/export_results.py": "2c73594fff0d592284097cd07cbf73a751292a7eb728ae52cd7624dfa92236a5",
+    "part_a/scripts/run_standard.py": "bdface1657632869aee28da66eb570b6af6c841b237c158fffbc419e31495aec"
+  }
+}

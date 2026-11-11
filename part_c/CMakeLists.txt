@@ -7,6 +7,7 @@ find_package(CUDAToolkit REQUIRED)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../part_a/cpu_reference ${CMAKE_CURRENT_BINARY_DIR}/shared_reference)
 add_library(part_c_attention STATIC
   src/flash_attention_1.cu
+  src/flash_attention_1_tensor_core.cu
   src/flash_attention_2_cuda_core.cu
   src/flash_attention_2_tensor_core.cu)
 target_include_directories(part_c_attention PUBLIC include)
@@ -29,4 +30,23 @@ target_link_libraries(part_c_input_contract PRIVATE part_c_attention attention_r
 target_compile_features(part_c_input_contract PRIVATE cxx_std_17)
 if(BUILD_TESTING)
   add_test(NAME part_c_input_contract COMMAND part_c_input_contract)
+endif()
+
+# Dedicated Algorithm-1 invariants, including dense mode and per-forward reset.
+add_executable(part_c_fa1_test tests/flash_attention_1_test.cpp tests/test_support.cpp)
+target_link_libraries(part_c_fa1_test PRIVATE part_c_attention attention_reference)
+target_compile_features(part_c_fa1_test PRIVATE cxx_std_17)
+if(BUILD_TESTING)
+  add_test(NAME part_c_fa1_invariants COMMAND part_c_fa1_test --output ${CMAKE_CURRENT_BINARY_DIR}/fa1-ctest-results)
+endif()
+
+option(PART_C_SUPPLEMENTARY_TESTS "Include optional WMMA FA1 invariant tests" OFF)
+if(BUILD_TESTING AND PART_C_SUPPLEMENTARY_TESTS)
+  add_test(NAME part_c_fa1_tensorcore_invariants COMMAND part_c_fa1_test --tensorcore --output ${CMAKE_CURRENT_BINARY_DIR}/fa1-tensorcore-ctest-results)
+endif()
+
+if(BUILD_TESTING)
+  foreach(config RANGE 0 3)
+    add_test(NAME part_c_fa1_ptx_c${config}_invariants COMMAND part_c_fa1_test --ptx --config ${config} --output ${CMAKE_CURRENT_BINARY_DIR}/fa1-ptx-c${config}-ctest-results)
+  endforeach()
 endif()
