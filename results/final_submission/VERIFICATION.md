@@ -63,6 +63,10 @@ python3 scripts/prepare_submission.py check --results results/final_submission
 python3 -m unittest discover -s tests -v
 ```
 
-These commands validate/reprocess saved evidence and run CPU integration tests; they do not rerun the CUDA benchmarks. Preserve the recorded raw evidence and binary profiler reports at their relative paths for full integrity checks. Binary reports can be distributed separately with checksums using the documented packaging workflow.
+These commands validate/reprocess saved evidence and run CPU integration tests; they do not rerun the CUDA benchmarks. Preserve the recorded raw evidence and binary profiler reports at their relative paths for full integrity checks. The 66 original binary report files (approximately 304 MiB) are retained directly with this accepted bundle. A's 36 report files contain three captures each; B's six and C's 24 contain one each. Once committed, a checkout includes the 138 captures needed by these checks without a separate download. Other experimental binary reports remain ignored.
 
 The separate historical B smoke recording `part_b/results/notebook_smoke_20261110_044515/` is still missing. It affects pinned historical replay tests and final source packaging, not this fresh full-run acceptance. Resolve it before claiming the complete submission package is ready. Final report, video, contributions, citations and accessible delivery links also remain team work.
+
+## Submission-file reproduction check
+
+A separate filesystem copy containing the tracked working-tree files and the 66 final-run reports proposed for inclusion passed the full saved-result audit before and after offline regeneration. All 33 root/child CSVs and all 66 report files remained byte-identical; all 41 indexed figure pairs were regenerated. No GPU benchmarks were executed. This verifies the proposed submission file set on the current analysis environment; it is not a claim of a fresh GitHub clone or an independent-machine test. After committing and pushing the report files, another member should verify the documented commands from the submitted revision.

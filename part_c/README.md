@@ -94,7 +94,7 @@ The published [saved-data export](results/standardized/ANALYSIS.md) is a format 
 
 Fused QK/softmax/PV timings and unmeasured setup time stay blank. Raw missing Nsight counters stay explicitly unavailable. Per-thread resource estimates are distinct from measured occupancy, source shared excess is distinct from aggregate arbitration counts, and warp-state percentages are not runtime fractions. Shared-memory/local traffic is not allocated storage.
 
-The exporter verifies native case hashes and metadata, fingerprints, sample/summary statistics, O-validation joins, profiler CSV hashes, supplied binary report hashes and byte-identical evidence copies. `.ncu-rep` files may be supplied separately; when absent, saved CSV evidence still exports and the missing binaries/expected checksums are explicit. New runs link the shared Part A CPU reference directly. Historical exports retain their original oracle provenance. Part B is integrated. The full-grid common-machine experiment passed with 24 fresh Part C profiler captures; the root aggregation audit is authoritative for the combined A/B/C completion status. The legacy `final_abc_integration_complete=false` field in the standalone C export does not describe the root run.
+The exporter verifies native case hashes and metadata, fingerprints, sample/summary statistics, O-validation joins, profiler CSV hashes, supplied binary report hashes and byte-identical evidence copies. The accepted `../results/final_submission/` bundle includes its original `.ncu-rep` files directly. Historical exports may instead omit binaries while declaring their expected checksums. New runs link the shared Part A CPU reference directly. Historical exports retain their original oracle provenance. Part B is integrated. The full-grid common-machine experiment passed with 24 fresh Part C profiler captures; the root aggregation audit is authoritative for the combined A/B/C completion status. The legacy `final_abc_integration_complete=false` field in the standalone C export does not describe the root run.
 
 CPU-only adapter regression tests:
 
@@ -285,7 +285,7 @@ python3 part_c/scripts/audit_evaluation.py part_c/results/bounded_evaluation
 python3 part_c/scripts/profile_frozen.py part_c/results/bounded_evaluation --analyze-only
 ```
 
-No GPU is needed for saved-data processing. Full profile-integrity audits require the checksummed raw `.ncu-rep` files, supplied separately if excluded from Git. Plans, frozen configs, raw samples, command records, numerical checks and source/analysis manifests are retained with each dataset. The small `tests/kernel_bodies.json` manifest lets active audits verify the declared current kernel fingerprints (FA1 rewritten; FA2 bodies preserved) without depending on private development history.
+No GPU is needed for saved-data processing. Full profile-integrity audits require the checksummed raw `.ncu-rep` files; the accepted `../results/final_submission/` bundle includes them in Git. Plans, frozen configs, raw samples, command records, numerical checks and source/analysis manifests are retained with each dataset. The small `tests/kernel_bodies.json` manifest lets active audits verify the declared current kernel fingerprints (FA1 rewritten; FA2 bodies preserved) without depending on private development history.
 
 ### Regenerating plots after analysis-script updates
 

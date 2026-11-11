@@ -102,6 +102,18 @@ These counts do not turn a smoke run into a full experiment.
 
 5. VALIDATE AND REGENERATE THE COMPLETED EXPERIMENT
 
+The submitted results/final_submission/ bundle includes all 66 raw Nsight report
+files (approximately 304 MiB). A's 36 reports each contain three kernel captures;
+with B's six and C's 24 reports, the bundle retains 138 captures. The final-run
+reports are allowed in Git; other experimental profiler binaries remain ignored.
+No additional archive is required for a complete checkout of the submitted
+revision after these binaries are committed and pushed.
+
+The following saved-data checks and regeneration need Python analysis packages,
+but do not require a GPU, CUDA build, ncu or Compute Sanitizer. Preserve the
+reports at their recorded paths for checksum verification.
+
+
 python3 scripts/prepare_submission.py check --results results/final_submission
 bash run.sh --analyze-only results/final_submission
 python3 scripts/prepare_submission.py check --results results/final_submission
@@ -110,7 +122,7 @@ The checks require completed A/B/C full-grid audits, seven valid canonical
 schemas, unchanged child tables, matching GPU identity, shared inputs, required
 profile coverage and indexed plots/evidence files. Offline regeneration verifies
 native-to-public extraction and redraws figures without running CUDA kernels.
-Preserve all binary reports at their original relative paths for these checks.
+The supplied binary reports must remain at their original relative paths for these checks.
 
 For a deliberate packaging test using a smoke bundle ONLY:
 python3 scripts/prepare_submission.py check --results results/abc_smoke --allow-smoke

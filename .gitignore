@@ -76,9 +76,11 @@ __pycache__/
 /extra/
 /part_c/src/extra/
 
-# Large profiler binaries are supplied separately with recorded checksums
+# Ignore experimental profiler binaries; retain the accepted submission evidence.
 *.ncu-rep
 *.ncu-repz
+!/results/final_submission/**/*.ncu-rep
+!/results/final_submission/**/*.ncu-repz
 
 # Superseded profiling interpretations (current analysis stays visible)
 /part_c/results/nsight_analysis/extra/

@@ -480,6 +480,19 @@ Explicit storage, observed device deltas and profiler traffic remain distinct. T
 
 ## 9. Recreate figures without rerunning CUDA
 
+The accepted bundle includes its original Nsight binaries in Git: 66 report files (36 A, six B and 24 C), totalling approximately 304 MiB. Each A report contains three kernel captures, so the files collectively retain 138 captures. Only `results/final_submission/` is exempted from the profiler-file ignore rules; reports from other experimental runs remain ignored. No separate profiler download is needed once these files are committed and pushed.
+
+After cloning the submitted revision and installing the Python analysis dependencies, validate and regenerate the supplied evidence from the repository root:
+
+```bash
+python3 scripts/prepare_submission.py check --results results/final_submission
+bash run_all.sh --analyze-only results/final_submission
+python3 scripts/prepare_submission.py check --results results/final_submission
+```
+
+These saved-data commands require neither an NVIDIA GPU nor Nsight installation. They read the supplied binary files for integrity checks and use the retained CSV exports for numerical processing and plots. Running a new full GPU experiment requires CUDA, Compute Sanitizer and Nsight Compute as described in Section 5, and produces new observations rather than identical timings.
+
+
 ```bash
 # Re-extract each child, validate identities/hashes and regenerate joint figures.
 bash run.sh --analyze-only results/final_submission
@@ -515,7 +528,7 @@ Archive outputs and audit copies belong under ignored `extra/` or a separate del
 
 
 
-Retain raw benchmark CSVs, selected configurations, metadata, plotting scripts, readable figures and reproduction instructions. Include source and source/binary hashes; large raw Nsight reports can be supplied as a separate accessible artifact with checksums. Do not submit compiled build directories as results.
+Retain raw benchmark CSVs, selected configurations, metadata, plotting scripts, readable figures and reproduction instructions. Include source and source/binary hashes. The accepted final-run Nsight reports are included directly in Git; optional split archives remain available for other delivery formats. Do not submit compiled build directories as results.
 
 The full-grid results are now retained and verified. The remaining shared work includes interpreting materialised-versus-fused and dense-versus-causal results, the report, video, references, member contributions and restoring the separate historical B smoke recording. The final comparison must include materialised versus fused latency/storage, dense versus causal work/traffic, bounded tuning and controlled optimisation comparisons. No fixed speedup target is required by the rubric; well-supported slowdowns and limitations are valid results.
 
