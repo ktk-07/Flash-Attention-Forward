@@ -1,0 +1,312 @@
+{
+  "configurations": {
+    "naive:tile16:sm256:d64": {
+      "variant": "naive",
+      "tile": 16,
+      "softmax_threads": 256,
+      "d": 64
+    },
+    "tiled:tile16:sm256:d64": {
+      "variant": "tiled",
+      "tile": 16,
+      "softmax_threads": 256,
+      "d": 64
+    },
+    "parallel:tile16:sm256:d64": {
+      "variant": "parallel",
+      "tile": 16,
+      "softmax_threads": 256,
+      "d": 64
+    },
+    "optimized:tile16:sm256:d64": {
+      "variant": "optimized",
+      "tile": 16,
+      "softmax_threads": 256,
+      "d": 64
+    },
+    "optimized:tile8:sm256:d32": {
+      "variant": "optimized",
+      "tile": 8,
+      "softmax_threads": 256,
+      "d": 32
+    },
+    "optimized:tile16:sm256:d32": {
+      "variant": "optimized",
+      "tile": 16,
+      "softmax_threads": 256,
+      "d": 32
+    },
+    "optimized:tile32:sm256:d32": {
+      "variant": "optimized",
+      "tile": 32,
+      "softmax_threads": 256,
+      "d": 32
+    },
+    "optimized:tile16:sm128:d32": {
+      "variant": "optimized",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 32
+    },
+    "optimized:tile8:sm256:d64": {
+      "variant": "optimized",
+      "tile": 8,
+      "softmax_threads": 256,
+      "d": 64
+    },
+    "optimized:tile32:sm256:d64": {
+      "variant": "optimized",
+      "tile": 32,
+      "softmax_threads": 256,
+      "d": 64
+    },
+    "optimized:tile16:sm128:d64": {
+      "variant": "optimized",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 64
+    },
+    "optimized:tile8:sm256:d128": {
+      "variant": "optimized",
+      "tile": 8,
+      "softmax_threads": 256,
+      "d": 128
+    },
+    "optimized:tile16:sm256:d128": {
+      "variant": "optimized",
+      "tile": 16,
+      "softmax_threads": 256,
+      "d": 128
+    },
+    "optimized:tile32:sm256:d128": {
+      "variant": "optimized",
+      "tile": 32,
+      "softmax_threads": 256,
+      "d": 128
+    },
+    "optimized:tile16:sm128:d128": {
+      "variant": "optimized",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 128
+    },
+    "wmma:tile16:sm128:d32": {
+      "variant": "wmma",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 32
+    },
+    "wmma:tile16:sm256:d32": {
+      "variant": "wmma",
+      "tile": 16,
+      "softmax_threads": 256,
+      "d": 32
+    },
+    "wmma:tile16:sm128:d64": {
+      "variant": "wmma",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 64
+    },
+    "wmma:tile16:sm256:d64": {
+      "variant": "wmma",
+      "tile": 16,
+      "softmax_threads": 256,
+      "d": 64
+    },
+    "wmma:tile16:sm128:d128": {
+      "variant": "wmma",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 128
+    },
+    "wmma:tile16:sm256:d128": {
+      "variant": "wmma",
+      "tile": 16,
+      "softmax_threads": 256,
+      "d": 128
+    },
+    "ptx:tile16:sm128:d32": {
+      "variant": "ptx",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 32
+    },
+    "ptx:tile16:sm256:d32": {
+      "variant": "ptx",
+      "tile": 16,
+      "softmax_threads": 256,
+      "d": 32
+    },
+    "ptx:tile16:sm128:d64": {
+      "variant": "ptx",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 64
+    },
+    "ptx:tile16:sm256:d64": {
+      "variant": "ptx",
+      "tile": 16,
+      "softmax_threads": 256,
+      "d": 64
+    },
+    "ptx:tile16:sm128:d128": {
+      "variant": "ptx",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 128
+    },
+    "ptx:tile16:sm256:d128": {
+      "variant": "ptx",
+      "tile": 16,
+      "softmax_threads": 256,
+      "d": 128
+    },
+    "naive:tile16:sm128:d32": {
+      "variant": "naive",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 32
+    },
+    "tiled:tile16:sm128:d32": {
+      "variant": "tiled",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 32
+    },
+    "parallel:tile16:sm128:d32": {
+      "variant": "parallel",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 32
+    },
+    "naive:tile16:sm128:d64": {
+      "variant": "naive",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 64
+    },
+    "tiled:tile16:sm128:d64": {
+      "variant": "tiled",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 64
+    },
+    "parallel:tile16:sm128:d64": {
+      "variant": "parallel",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 64
+    },
+    "naive:tile16:sm128:d128": {
+      "variant": "naive",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 128
+    },
+    "tiled:tile16:sm128:d128": {
+      "variant": "tiled",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 128
+    },
+    "parallel:tile16:sm128:d128": {
+      "variant": "parallel",
+      "tile": 16,
+      "softmax_threads": 128,
+      "d": 128
+    }
+  },
+  "frozen_selection": {
+    "optimized:dense:d32": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "optimized:causal:d32": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "optimized:dense:d64": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "optimized:causal:d64": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "optimized:dense:d128": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "optimized:causal:d128": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "wmma:dense:d32": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "wmma:causal:d32": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "wmma:dense:d64": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "wmma:causal:d64": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "wmma:dense:d128": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "wmma:causal:d128": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "ptx:dense:d32": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "ptx:causal:d32": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "ptx:dense:d64": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "ptx:causal:d64": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "ptx:dense:d128": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    },
+    "ptx:causal:d128": {
+      "tile": 16,
+      "softmax_threads": 128,
+      "selection": "minimum_geometric_mean_forward_latency_across_tuning_N"
+    }
+  }
+}

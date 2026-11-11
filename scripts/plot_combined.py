@@ -153,32 +153,52 @@ def generate(out):
                 if actual!=count:raise ValueError(f'Missing frozen cross-part comparison: {right}/{precision}, expected {count}, found {actual}')
     folder=out/'plots/combined';folder.mkdir(parents=True,exist_ok=True);write_rows(out/'comparison.csv',comparison)
     if comparison:
-        fig,axes=plt.subplots(1,2,figsize=(12,4))
-        groups={}
-        for row in comparison:groups.setdefault((row['target_part'],row['precision'],row['d'],row['baseline_variant']),[]).append(row)
-        for key,group in sorted(groups.items()):
-            group.sort(key=lambda r:int(r['N']));label='/'.join(key)
-            axes[0].plot([int(r['N']) for r in group],[float(r['speedup']) for r in group],marker='o',label=label)
-            axes[1].errorbar([int(r['N']) for r in group],[float(r['target_ms']) for r in group],yerr=[[float(r['target_ms'])-float(r['target_q1_ms']) for r in group],[float(r['target_q3_ms'])-float(r['target_ms']) for r in group]],marker='o',label=label,capsize=2)
-            axes[1].plot([int(r['N']) for r in group],[float(r['baseline_ms']) for r in group],linestyle='--',label='A/'+key[3]+'/'+key[1]+'/d'+key[2])
-        axes[0].axhline(1,color='gray',linestyle='--');axes[0].set(xlabel='Sequence length',ylabel='Part A latency / fused latency');axes[1].set(xlabel='Sequence length',ylabel='Forward latency (ms); A dashed, fused solid',yscale='log')
-        for ax in axes:ax.grid(alpha=.25);ax.legend(fontsize=7)
-        fig.suptitle('Same inputs and FP32 accumulation/output; FP16 probability rounding order differs',fontsize=10)
-        fig.tight_layout()
-        for ext in ['png','pdf']:fig.savefig(folder/f'cross_part.{ext}',metadata={'CreationDate':None,'ModDate':None} if ext=='pdf' else {'Software':'attention-evaluation'},dpi=160)
-        plt.close(fig);index.append({'part':'combined','figure':'plots/combined/cross_part','description':'Frozen selections on identical inputs. FP16 comparison matches accumulator/output precision; probability rounding order differs.'})
-        memory_data=[];fig,ax=plt.subplots(figsize=(9,4))
+        panels=[(mode,precision,target) for mode,precision,target in
+                [('dense','FP32','part_b'),('causal','FP32','part_c'),('causal','FP16','part_c')]
+                if any(r['mode']==mode and r['precision']==precision and r['target_part']==target for r in comparison)]
+        fig,axes=plt.subplots(len(panels),2,figsize=(14,5.5*len(panels)),squeeze=False,layout='constrained')
+        for pair,(mode,precision,target) in zip(axes,panels):
+            groups={}
+            for row in comparison:
+                if (row['mode'],row['precision'],row['target_part'])!=(mode,precision,target):continue
+                groups.setdefault((int(row['d']),row['baseline_variant'],row['target_variant']),[]).append(row)
+            for (d,baseline,variant),group in sorted(groups.items()):
+                group.sort(key=lambda r:int(r['N']))
+                label=f"{target.removeprefix('part_').upper()} {variant}, d={d}"
+                line,=pair[0].plot([int(r['N']) for r in group],[float(r['speedup']) for r in group],marker='o',label=label)
+                pair[1].errorbar([int(r['N']) for r in group],[float(r['target_ms']) for r in group],yerr=[[float(r['target_ms'])-float(r['target_q1_ms']) for r in group],[float(r['target_q3_ms'])-float(r['target_ms']) for r in group]],marker='o',label=label,color=line.get_color(),capsize=2)
+                pair[1].plot([int(r['N']) for r in group],[float(r['baseline_ms']) for r in group],linestyle='--',color=line.get_color(),label=f'A {baseline}, d={d}')
+            title=f'{mode.capitalize()}, {precision} inputs / FP32 accumulation and output'
+            pair[0].axhline(1,color='gray',linestyle='--')
+            pair[0].set(title=title,xlabel='Sequence length',ylabel='Part A median / fused median')
+            pair[1].set(title=title,xlabel='Sequence length',ylabel='Forward latency (ms); A dashed, fused solid',yscale='log')
+            for ax in pair:
+                ax.grid(alpha=.25)
+                ax.legend(fontsize=8,loc='upper center',bbox_to_anchor=(.5,-.17),ncol=2)
+        fig.suptitle('Same-operation comparisons on identical inputs; frozen configurations\nFP16 probability rounding order differs between A and C',fontsize=12)
+        for ext in ['png','pdf']:fig.savefig(folder/f'cross_part.{ext}',metadata={'CreationDate':None,'ModDate':None} if ext=='pdf' else {'Software':'attention-evaluation'},dpi=160,bbox_inches='tight')
+        plt.close(fig);index.append({'part':'combined','figure':'plots/combined/cross_part','description':'Separate dense FP32, causal FP32 and causal FP16 panels. Frozen selections on identical inputs; target variants and head dimensions are explicit. FP16 probability rounding order differs.'})
+        memory_data=[];fig,ax=plt.subplots(figsize=(11,5),layout='constrained')
         for part in parts:
             for precision in ['FP32','FP16']:
-                line=[r for r in rows if r['part']==part and r['d']=='64' and r['mode']=='causal' and r['precision']==precision]
-                # Allocation size is identical within each part/precision/shape.
-                line=list({r['N']:r for r in line}.values());line.sort(key=lambda r:int(r['N']))
-                if not line:continue
-                ax.plot([int(r['N']) for r in line],[int(r['peak_workspace_allocated_bytes'])/2**20 for r in line],marker='o',label=f'{part}/{precision}')
-                memory_data.extend({k:r[k] for k in ['part','precision','B','H','N','d','peak_workspace_allocated_bytes']} for r in line)
-        ax.set(xlabel='Sequence length (causal, d=64)',ylabel='Explicit live device buffers (MiB)');ax.legend();ax.grid(alpha=.25);fig.tight_layout()
-        for ext in ['png','pdf']:fig.savefig(folder/f'materialised_fused_memory.{ext}',metadata={'CreationDate':None,'ModDate':None} if ext=='pdf' else {'Software':'attention-evaluation'},dpi=160)
-        plt.close(fig);write_rows(folder/'materialised_fused_memory.csv',memory_data);index.append({'part':'combined','figure':'plots/combined/materialised_fused_memory','description':'Same-input explicit allocation evidence; not total process memory.'})
+                mode='dense' if part in ['part_a','part_b'] else 'causal'
+                available=[r for r in rows if r['part']==part and r['d']=='64' and r['mode']==mode and r['precision']==precision]
+                present={r['variant'] for r in available}
+                if part=='part_a':variants=['optimized'] if precision=='FP32' else [next((v for v in ['ptx','wmma','tensorcore'] if v in present),'')]
+                elif part=='part_b':variants=['selected'] if precision=='FP32' else []
+                else:variants=(['fa1',choose_c(precision,64)] if precision=='FP32' else ['fa1_ptx','fa1_wmma',choose_c(precision,64)])
+                for variant in dict.fromkeys(variants):
+                    line=sorted([r for r in available if r['variant']==variant],key=lambda r:int(r['N']))
+                    if not line:continue
+                    # Keep FA1's m/l workspace distinct from FA2's allocation;
+                    # do not silently collapse all implementations by N.
+                    label=f"{part.removeprefix('part_').upper()} / {mode} / {variant} / {precision}"
+                    ax.plot([int(r['N']) for r in line],[int(r['peak_workspace_allocated_bytes'])/2**20 for r in line],marker='o',linestyle='--' if variant.startswith('fa1') else '-',label=label)
+                    memory_data.extend({k:r[k] for k in ['part','mode','variant','config','precision','B','H','N','d','peak_workspace_allocated_bytes']} for r in line)
+        ax.set(xlabel='Sequence length (d=64)',ylabel='Explicit live device buffers (MiB)',yscale='log',title='A/B/C allocation ledgers; FA1 row-state workspace included')
+        ax.legend(fontsize=8,loc='upper center',bbox_to_anchor=(.5,-.17),ncol=2);ax.grid(alpha=.25)
+        for ext in ['png','pdf']:fig.savefig(folder/f'materialised_fused_memory.{ext}',metadata={'CreationDate':None,'ModDate':None} if ext=='pdf' else {'Software':'attention-evaluation'},dpi=160,bbox_inches='tight')
+        plt.close(fig);write_rows(folder/'materialised_fused_memory.csv',memory_data);index.append({'part':'combined','figure':'plots/combined/materialised_fused_memory','description':'A dense, B dense and C causal explicit allocation ledgers, including separate C FA1 workspace. Capacity comparison across labelled workloads, not total process memory or traffic.'})
 
     if 'part_b' in parts and 'part_c' in parts:
         work_comparison=[]

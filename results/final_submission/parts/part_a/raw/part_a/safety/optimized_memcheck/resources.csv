@@ -1,0 +1,7 @@
+experiment,precision,B,H,N,d,mode,variant,tile,softmax_threads,stage,blocks,threads,registers_per_thread,shared_bytes,local_bytes_per_thread,active_blocks_per_sm,theoretical_occupancy_percent
+representative,FP32,1,1,33,64,dense,optimized,16,256,QK,9,256,40,2112,0,6,100
+representative,FP32,1,1,33,64,dense,optimized,16,256,softmax,33,256,24,1024,0,6,100
+representative,FP32,1,1,33,64,dense,optimized,16,256,PV,12,256,40,2048,0,6,100
+representative,FP32,1,1,33,64,causal,optimized,16,256,QK,9,256,40,2112,0,6,100
+representative,FP32,1,1,33,64,causal,optimized,16,256,softmax,33,256,24,1024,0,6,100
+representative,FP32,1,1,33,64,causal,optimized,16,256,PV,12,256,40,2048,0,6,100

@@ -77,6 +77,11 @@ class IntegrationTests(unittest.TestCase):
             self.assertEqual(len(schema.read(out/'comparison.csv')),8)
             self.assertEqual(len(schema.read(out/'plots/combined/dense_causal_work.csv')),2)
             self.assertTrue((out/'plots/combined/dense_causal_work.png').is_file())
+            memory=schema.read(out/'plots/combined/materialised_fused_memory.csv')
+            self.assertEqual({r['part'] for r in memory},{'part_a','part_b','part_c'})
+            self.assertEqual({r['mode'] for r in memory if r['part']=='part_b'},{'dense'})
+            self.assertEqual({r['variant'] for r in memory if r['part']=='part_c' and r['precision']=='FP32'},{'skip'})
+            self.assertEqual(len({(r['part'],r['mode'],r['variant'],r['precision'],r['N']) for r in memory}),len(memory))
     def test_both_fa1_baselines_aggregate_and_require_matched_inputs(self):
         from fa1_comparison import generate
         with tempfile.TemporaryDirectory() as temp:
@@ -119,6 +124,8 @@ class IntegrationTests(unittest.TestCase):
             aggregate(out,['part_a','part_c'],'smoke')
             self.assertEqual(len(schema.read(out/'fa1_fa2_comparison.csv')),4)
             self.assertEqual(len(schema.read(out/'fa1_cross_precision.csv')),2)
+            memory=schema.read(out/'plots/combined/materialised_fused_memory.csv')
+            self.assertEqual({r['variant'] for r in memory if r['part']=='part_c'},{'fa1','fa1_ptx','skip','wmma'})
             index=json.loads((out/'fa1_comparison_index.json').read_text())
             self.assertEqual(index['tensor_core_baseline'],'fa1_ptx')
             self.assertEqual(len(index['figures']),3)

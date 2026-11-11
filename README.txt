@@ -7,10 +7,12 @@ No project runner or packaging helper executes Git or publishes anything.
 
 1. SOURCE VERSION AND CURRENT STATUS
 
-A/B/C integrated smoke passed on RTX 3070 Ti Laptop: correctness, representative
-sanitizers, tuning, 3,600 timing samples, aggregation, 31 figure pairs and offline
-regeneration. The full experiment is assigned to the team's full-run operator;
-it has NOT been executed as part of this handoff.
+The A/B/C full-grid run is complete in results/final_submission/ on the
+RTX 3070 Ti Laptop GPU. Saved-result validation and CPU-only regeneration pass:
+1,657 passing correctness records, 15,000 timing samples and 138 profiler
+captures (A108/B6/C24), with 41 indexed PNG/PDF figure pairs. See
+results/final_submission/VERIFICATION.md for findings and limitations.
+Use a fresh output directory when repeating the experiment.
 
 The integrator supplies the reviewed source commit ID. The operator uses that
 exact source and records the complete ID for packaging. The helper hashes source

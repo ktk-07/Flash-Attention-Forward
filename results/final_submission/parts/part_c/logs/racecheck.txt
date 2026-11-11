@@ -1,0 +1,12 @@
+========= COMPUTE-SANITIZER
+fa1 B=1 H=1 N=33 d=64 random PASS max_abs=1.16218e-07
+fa1_ptx B=1 H=1 N=33 d=64 random PASS max_abs=0.000137454
+scalar B=1 H=1 N=33 d=64 random PASS max_abs=1.16218e-07
+warp B=1 H=1 N=33 d=64 random PASS max_abs=1.16218e-07
+tiled B=1 H=1 N=33 d=64 random PASS max_abs=1.18051e-07
+skip B=1 H=1 N=33 d=64 random PASS max_abs=1.18051e-07
+vector B=1 H=1 N=33 d=64 random PASS max_abs=1.18051e-07
+wmma B=1 H=1 N=33 d=64 random PASS max_abs=0.000137454
+ptx B=1 H=1 N=33 d=64 random PASS max_abs=0.000137454
+PASS=9 FAIL=0 UNSUPPORTED=0
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)

@@ -2,7 +2,13 @@
 
 Part C implements causal attention with online softmax, progressing from scalar CUDA kernels to cooperative warps, register tiling, vector loads, WMMA and PTX MMA. All kernels compute a complete forward pass without materialising the full score/probability matrices in device memory.
 
-For shared setup and submission reproduction, see [../README.md](../README.md) and [../README.txt](../README.txt). A/B/C integration is maintained by Kyaw Tun Khine. The combined smoke run passed correctness, representative sanitizers, aggregation, plots and offline regeneration; the final full-grid experiment is assigned to the team's full-run operator.
+For shared setup and submission reproduction, see [../README.md](../README.md) and [../README.txt](../README.txt). A/B/C integration is maintained by Kyaw Tun Khine. The full-grid A/B/C experiment is complete in `../results/final_submission/`; its saved-result audit, shared-input/GPU checks, profiling and offline regeneration pass. See [verification findings](../results/final_submission/VERIFICATION.md).
+
+## Common-machine results
+
+The retained full-grid study uses B4/H8, N256/512/1024/2048/4096 and d32/64/128 on the RTX 3070 Ti Laptop GPU. Its Part C bundle contains 764 passing canonical correctness records, 352 timing cases with 7,040 samples and 24 profiler captures. Matched FP32 FA1/FA2 latency ratios range from 4.083 to 6.554×; matched PTX FA1/FA2 ratios range from 3.032 to 13.079×. These compare the repository implementations with independently frozen configurations, rather than official-library performance.
+
+Relative to optimized materialised causal A, the frozen FP32 FA2 ratio is 0.547–1.179×; fused PTX FA2 versus materialised PTX is 1.182–6.131×. The latter includes the documented probability-rounding difference. Kernel fusion, lower precision and FA1/FA2 scheduling are distinct comparison axes. Some cases have substantial within-case variation; preserve their quartiles when interpreting small differences. See [verification findings](../results/final_submission/VERIFICATION.md), [comparison plots](../results/final_submission/plots/part_c/) and the retained supplementary profiler evidence.
 
 ## Source layout
 
@@ -88,7 +94,7 @@ The published [saved-data export](results/standardized/ANALYSIS.md) is a format 
 
 Fused QK/softmax/PV timings and unmeasured setup time stay blank. Raw missing Nsight counters stay explicitly unavailable. Per-thread resource estimates are distinct from measured occupancy, source shared excess is distinct from aggregate arbitration counts, and warp-state percentages are not runtime fractions. Shared-memory/local traffic is not allocated storage.
 
-The exporter verifies native case hashes and metadata, fingerprints, sample/summary statistics, O-validation joins, profiler CSV hashes, supplied binary report hashes and byte-identical evidence copies. `.ncu-rep` files may be supplied separately; when absent, saved CSV evidence still exports and the missing binaries/expected checksums are explicit. New runs link the shared Part A CPU reference directly. Historical exports retain their original oracle provenance. Part B is integrated and passed the three-part smoke workflow. The full-grid common-machine experiment and its full profiler evidence remain to be collected by the assigned operator.
+The exporter verifies native case hashes and metadata, fingerprints, sample/summary statistics, O-validation joins, profiler CSV hashes, supplied binary report hashes and byte-identical evidence copies. `.ncu-rep` files may be supplied separately; when absent, saved CSV evidence still exports and the missing binaries/expected checksums are explicit. New runs link the shared Part A CPU reference directly. Historical exports retain their original oracle provenance. Part B is integrated. The full-grid common-machine experiment passed with 24 fresh Part C profiler captures; the root aggregation audit is authoritative for the combined A/B/C completion status. The legacy `final_abc_integration_complete=false` field in the standalone C export does not describe the root run.
 
 CPU-only adapter regression tests:
 

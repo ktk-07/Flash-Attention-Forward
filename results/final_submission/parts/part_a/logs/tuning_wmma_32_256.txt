@@ -1,0 +1,4 @@
+4,8,256,32,dense,wmma,16,128 median_ms=0.22672 IQR_ms=0.002128
+4,8,256,32,dense,wmma,16,256 median_ms=0.277504 IQR_ms=0.00557601
+4,8,256,32,causal,wmma,16,128 median_ms=0.200704 IQR_ms=0.00332801
+4,8,256,32,causal,wmma,16,256 median_ms=0.250768 IQR_ms=0.001304

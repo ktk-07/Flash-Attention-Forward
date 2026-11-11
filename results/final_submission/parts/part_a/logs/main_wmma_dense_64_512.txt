@@ -1,0 +1,1 @@
+4,8,512,64,dense,wmma,16,128 median_ms=1.1223 IQR_ms=0.023888

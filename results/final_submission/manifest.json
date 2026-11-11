@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "requested_parts": [
+    "part_a",
+    "part_b",
+    "part_c"
+  ],
+  "grid": "full",
+  "devices": {
+    "part_a": {
+      "uuid": "GPU-f5bd2e3d-ddc7-7006-0401-dd3b93a77330",
+      "name": "NVIDIA GeForce RTX 3070 Ti Laptop GPU",
+      "driver_version": "565.90",
+      "compute_cap": "8.6"
+    },
+    "part_b": {
+      "uuid": "GPU-f5bd2e3d-ddc7-7006-0401-dd3b93a77330",
+      "name": "NVIDIA GeForce RTX 3070 Ti Laptop GPU",
+      "driver_version": "565.90",
+      "compute_cap": "8.6"
+    },
+    "part_c": {
+      "uuid": "GPU-f5bd2e3d-ddc7-7006-0401-dd3b93a77330",
+      "name": "NVIDIA GeForce RTX 3070 Ti Laptop GPU",
+      "driver_version": "565.90",
+      "compute_cap": "8.6"
+    }
+  },
+  "source_tables": {
+    "parts/part_a/correctness.csv": "ee4317e0afa8e96a42abbb30c66246d6be7dc99affa92aea88428d8d93df7252",
+    "parts/part_a/samples.csv": "949138de1bf82ed5b1f3a2fbf6a67529852c868c81f72bc1a8e2cb08548e9268",
+    "parts/part_a/summary.csv": "9907ab7b2eddfb92c29f6d08224cbf227e8e7ccf1127283247a69f4a6f73bd55",
+    "parts/part_a/resources.csv": "d25d59eb4165ef5cbb1f37422c0069de67ffabb6cc35ea0285c7c5974597048a",
+    "parts/part_a/profiles.csv": "8db2fbd7a96f0699328653182460e044ac96216d45ac4938f94bf55df90399cb",
+    "parts/part_a/memory.csv": "e243af144aaa2ced9f24e60fbb4c197880f403195d07c0eeeddf1d567a2a1cba",
+    "parts/part_a/work.csv": "ca2d8bacc63e304334fa8e152a9dddc722cfa92d287251c1e38c536c57d7711b",
+    "parts/part_b/correctness.csv": "ccc47170e95a850e2684b163d1e53bba2faa5be8101f594d885dddee58c6a010",
+    "parts/part_b/samples.csv": "3542085380a5cab88f2167aaad57a22fb9c8f424d97cfcf23566b7bca2e6a00d",
+    "parts/part_b/summary.csv": "ec1aba685798349d77154dbbdb780adfaee76857ce97bcc53ecec2c0bfc6efe7",
+    "parts/part_b/resources.csv": "7b4f7cbe130da1b32ca2c1e3ecf8dd30765ad0ba3e206155b7d46ba74f7a4f19",
+    "parts/part_b/profiles.csv": "a8022cf90a4bcfe51ae50e025fc7d94804b8d9519c528a62a8513048c67f662e",
+    "parts/part_b/memory.csv": "4aa4107416b4c5420e494338da658d89d4ba3ed3cd336a8b93bbef4844064f7e",
+    "parts/part_b/work.csv": "d1dca92382b56ee033d862faa67237a49e42cccd287aad726ab6245f80226d66",
+    "parts/part_c/correctness.csv": "d09a7f620ae02672f6927880494c7f84423919e9e84d061799a81050f13619ec",
+    "parts/part_c/samples.csv": "d1432674bc27cb8952af7798f0271da73c803fb5bbcbe0274b165364be905242",
+    "parts/part_c/summary.csv": "da1f8cdc7b645f023930fde8ea9edac61c5f44ec720f4282261868d0d6c3ea69",
+    "parts/part_c/resources.csv": "623f0c17b44a1d89b1822472310cd908728696d6f880534ed35e069df4d2ed61",
+    "parts/part_c/profiles.csv": "a13cfeb04f83d748fb294760026db1a26ebf50df2db2b94d557a3fc67bf5c871",
+    "parts/part_c/memory.csv": "9cbca4e0552ac33fe5524d6311ef3117981d3864de2b18b730ed5725968f4ecc",
+    "parts/part_c/work.csv": "8824da57272173684afaff441290f9b8d1c3068b9d0bf3683e67a6b4b1be1c5b"
+  },
+  "missing_parts": [],
+  "processing_sources": {
+    "scripts/fa1_comparison.py": "387cf4d571261745a0091b37010a385e83ec3f0f194570fad069cdf50f330992",
+    "scripts/ncu_csv.py": "8e89375b8c3398aa979153c5953c9d9b1416cd4f4377bcb2740eb70c756e3999",
+    "scripts/plot_combined.py": "a6d56dfb264442e63e91ad4ef7bcf36e0d1d285840ba663530336fc477711a5f",
+    "scripts/prepare_submission.py": "bf32eb8290b55b136831ab4e7f3e21ffbe3fdde5d96dc6ae2c7da8502fa1204e",
+    "scripts/results_schema.py": "87e97864d136d557a55d7a87e49cfa1c924c1c919f859e1931f20944fb869efc",
+    "scripts/run_all.py": "fecb7e11ecc97289069e2920e36774a2382feb337dd3659ba596adfc522418d3",
+    "scripts/workflow.py": "e185b2484e2cc7bd8f245dcd9b73071013e6fbbc6417cee29e9bf5479e9b46ec"
+  },
+  "generated_utc": "2026-11-11T02:56:08.190941+00:00"
+}

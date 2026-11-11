@@ -1,0 +1,3 @@
+variant,mode,N,stage,unit,metric,value
+selected,dense,256,forward,%,sm__warps_active.avg.pct_of_peak_sustained_active,40.46
+selected,dense,4096,forward,%,sm__warps_active.avg.pct_of_peak_sustained_active,41.59

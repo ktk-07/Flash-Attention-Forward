@@ -1,0 +1,1028 @@
+{
+  "configurations": {
+    "skip:c0:d32": {
+      "variant": "skip",
+      "d": 32,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 3,
+        "thread_k": 5
+      }
+    },
+    "skip:c0:d64": {
+      "variant": "skip",
+      "d": 64,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 3,
+        "thread_k": 5
+      }
+    },
+    "skip:c0:d128": {
+      "variant": "skip",
+      "d": 128,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 3,
+        "thread_k": 5
+      }
+    },
+    "skip:c1:d32": {
+      "variant": "skip",
+      "d": 32,
+      "native_config": 1,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "skip:c1:d64": {
+      "variant": "skip",
+      "d": 64,
+      "native_config": 1,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "skip:c1:d128": {
+      "variant": "skip",
+      "d": 128,
+      "native_config": 1,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "skip:c2:d32": {
+      "variant": "skip",
+      "d": 32,
+      "native_config": 2,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "skip:c2:d64": {
+      "variant": "skip",
+      "d": 64,
+      "native_config": 2,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "skip:c2:d128": {
+      "variant": "skip",
+      "d": 128,
+      "native_config": 2,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "skip:c3:d32": {
+      "variant": "skip",
+      "d": 32,
+      "native_config": 3,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "skip:c3:d64": {
+      "variant": "skip",
+      "d": 64,
+      "native_config": 3,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "skip:c3:d128": {
+      "variant": "skip",
+      "d": 128,
+      "native_config": 3,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "skip:c4:d32": {
+      "variant": "skip",
+      "d": 32,
+      "native_config": 4,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 8,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "skip:c4:d64": {
+      "variant": "skip",
+      "d": 64,
+      "native_config": 4,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 8,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "skip:c4:d128": {
+      "variant": "skip",
+      "d": 128,
+      "native_config": 4,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 8,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "vector:c0:d32": {
+      "variant": "vector",
+      "d": 32,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 3,
+        "thread_k": 5
+      }
+    },
+    "vector:c0:d64": {
+      "variant": "vector",
+      "d": 64,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 3,
+        "thread_k": 5
+      }
+    },
+    "vector:c0:d128": {
+      "variant": "vector",
+      "d": 128,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 3,
+        "thread_k": 5
+      }
+    },
+    "vector:c1:d32": {
+      "variant": "vector",
+      "d": 32,
+      "native_config": 1,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "vector:c1:d64": {
+      "variant": "vector",
+      "d": 64,
+      "native_config": 1,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "vector:c1:d128": {
+      "variant": "vector",
+      "d": 128,
+      "native_config": 1,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "vector:c2:d32": {
+      "variant": "vector",
+      "d": 32,
+      "native_config": 2,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "vector:c2:d64": {
+      "variant": "vector",
+      "d": 64,
+      "native_config": 2,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "vector:c2:d128": {
+      "variant": "vector",
+      "d": 128,
+      "native_config": 2,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "vector:c3:d32": {
+      "variant": "vector",
+      "d": 32,
+      "native_config": 3,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "vector:c3:d64": {
+      "variant": "vector",
+      "d": 64,
+      "native_config": 3,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "vector:c3:d128": {
+      "variant": "vector",
+      "d": 128,
+      "native_config": 3,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 4,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "vector:c4:d32": {
+      "variant": "vector",
+      "d": 32,
+      "native_config": 4,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 8,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "vector:c4:d64": {
+      "variant": "vector",
+      "d": 64,
+      "native_config": 4,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 8,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "vector:c4:d128": {
+      "variant": "vector",
+      "d": 128,
+      "native_config": 4,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 8,
+        "thread_q": 2,
+        "thread_k": 4
+      }
+    },
+    "wmma:c0:d32": {
+      "variant": "wmma",
+      "d": 32,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "wmma:c0:d64": {
+      "variant": "wmma",
+      "d": 64,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "wmma:c0:d128": {
+      "variant": "wmma",
+      "d": 128,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "wmma:c1:d32": {
+      "variant": "wmma",
+      "d": 32,
+      "native_config": 1,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "wmma:c1:d64": {
+      "variant": "wmma",
+      "d": 64,
+      "native_config": 1,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "wmma:c1:d128": {
+      "variant": "wmma",
+      "d": 128,
+      "native_config": 1,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "wmma:c2:d32": {
+      "variant": "wmma",
+      "d": 32,
+      "native_config": 2,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "wmma:c2:d64": {
+      "variant": "wmma",
+      "d": 64,
+      "native_config": 2,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "wmma:c2:d128": {
+      "variant": "wmma",
+      "d": 128,
+      "native_config": 2,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "wmma:c3:d32": {
+      "variant": "wmma",
+      "d": 32,
+      "native_config": 3,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 16,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "wmma:c3:d64": {
+      "variant": "wmma",
+      "d": 64,
+      "native_config": 3,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 16,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "wmma:c3:d128": {
+      "variant": "wmma",
+      "d": 128,
+      "native_config": 3,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 16,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "ptx:c0:d32": {
+      "variant": "ptx",
+      "d": 32,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "ptx:c0:d64": {
+      "variant": "ptx",
+      "d": 64,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "ptx:c0:d128": {
+      "variant": "ptx",
+      "d": 128,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "ptx:c1:d32": {
+      "variant": "ptx",
+      "d": 32,
+      "native_config": 1,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "ptx:c1:d64": {
+      "variant": "ptx",
+      "d": 64,
+      "native_config": 1,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "ptx:c1:d128": {
+      "variant": "ptx",
+      "d": 128,
+      "native_config": 1,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "ptx:c2:d32": {
+      "variant": "ptx",
+      "d": 32,
+      "native_config": 2,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "ptx:c2:d64": {
+      "variant": "ptx",
+      "d": 64,
+      "native_config": 2,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "ptx:c2:d128": {
+      "variant": "ptx",
+      "d": 128,
+      "native_config": 2,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "ptx:c3:d32": {
+      "variant": "ptx",
+      "d": 32,
+      "native_config": 3,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 16,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "ptx:c3:d64": {
+      "variant": "ptx",
+      "d": 64,
+      "native_config": 3,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 16,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "ptx:c3:d128": {
+      "variant": "ptx",
+      "d": 128,
+      "native_config": 3,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 16,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "fa1_ptx:kv_outer_ptx_v1:c0:d32": {
+      "variant": "fa1_ptx",
+      "d": 32,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "fa1_ptx:kv_outer_ptx_v1:c0:d64": {
+      "variant": "fa1_ptx",
+      "d": 64,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "fa1_ptx:kv_outer_ptx_v1:c0:d128": {
+      "variant": "fa1_ptx",
+      "d": 128,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "fa1_ptx:kv_outer_ptx_v1:c1:d32": {
+      "variant": "fa1_ptx",
+      "d": 32,
+      "native_config": 1,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "fa1_ptx:kv_outer_ptx_v1:c1:d64": {
+      "variant": "fa1_ptx",
+      "d": 64,
+      "native_config": 1,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "fa1_ptx:kv_outer_ptx_v1:c1:d128": {
+      "variant": "fa1_ptx",
+      "d": 128,
+      "native_config": 1,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "fa1_ptx:kv_outer_ptx_v1:c2:d32": {
+      "variant": "fa1_ptx",
+      "d": 32,
+      "native_config": 2,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "fa1_ptx:kv_outer_ptx_v1:c2:d64": {
+      "variant": "fa1_ptx",
+      "d": 64,
+      "native_config": 2,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "fa1_ptx:kv_outer_ptx_v1:c2:d128": {
+      "variant": "fa1_ptx",
+      "d": 128,
+      "native_config": 2,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 16,
+        "warps": 2,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "fa1_ptx:kv_outer_ptx_v1:c3:d32": {
+      "variant": "fa1_ptx",
+      "d": 32,
+      "native_config": 3,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 16,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "fa1_ptx:kv_outer_ptx_v1:c3:d64": {
+      "variant": "fa1_ptx",
+      "d": 64,
+      "native_config": 3,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 16,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "fa1_ptx:kv_outer_ptx_v1:c3:d128": {
+      "variant": "fa1_ptx",
+      "d": 128,
+      "native_config": 3,
+      "launch": {
+        "block_q": 16,
+        "block_kv": 16,
+        "warps": 1,
+        "thread_q": 0,
+        "thread_k": 0
+      }
+    },
+    "fa1:kv_outer_shared_v2:c0:d32": {
+      "variant": "fa1",
+      "d": 32,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 1,
+        "thread_k": 1
+      }
+    },
+    "scalar:c0:d32": {
+      "variant": "scalar",
+      "d": 32,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 1,
+        "thread_k": 1
+      }
+    },
+    "warp:c0:d32": {
+      "variant": "warp",
+      "d": 32,
+      "native_config": 0,
+      "launch": {
+        "block_q": 4,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 1,
+        "thread_k": 1
+      }
+    },
+    "tiled:c0:d32": {
+      "variant": "tiled",
+      "d": 32,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 3,
+        "thread_k": 5
+      }
+    },
+    "fa1:kv_outer_shared_v2:c0:d64": {
+      "variant": "fa1",
+      "d": 64,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 1,
+        "thread_k": 1
+      }
+    },
+    "scalar:c0:d64": {
+      "variant": "scalar",
+      "d": 64,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 1,
+        "thread_k": 1
+      }
+    },
+    "warp:c0:d64": {
+      "variant": "warp",
+      "d": 64,
+      "native_config": 0,
+      "launch": {
+        "block_q": 4,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 1,
+        "thread_k": 1
+      }
+    },
+    "tiled:c0:d64": {
+      "variant": "tiled",
+      "d": 64,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 3,
+        "thread_k": 5
+      }
+    },
+    "fa1:kv_outer_shared_v2:c0:d128": {
+      "variant": "fa1",
+      "d": 128,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 1,
+        "thread_k": 1
+      }
+    },
+    "scalar:c0:d128": {
+      "variant": "scalar",
+      "d": 128,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 1,
+        "thread_q": 1,
+        "thread_k": 1
+      }
+    },
+    "warp:c0:d128": {
+      "variant": "warp",
+      "d": 128,
+      "native_config": 0,
+      "launch": {
+        "block_q": 4,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 1,
+        "thread_k": 1
+      }
+    },
+    "tiled:c0:d128": {
+      "variant": "tiled",
+      "d": 128,
+      "native_config": 0,
+      "launch": {
+        "block_q": 32,
+        "block_kv": 32,
+        "warps": 4,
+        "thread_q": 3,
+        "thread_k": 5
+      }
+    }
+  },
+  "frozen_selection": {
+    "variants": {
+      "skip": {
+        "32": {
+          "config": 2,
+          "geomean_ms": 1.1431700176077633
+        },
+        "64": {
+          "config": 4,
+          "geomean_ms": 2.0202158534640966
+        },
+        "128": {
+          "config": 4,
+          "geomean_ms": 2.8938219160454683
+        }
+      },
+      "vector": {
+        "32": {
+          "config": 4,
+          "geomean_ms": 1.1519383656275757
+        },
+        "64": {
+          "config": 2,
+          "geomean_ms": 1.955176448515351
+        },
+        "128": {
+          "config": 4,
+          "geomean_ms": 2.8485694447970054
+        }
+      },
+      "wmma": {
+        "32": {
+          "config": 2,
+          "geomean_ms": 0.39067369488263254
+        },
+        "64": {
+          "config": 2,
+          "geomean_ms": 0.858439123864346
+        },
+        "128": {
+          "config": 0,
+          "geomean_ms": 2.7186568233712993
+        }
+      },
+      "ptx": {
+        "32": {
+          "config": 2,
+          "geomean_ms": 0.16498599229279476
+        },
+        "64": {
+          "config": 2,
+          "geomean_ms": 0.4194039384444936
+        },
+        "128": {
+          "config": 2,
+          "geomean_ms": 0.9737283054668826
+        }
+      },
+      "fa1_ptx": {
+        "32": {
+          "config": 0,
+          "geomean_ms": 1.0807324647925896
+        },
+        "64": {
+          "config": 0,
+          "geomean_ms": 2.0629358347341284
+        },
+        "128": {
+          "config": 0,
+          "geomean_ms": 4.6127641176903476
+        }
+      }
+    },
+    "families": {
+      "cuda_core": {
+        "32": "skip",
+        "64": "vector",
+        "128": "vector"
+      },
+      "tensor_core": {
+        "32": "ptx",
+        "64": "ptx",
+        "128": "ptx"
+      }
+    },
+    "frozen_utc": "2026-11-11T01:59:23Z",
+    "plan_sha256": "595b4e527df676ec9e54df1c273df6234578fea18f48dae8cd0c754b7c30878c"
+  }
+}

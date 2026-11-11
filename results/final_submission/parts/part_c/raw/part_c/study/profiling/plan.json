@@ -1,0 +1,41 @@
+{
+  "targets": [
+    {
+      "role": "fa1",
+      "kernel": "fa1",
+      "config": 0
+    },
+    {
+      "role": "fa1_ptx",
+      "kernel": "fa1_ptx",
+      "config": 0
+    },
+    {
+      "role": "cuda_core",
+      "kernel": "vector",
+      "config": 2
+    },
+    {
+      "role": "matched_FA2_PTX",
+      "kernel": "ptx",
+      "config": 2
+    }
+  ],
+  "B": 4,
+  "H": 8,
+  "selection_sha256": "051eb78d537583fffe544f753e8c8e73e780bd7ed6b855a3ac78baaf04b75f1d",
+  "binary_sha256": "6af763f1bb99d3d56b9a5172cbbee9ecf6205a0f614a10f5e4826f0341d6d430",
+  "study_binary_match": true,
+  "launch_skip": 7,
+  "explanation": "one warm-module forward, one validation forward, five warmups, then first timed forward; all reset work stays in forward",
+  "repeats": 3,
+  "N": [
+    256,
+    4096
+  ],
+  "d": 64,
+  "cache_control": "all",
+  "clock_control": "none",
+  "smoke": false,
+  "fa1_total_shared_bytes": true
+}

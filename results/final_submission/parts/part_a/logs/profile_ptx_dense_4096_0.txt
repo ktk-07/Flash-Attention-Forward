@@ -1,0 +1,9 @@
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 18488 (/tmp/attention-builds/part_a/attention)
+==PROF== Profiling "matmul_fp16_kernel" - 0 (1/3): 0%
+==WARNING== Launching the workload is taking more time than expected. If this continues to hang, terminate the profile and re-try by profiling the range of all related launches using '--replay-mode range'. See https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html#replay for more details.
+....50%....100% - 38 passes
+==PROF== Profiling "softmax_mixed_kernel" - 1 (2/3): 0%....50%....100% - 37 passes
+==PROF== Profiling "matmul_fp16_kernel" - 2 (3/3): 0%....50%....100% - 38 passes
+==PROF== Disconnected from process 18488
+==PROF== Report: /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_a/raw/part_a/profiles/ptx_dense_4096_0/capture.ncu-rep

@@ -1,0 +1,18 @@
+[  7%] Building CXX object shared_reference/CMakeFiles/attention_reference.dir/attention_reference.cpp.o
+[ 15%] Building CUDA object CMakeFiles/dense_attention.dir/src/dense_flash_attention.cu.o
+[ 23%] Building CXX object shared_reference/CMakeFiles/attention_reference.dir/sampled_reference.cpp.o
+[ 30%] Linking CXX static library libattention_reference.a
+[ 30%] Built target attention_reference
+[ 38%] Building CUDA object CMakeFiles/part_b_materialised_check.dir/home/buntr/Projects/Flash-Attention-CUDA/part_a/gpu_baseline/qk.cu.o
+[ 46%] Building CUDA object CMakeFiles/part_b_materialised_check.dir/home/buntr/Projects/Flash-Attention-CUDA/part_a/gpu_baseline/softmax.cu.o
+[ 53%] Building CUDA object CMakeFiles/part_b_materialised_check.dir/home/buntr/Projects/Flash-Attention-CUDA/part_a/gpu_baseline/pv.cu.o
+[ 61%] Linking CUDA static library libdense_attention.a
+[ 61%] Built target dense_attention
+[ 69%] Building CXX object shared_reference/CMakeFiles/attention_reference_test.dir/home/buntr/Projects/Flash-Attention-CUDA/part_a/tests/reference_test.cpp.o
+[ 76%] Linking CXX executable attention_reference_test
+[ 76%] Built target attention_reference_test
+[ 84%] Linking CUDA static library libpart_b_materialised_check.a
+[ 84%] Built target part_b_materialised_check
+[ 92%] Building CXX object CMakeFiles/part_b_runner.dir/tests/evaluation_runner.cpp.o
+[100%] Linking CXX executable part_b_runner
+[100%] Built target part_b_runner

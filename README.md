@@ -7,11 +7,24 @@ CUDA C++ implementations of materialised attention (Part A), dense fused FlashAt
 
 **Documentation:** this README describes the repository, shared interfaces, run commands, plots and evidence status. [README.txt](README.txt) provides the submission reproduction checklist. The full-run handoff and packaging commands are in [README.txt](README.txt), supported by [prepare_submission.py](scripts/prepare_submission.py). Implementation details are in the [Part A](part_a/README.md), [Part B](part_b/README.md) and [Part C](part_c/README.md) READMEs.
 
-**Current status:** the integrated A/B/C smoke run passed correctness, representative sanitizers, tuning, CSV aggregation, plotting and CPU-only regeneration on the RTX 3070 Ti Laptop. Part B passed 24 sanitizer checks in that run. The full-grid common-machine experiment and its fresh profiler captures remain outstanding; retained diagnostic replays have their own separate acceptance scope.
+**Current status:** the full-grid A/B/C run in [results/final_submission](results/final_submission/) completed on the RTX 3070 Ti Laptop GPU and passed the saved-result audit and CPU-only regeneration: 1,657 passing correctness records, 15,000 timing samples and 138 profiler captures (A108/B6/C24). See [verification findings](results/final_submission/VERIFICATION.md). The bundle contains 41 PNG/PDF figure pairs. Performance includes slowdowns against optimized Part A; fusion alone is not a guaranteed speedup. Final report/video and the separate missing historical B smoke recording remain outstanding.
 
 The scope follows the approved FlashAttention proposal, Project Briefing and Team Project Rubrics. **Briefing deadline:** Friday, 13 November 2026, 11:59 PM. Submission requires a report PDF, an accessible 10–15-minute video link, the repository link and a final commit hash or release tag.
 
 **Navigation:** [Repository layout](#repository-layout) · [Setup](#2-open-the-project-and-install-analysis-dependencies) · [Inputs](#3-inputs-and-computation-contract) · [Tests](#4-build-and-run-the-available-tests) · [Run A/B/C](#5-run-the-project) · [Integration and outputs](#6-shared-integration-and-results) · [Measurement](#7-measurement-conventions) · [Saved evidence](#8-read-the-results) · [Offline analysis](#9-recreate-figures-without-rerunning-cuda) · [Submission](#10-submission-and-outstanding-scope)
+
+## Reproduce the full A/B/C experiment
+
+Complete the [setup](#2-open-the-project-and-install-analysis-dependencies), then run this command from the repository root:
+
+```bash
+bash run_all.sh --parts a,b,c --grid full --device 0 \
+  --output results/new_full_run
+```
+
+This builds and evaluates all three parts on GPU 0, including correctness checks, representative sanitizers, bounded tuning, benchmarks, memory/resource measurements, profiling and plot generation. CUDA, Compute Sanitizer and Nsight Compute with GPU-counter access are required. Use a fresh output directory; the verified `results/final_submission/` bundle is already supplied and should be preserved.
+
+Aggregated CSVs are written to `results/new_full_run/`, complete individual bundles to `parts/part_a/`, `parts/part_b/` and `parts/part_c/` beneath that directory, and figures to `plots/part_a/`, `plots/part_b/`, `plots/part_c/` and `plots/combined/`. See [Section 5](#5-run-the-project) for the smoke check and individual runs, and [Section 6](#6-shared-integration-and-results) for the complete output layout.
 
 ## Team responsibilities
 
@@ -196,7 +209,8 @@ bash run.sh --arch 86 --output results/abc_preview --dry-run
 bash run.sh --grid smoke --output results/abc_smoke
 
 # Full common-machine experiment, including fresh profiling.
-bash run.sh --output results/final_submission
+bash run_all.sh --parts a,b,c --grid full --device 0 \
+  --output results/new_full_run
 ```
 
 Full runs execute tests, required sanitizer checks, bounded tuning, frozen main-grid timing, memory/resource studies, profiling, export and combined analysis. Smoke uses B=H=1, d64, reporting N33/65 and tuning N17/33; it omits profiling and is not final report evidence. The full grid is defined in Section 3. Do not bypass failed safety checks to label a diagnostic run complete.
@@ -280,11 +294,11 @@ Root additionally writes aggregate CSVs, `comparison.csv`, combined plots and `p
 
 | Component | Current implementation | Evidence boundary |
 |---|---|---|
-| Part A | Materialised FP32 kernels plus WMMA/PTX; shared FP64 oracle and canonical adapter | Saved standalone results and actual integrated A/B/C smoke checks exist |
-| Part B | Dense FP32 streaming, tiled and float4 kernels; standard runner, pinned replay and canonical adapter | Retained numerical/timing evidence exists; fresh smoke passed 83 correctness records and 24 sanitizer checks; full-grid profiling remains pending |
-| Part C | FP32 FA1, tuned PTX FA1, FA2 CUDA-core/WMMA/PTX; native and standard workflows | Integrated A/B/C smoke, four-config PTX FA1 invariants, sanitizer and separate small profiler/export checks passed |
-| Root runner | Builds A/B/C, runs each separately and validates/aggregates canonical tables | Integrated A/B/C smoke and offline regeneration passed; full-grid same-machine execution remains pending |
-| Plotting | Individual, combined, matched FA1/FA2 and supplementary figures | All 31 combined-run figure pairs and links verified; regeneration passed; final full-grid plots require final measurements |
+| Part A | Materialised FP32 kernels plus WMMA/PTX; shared FP64 oracle and canonical adapter | Full common-machine run passed 728 correctness records and 108 profiler captures; historical standalone evidence remains separate |
+| Part B | Dense FP32 streaming, tiled and float4 kernels; standard runner, pinned replay and canonical adapter | Full common-machine run passed 165 correctness records, 32 sanitizer checks and six profiler captures |
+| Part C | FP32 FA1, tuned PTX FA1, FA2 CUDA-core/WMMA/PTX; native and standard workflows | Full common-machine run passed 764 canonical correctness records and 24 profiler captures; FA1 invariants and representative sanitizer checks are retained |
+| Root runner | Builds A/B/C, runs each separately and validates/aggregates canonical tables | Full-grid same-machine A/B/C execution, saved-result audit and offline regeneration passed |
+| Plotting | Individual, combined, matched FA1/FA2 and supplementary figures | All 41 full-run PNG/PDF figure pairs are indexed and readable; native re-extraction and combined regeneration passed |
 
 Existing B replay/diagnostic bundles are not accepted final comparisons. Existing A/B/C historical measurements came from different GPUs and cannot be divided to claim a same-machine optimisation speedup. Private smoke/debug evidence stays in ignored `extra/`; final retained report evidence belongs under a fresh public `results/<run_id>/` bundle.
 
@@ -428,7 +442,19 @@ Part A provides WMMA and direct PTX materialised baselines with FP16 Q/K/V/P and
 
 ## 8. Read the results
 
-Use fresh `results/<run_id>/` bundles for final same-machine comparisons. The following retained studies are separate historical/local evidence:
+The report's common-machine measurements are retained in [results/final_submission/](results/final_submission/). Validation scope, uncertainty and reproduction checks are documented in [VERIFICATION.md](results/final_submission/VERIFICATION.md). The table below summarizes baseline/candidate median latency ratios over the 15 main-grid shapes; a ratio greater than one favours the candidate. Configurations were frozen using the designated tuning lengths.
+
+| Baseline / candidate | Ratio range | Geometric mean |
+|---|---:|---:|
+| A optimized dense FP32 / B selected dense FP32 | 0.205–0.703× | 0.428× |
+| A optimized causal FP32 / C frozen CUDA-core FA2 | 0.547–1.179× | 0.781× |
+| A causal PTX / C causal PTX FA2 | 1.182–6.131× | 2.483× |
+| C FP32 FA1 / C frozen CUDA-core FA2 | 4.083–6.554× | 5.290× |
+| C PTX FA1 / C PTX FA2 | 3.032–13.079× | 6.433× |
+
+The FP32 fused implementations reduce intermediate storage, but do not consistently reduce latency relative to optimized materialised A on this GPU. C's query-resident FA2 implementations improve on the corresponding FA1 baselines across the measured grid. The A/C PTX comparison includes their different probability-rounding order. These observations establish the performance trade-offs; attribution to instruction issue, memory access or residency requires the accompanying profiler and source analysis. Quartiles describe within-case timing variation, and the geometric means do not establish uncertainty across independent sessions.
+
+Earlier studies remain separate historical/local evidence:
 
 | Location | Contents and scope |
 |---|---|
@@ -448,7 +474,7 @@ The historical C bounded study passed 288 full candidate checks, 318 sampled ben
 | 64 | `skip`, BQ32/BK32/8 warps | 107.663 | 12.153 | 8.86× |
 | 128 | `vector`, BQ32/BK32/8 warps | 150.936 | 36.106 | 4.18× |
 
-These are FP32-core versus FP16-input/FP32-output measurements on the recorded laptop GPU, **not FA1→FA2 speedups or final A/B/C results**. See [the historical report](part_c/results/bounded_evaluation/REPORT.md) for configurations, tuning gains and limits. New PTX FA1 comparisons require new measurements.
+These are FP32-core versus FP16-input/FP32-output measurements on the recorded laptop GPU, **not FA1→FA2 speedups or final A/B/C results**. See [the historical report](part_c/results/bounded_evaluation/REPORT.md) for configurations, tuning gains and limits. The current matched PTX FA1/FA2 measurements are retained in `results/final_submission/fa1_fa2_comparison.csv`.
 
 Explicit storage, observed device deltas and profiler traffic remain distinct. The materialised S+P curve is an analytical model. Source-level excessive shared wavefronts support a layout investigation; aggregate conflict counters alone can include arbitration. The historical tiled/skip/vector captures show zero source excess, so they do not establish bank-conflicted layouts.
 
@@ -491,5 +517,5 @@ Archive outputs and audit copies belong under ignored `extra/` or a separate del
 
 Retain raw benchmark CSVs, selected configurations, metadata, plotting scripts, readable figures and reproduction instructions. Include source and source/binary hashes; large raw Nsight reports can be supplied as a separate accessible artifact with checksums. Do not submit compiled build directories as results.
 
-The integrated smoke run verifies the pipeline. The remaining shared work includes full-grid safety/profiling evidence, final same-GPU A/B/C results, materialised-versus-fused validation, dense-versus-causal work/traffic analysis, the report, video, references and member contributions. The final comparison must include materialised versus fused latency/storage, dense versus causal work/traffic, bounded tuning and controlled optimisation comparisons. No fixed speedup target is required by the rubric; well-supported slowdowns and limitations are valid results.
+The full-grid results are now retained and verified. The remaining shared work includes interpreting materialised-versus-fused and dense-versus-causal results, the report, video, references, member contributions and restoring the separate historical B smoke recording. The final comparison must include materialised versus fused latency/storage, dense versus causal work/traffic, bounded tuning and controlled optimisation comparisons. No fixed speedup target is required by the rubric; well-supported slowdowns and limitations are valid results.
 

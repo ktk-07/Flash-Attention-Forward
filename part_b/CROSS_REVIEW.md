@@ -23,4 +23,4 @@ B's small-case runner additionally links A's actual naive materialised CUDA
 QK/softmax/PV kernels and checks its dense output against B at the same tolerance.
 The independent FP64 oracle remains authoritative. This supplementary equivalence
 check does not establish performance fairness of A's tuned materialised kernels;
-that requires the common-machine experiment.
+see the completed [common-machine comparison](../results/final_submission/VERIFICATION.md) for the performance evidence.

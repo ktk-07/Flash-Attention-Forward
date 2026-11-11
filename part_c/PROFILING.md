@@ -2,6 +2,8 @@
 
 The ordinary benchmarks establish latency. This separate workflow collects hardware evidence for why variants differ: occupancy/resource limits, eligible warps, issue rates, warp states, branch uniformity and predication, DRAM/local/shared traffic, bank conflicts, scalar operations, and Tensor Core activity.
 
+The completed common-machine experiment retains 24 Part C captures under `../results/final_submission/parts/part_c/`: FP32 FA1, PTX FA1, the frozen CUDA-core FA2 winner and PTX FA2 at d64, N256/4096, with three repetitions. Generated counters and figures are retained in the child bundle and `../results/final_submission/supplementary/part_c/`. See [verification](../results/final_submission/VERIFICATION.md) for coverage and unavailable metrics. The optional all-variant workflow below has a broader capture plan and is not required to reproduce the completed experiment's figures.
+
 ## Capture and process
 
 From the repository root, with CUDA, Nsight Compute, CMake, a C++ compiler, Python 3.12, and an accessible NVIDIA GPU:

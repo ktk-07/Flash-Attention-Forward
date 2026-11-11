@@ -1,0 +1,90 @@
+[  7%] Building CXX object cpu_reference/CMakeFiles/attention_reference.dir/attention_reference.cpp.o
+[ 15%] Building CXX object cpu_reference/CMakeFiles/attention_reference.dir/sampled_reference.cpp.o
+[ 23%] Linking CXX static library libattention_reference.a
+[ 23%] Built target attention_reference
+[ 30%] Building CXX object CMakeFiles/attention.dir/main.cpp.o
+[ 38%] Building CXX object cpu_reference/CMakeFiles/attention_reference_test.dir/__/tests/reference_test.cpp.o
+[ 46%] Linking CXX executable attention_reference_test
+[ 46%] Built target attention_reference_test
+[ 53%] Building CUDA object CMakeFiles/attention.dir/gpu_baseline/qk.cu.o
+[ 61%] Building CUDA object CMakeFiles/attention.dir/gpu_baseline/softmax.cu.o
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN9attention6detail9qk_kernelEPKfS2_PfNS_5ShapeEbfm' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail9qk_kernelEPKfS2_PfNS_5ShapeEbfm
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 39 registers, used 0 barriers, 424 bytes cmem[0]
+[ 69%] Building CUDA object CMakeFiles/attention.dir/gpu_baseline/pv.cu.o
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN9attention6detail14softmax_kernelEPKfPfNS_5ShapeEbm' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail14softmax_kernelEPKfPfNS_5ShapeEbm
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 37 registers, used 0 barriers, 416 bytes cmem[0]
+[ 76%] Building CUDA object CMakeFiles/attention.dir/gpu_baseline/matmul_tiled.cu.o
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN9attention6detail9pv_kernelEPKfS2_PfNS_5ShapeEm' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail9pv_kernelEPKfS2_PfNS_5ShapeEm
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 38 registers, used 0 barriers, 416 bytes cmem[0]
+[ 84%] Building CUDA object CMakeFiles/attention.dir/gpu_baseline/softmax_parallel.cu.o
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN9attention6detail15pv_tiled_kernelILj32EEEvPKfS3_PfNS_5ShapeEmmm' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail15pv_tiled_kernelILj32EEEvPKfS3_PfNS_5ShapeEmmm
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 1 barriers, 8192 bytes smem, 432 bytes cmem[0]
+ptxas info    : Compiling entry function '_ZN9attention6detail15pv_tiled_kernelILj16EEEvPKfS3_PfNS_5ShapeEmmm' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail15pv_tiled_kernelILj16EEEvPKfS3_PfNS_5ShapeEmmm
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 1 barriers, 2048 bytes smem, 432 bytes cmem[0]
+ptxas info    : Compiling entry function '_ZN9attention6detail15pv_tiled_kernelILj8EEEvPKfS3_PfNS_5ShapeEmmm' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail15pv_tiled_kernelILj8EEEvPKfS3_PfNS_5ShapeEmmm
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 1 barriers, 512 bytes smem, 432 bytes cmem[0]
+ptxas info    : Compiling entry function '_ZN9attention6detail15qk_tiled_kernelILj32EEEvPKfS3_PfNS_5ShapeEmmfb' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail15qk_tiled_kernelILj32EEEvPKfS3_PfNS_5ShapeEmmfb
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 1 barriers, 8320 bytes smem, 429 bytes cmem[0]
+ptxas info    : Compiling entry function '_ZN9attention6detail15qk_tiled_kernelILj16EEEvPKfS3_PfNS_5ShapeEmmfb' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail15qk_tiled_kernelILj16EEEvPKfS3_PfNS_5ShapeEmmfb
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 1 barriers, 2112 bytes smem, 429 bytes cmem[0]
+ptxas info    : Compiling entry function '_ZN9attention6detail15qk_tiled_kernelILj8EEEvPKfS3_PfNS_5ShapeEmmfb' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail15qk_tiled_kernelILj8EEEvPKfS3_PfNS_5ShapeEmmfb
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 1 barriers, 544 bytes smem, 429 bytes cmem[0]
+[ 92%] Building CUDA object CMakeFiles/attention.dir/gpu_baseline/matmul_tensorcore.cu.o
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN9attention6detail20softmax_mixed_kernelILj256EEEvPKfP6__halfNS_5ShapeEbm' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail20softmax_mixed_kernelILj256EEEvPKfP6__halfNS_5ShapeEbm
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 28 registers, used 1 barriers, 1024 bytes smem, 416 bytes cmem[0]
+ptxas info    : Compiling entry function '_ZN9attention6detail20softmax_mixed_kernelILj128EEEvPKfP6__halfNS_5ShapeEbm' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail20softmax_mixed_kernelILj128EEEvPKfP6__halfNS_5ShapeEbm
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 28 registers, used 1 barriers, 512 bytes smem, 416 bytes cmem[0]
+ptxas info    : Compiling entry function '_ZN9attention6detail23softmax_parallel_kernelILj256EEEvPKfPfNS_5ShapeEbm' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail23softmax_parallel_kernelILj256EEEvPKfPfNS_5ShapeEbm
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 24 registers, used 1 barriers, 1024 bytes smem, 416 bytes cmem[0]
+ptxas info    : Compiling entry function '_ZN9attention6detail23softmax_parallel_kernelILj128EEEvPKfPfNS_5ShapeEbm' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail23softmax_parallel_kernelILj128EEEvPKfPfNS_5ShapeEbm
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 24 registers, used 1 barriers, 512 bytes smem, 416 bytes cmem[0]
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_ZN9attention6detail18matmul_fp16_kernelILb0ELb0EEEvPK6__halfS4_PfNS_5ShapeEbmmmm' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail18matmul_fp16_kernelILb0ELb0EEEvPK6__halfS4_PfNS_5ShapeEbmmmm
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers, 2048 bytes smem, 448 bytes cmem[0]
+ptxas info    : Compiling entry function '_ZN9attention6detail18matmul_fp16_kernelILb0ELb1EEEvPK6__halfS4_PfNS_5ShapeEbmmmm' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail18matmul_fp16_kernelILb0ELb1EEEvPK6__halfS4_PfNS_5ShapeEbmmmm
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers, 2048 bytes smem, 448 bytes cmem[0]
+ptxas info    : Compiling entry function '_ZN9attention6detail18matmul_fp16_kernelILb1ELb0EEEvPK6__halfS4_PfNS_5ShapeEbmmmm' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail18matmul_fp16_kernelILb1ELb0EEEvPK6__halfS4_PfNS_5ShapeEbmmmm
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 56 registers, used 0 barriers, 2048 bytes smem, 448 bytes cmem[0]
+ptxas info    : Compiling entry function '_ZN9attention6detail18matmul_fp16_kernelILb1ELb1EEEvPK6__halfS4_PfNS_5ShapeEbmmmm' for 'sm_86'
+ptxas info    : Function properties for _ZN9attention6detail18matmul_fp16_kernelILb1ELb1EEEvPK6__halfS4_PfNS_5ShapeEbmmmm
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 64 registers, used 0 barriers, 2048 bytes smem, 448 bytes cmem[0]
+[100%] Linking CXX executable attention
+[100%] Built target attention

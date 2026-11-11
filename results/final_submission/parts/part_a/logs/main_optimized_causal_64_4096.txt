@@ -1,0 +1,4 @@
+4,8,4096,64,causal,naive,16,128 median_ms=678.124 IQR_ms=2.38155
+4,8,4096,64,causal,tiled,16,128 median_ms=351.797 IQR_ms=2.32348
+4,8,4096,64,causal,parallel,16,128 median_ms=416.602 IQR_ms=2.16462
+4,8,4096,64,causal,optimized,16,128 median_ms=96.9072 IQR_ms=0.537533

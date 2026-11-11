@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "validation_cases": 352,
+  "benchmark_cases": 352,
+  "samples": 7040,
+  "memory_cases": 60,
+  "source_snapshot_hashes_match": true,
+  "input_hashes_consistent": true,
+  "allocation_ledger_matches": true,
+  "plan_hash_matches_frozen": true
+}

@@ -1,0 +1,4 @@
+==PROF== Connected to process 23278 (/tmp/attention-builds/part_b/part_b_runner)
+==PROF== Profiling "tiled_dense" - 0 (1/1): 0%....50%....100% - 1 pass
+==PROF== Disconnected from process 23278
+==PROF== Report: /home/buntr/Projects/Flash-Attention-CUDA/results/final_submission/parts/part_b/raw/part_b/profiles/n256/repeat_2.ncu-rep

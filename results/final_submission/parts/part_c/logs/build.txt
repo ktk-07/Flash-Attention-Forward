@@ -1,0 +1,14 @@
+Consolidate compiler generated dependencies of target attention_reference
+Consolidate compiler generated dependencies of target part_c_attention
+[ 13%] Built target attention_reference
+[ 36%] Built target part_c_attention
+Consolidate compiler generated dependencies of target attention_reference_test
+Consolidate compiler generated dependencies of target part_c_runner
+[ 45%] Built target attention_reference_test
+[ 59%] Built target part_c_runner
+Consolidate compiler generated dependencies of target part_c_evaluation
+Consolidate compiler generated dependencies of target part_c_input_contract
+[ 72%] Built target part_c_evaluation
+[ 86%] Built target part_c_input_contract
+Consolidate compiler generated dependencies of target part_c_fa1_test
+[100%] Built target part_c_fa1_test

@@ -1,0 +1,88 @@
+{
+  "variants": {
+    "skip": {
+      "32": {
+        "config": 2,
+        "geomean_ms": 1.1431700176077633
+      },
+      "64": {
+        "config": 4,
+        "geomean_ms": 2.0202158534640966
+      },
+      "128": {
+        "config": 4,
+        "geomean_ms": 2.8938219160454683
+      }
+    },
+    "vector": {
+      "32": {
+        "config": 4,
+        "geomean_ms": 1.1519383656275757
+      },
+      "64": {
+        "config": 2,
+        "geomean_ms": 1.955176448515351
+      },
+      "128": {
+        "config": 4,
+        "geomean_ms": 2.8485694447970054
+      }
+    },
+    "wmma": {
+      "32": {
+        "config": 2,
+        "geomean_ms": 0.39067369488263254
+      },
+      "64": {
+        "config": 2,
+        "geomean_ms": 0.858439123864346
+      },
+      "128": {
+        "config": 0,
+        "geomean_ms": 2.7186568233712993
+      }
+    },
+    "ptx": {
+      "32": {
+        "config": 2,
+        "geomean_ms": 0.16498599229279476
+      },
+      "64": {
+        "config": 2,
+        "geomean_ms": 0.4194039384444936
+      },
+      "128": {
+        "config": 2,
+        "geomean_ms": 0.9737283054668826
+      }
+    },
+    "fa1_ptx": {
+      "32": {
+        "config": 0,
+        "geomean_ms": 1.0807324647925896
+      },
+      "64": {
+        "config": 0,
+        "geomean_ms": 2.0629358347341284
+      },
+      "128": {
+        "config": 0,
+        "geomean_ms": 4.6127641176903476
+      }
+    }
+  },
+  "families": {
+    "cuda_core": {
+      "32": "skip",
+      "64": "vector",
+      "128": "vector"
+    },
+    "tensor_core": {
+      "32": "ptx",
+      "64": "ptx",
+      "128": "ptx"
+    }
+  },
+  "frozen_utc": "2026-11-11T01:59:23Z",
+  "plan_sha256": "595b4e527df676ec9e54df1c273df6234578fea18f48dae8cd0c754b7c30878c"
+}

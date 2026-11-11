@@ -1,0 +1,1 @@
+PASS: shared generator fingerprint, full/sampled dense/causal oracle, stress/tails and causal isolation

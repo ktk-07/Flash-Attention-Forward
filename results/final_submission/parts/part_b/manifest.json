@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "part": "part_b",
+  "grid": "full",
+  "run_id": "part_b",
+  "device": {
+    "uuid": "GPU-f5bd2e3d-ddc7-7006-0401-dd3b93a77330",
+    "name": "NVIDIA GeForce RTX 3070 Ti Laptop GPU",
+    "driver_version": "565.90",
+    "compute_cap": "8.6"
+  },
+  "profile_requested": true,
+  "shared_cpu_reference_linked": true,
+  "sanitizers_requested": true,
+  "source_hashes": {
+    "part_b/.gitattributes": "b0398ebed233a2499221dcd1ac68b548d7d82fe1dcd6da38ed02a6665e17f4c7",
+    "part_b/CMakeLists.txt": "262ca9997a9c01fd6c03bc3e6e9407f230ed1a431f4f52d89e265d7dc56070be",
+    "part_b/CROSS_CHECK.md": "8e7078c8b16f5e3ccb32b4b3ad91a14460b6d66aa1c7777b86226fcea3e0aeb9",
+    "part_b/CROSS_REVIEW.md": "748b3371e21f71de879a23f81939c84315bc543a142b74952aa8cd114610ca78",
+    "part_b/EXECUTION_REFERENCE.json": "549a1fc54e96dab3a90052ec8531e8e95d1cccba27c1d0d146be2f50d4b2b367",
+    "part_b/README.md": "75d7a9b9c50950ae8a2c26743a9d11fabeca6c03d24b0757ef85bdb825202f56",
+    "part_b/include/flash_attention/dense_flash_attention.h": "f077371dfaed6848fe3e8eb8b99d1a800ca82e731d4ec5185ff5b4ac451b742a",
+    "part_b/notebooks/Analyze_Retained_Full_Run.ipynb": "a27a25efd8a153b11c1596d4aae3df6dc4627bb5646ec6287d40e5f5387d3735",
+    "part_b/notebooks/FlashAttention_Part_B_Lab.ipynb": "bbdb3d26041cdae52f718adc8c614905617d3ba9f0fd131a3301f72bee74f617",
+    "part_b/reproduce.cmd": "1ed5e0f37bed0397adcb68972d5ad27f2e2a514d05a3d0594dcc30f5ea599c1b",
+    "part_b/reproduce.sh": "bc2728b313a8c9ea3fb577b8611d1d1be727be9670e865062e45f7cde3b51736",
+    "part_b/run.cmd": "f3a9db18b22c0cc5d4024d539dd1e363ec530e5e2b6619bed94a54292fbe03ef",
+    "part_b/run.sh": "172792389f4cfcbcb33c4ae003e1621ab0c9e760c770592fd051fb7580f3725d",
+    "part_b/scripts/analyze_delivery.py": "78a2c216759023fdfc89abbe98636d74cfa9d1b1081e5d6af4e895c4444efe52",
+    "part_b/scripts/export_results.py": "f057cefb981041bc10d7e292e6b0bb5c17fd24a2eedfc0b41d0ccea86a1494c0",
+    "part_b/scripts/reproduce_notebook.py": "aaea9f97dfa4bdcb52f918c0ba6467860da3d42c92ed4293133bbca1a74a7a21",
+    "part_b/scripts/run_standard.py": "abde13896e41d7420bdcf9276e425367c0cfd3a00d94baa6a9bd13bbac745a4c",
+    "part_b/src/dense_flash_attention.cu": "3af6d127705f2f80d236cf386814601b8bf49629838bd8c4780e6649185c3173",
+    "part_b/tests/evaluation_runner.cpp": "35d399e934932f107e9811c9b82cadb0fd10c42dc70d4e134d53666ad88161ca",
+    "part_b/tests/test_adapter.py": "d7d255ab8183ff204a91ae52f00da909de709c16ef410f9b4f238f101b0f69db",
+    "part_b/tests/test_reference_replay.py": "e1b02267426faaeb724cde49c974bac2a21f4f1d839c001d586a59a8f0d7d754"
+  },
+  "shared_source_hashes": {
+    "part_a/common/attention_types.hpp": "cde504f1079a7138a232725c0dfac98b6ba29bd516c097f40858b54d84fd611e",
+    "part_a/common/input_generation.hpp": "d5bf1b3b0eff0b5dd2816f6db0b1570a28f61b63e54fda885790a744dd80cda6",
+    "part_a/cpu_reference/CMakeLists.txt": "9e64058f864cb4759246b6654f0177e1522ef4e8c0b277e0531896b2a4ea82cf",
+    "part_a/cpu_reference/attention_reference.cpp": "1dde31fb30817af0ed8221b22626f6fe41b921a782b7ae164490331fee4be74f",
+    "part_a/cpu_reference/sampled_reference.cpp": "d9673860fe2c8919b6584d813f45a4dcd64ecce530942571d0436d784e385440",
+    "scripts/fa1_comparison.py": "387cf4d571261745a0091b37010a385e83ec3f0f194570fad069cdf50f330992",
+    "scripts/ncu_csv.py": "8e89375b8c3398aa979153c5953c9d9b1416cd4f4377bcb2740eb70c756e3999",
+    "scripts/plot_combined.py": "f045d039b6591be75756aba65629c508d2317c89ec61c7245ae3a10230a12e09",
+    "scripts/prepare_submission.py": "bf32eb8290b55b136831ab4e7f3e21ffbe3fdde5d96dc6ae2c7da8502fa1204e",
+    "scripts/results_schema.py": "87e97864d136d557a55d7a87e49cfa1c924c1c919f859e1931f20944fb869efc",
+    "scripts/run_all.py": "fecb7e11ecc97289069e2920e36774a2382feb337dd3659ba596adfc522418d3",
+    "scripts/workflow.py": "e185b2484e2cc7bd8f245dcd9b73071013e6fbbc6417cee29e9bf5479e9b46ec"
+  },
+  "binary_sha256": "0cdde821a491969c251aa61df273ce1fbc1816668ec387f0e30e108365a356da",
+  "layout": "BHNd_contiguous_row_major",
+  "generator": "splitmix64-fp32-v1",
+  "seed": 5206,
+  "registry": {
+    "FP32": {
+      "input": "FP32",
+      "accumulator": "FP32",
+      "output": "FP32",
+      "selected": {
+        "32": {
+          "variant": "vector",
+          "warps": 4,
+          "key_tile": 64
+        },
+        "64": {
+          "variant": "vector",
+          "warps": 4,
+          "key_tile": 32
+        },
+        "128": {
+          "variant": "streaming",
+          "warps": 4,
+          "key_tile": 32
+        }
+      },
+      "kernels": {
+        "streaming": "streaming_dense<W>",
+        "tiled": "tiled_dense<W,BK,false>",
+        "vector": "tiled_dense<W,BK,true>"
+      }
+    }
+  }
+}
