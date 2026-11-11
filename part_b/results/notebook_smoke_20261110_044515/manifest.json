@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "part": "part_b",
+  "grid": "smoke",
+  "run_id": "results_smoke",
+  "device": {
+    "uuid": "GPU-46dcdb6f-3d34-f41d-dea5-746626f9b013",
+    "name": "NVIDIA GeForce RTX 4070 Ti",
+    "driver_version": "621.01",
+    "compute_cap": "8.9"
+  },
+  "profile_requested": false,
+  "shared_cpu_reference_linked": true,
+  "sanitizers_requested": false,
+  "source_hashes": {
+    "part_b/CMakeLists.txt": "262ca9997a9c01fd6c03bc3e6e9407f230ed1a431f4f52d89e265d7dc56070be",
+    "part_b/include/flash_attention/dense_flash_attention.h": "f077371dfaed6848fe3e8eb8b99d1a800ca82e731d4ec5185ff5b4ac451b742a",
+    "part_b/run.sh": "172792389f4cfcbcb33c4ae003e1621ab0c9e760c770592fd051fb7580f3725d",
+    "part_b/scripts/export_results.py": "f057cefb981041bc10d7e292e6b0bb5c17fd24a2eedfc0b41d0ccea86a1494c0",
+    "part_b/scripts/run_standard.py": "abde13896e41d7420bdcf9276e425367c0cfd3a00d94baa6a9bd13bbac745a4c",
+    "part_b/src/dense_flash_attention.cu": "3af6d127705f2f80d236cf386814601b8bf49629838bd8c4780e6649185c3173",
+    "part_b/tests/evaluation_runner.cpp": "35d399e934932f107e9811c9b82cadb0fd10c42dc70d4e134d53666ad88161ca"
+  },
+  "shared_source_hashes": {
+    "part_a/common/attention_types.hpp": "42904650d690c9b1a1769995dd2e8281d1ed012c70599b6b5ea1dcb88dfcd0eb",
+    "part_a/common/input_generation.hpp": "f57e5b935ac5a3eab1178d295aafe4f9dac838010a8f47c689d75d436cd9e414",
+    "part_a/cpu_reference/attention_reference.cpp": "b940511c81ef6a5305f7f37ea24c66012064ee184e65b53bc63abe443f5e05de",
+    "part_a/cpu_reference/CMakeLists.txt": "ecd3d9c38c68c8f0a06b9ee1a9ad66dfdc98ba5220df3423f065b69fa659bace",
+    "part_a/cpu_reference/sampled_reference.cpp": "06405bfc790ebe80b854d8d1e6e42bbf7b683414a335334e501b559dd41e6729",
+    "scripts/ncu_csv.py": "1126114e652ffc5cf0f494e591c45ab916ffdf46f9911f55d8b7957f23e8ac4b",
+    "scripts/results_schema.py": "138beee35dd03568a47225a542f746cb0f75d4912137774c8a9d72f1963ec63c",
+    "scripts/workflow.py": "b27a0c465f35b3e1f108773a55b91ccb29eace2d164b106f9b210d92fc689e53"
+  },
+  "binary_sha256": "b579f224ed59e7b833f787a6c79ae35e071b37f3c1190b4741b1b06a83a464f7",
+  "layout": "BHNd_contiguous_row_major",
+  "generator": "splitmix64-fp32-v1",
+  "seed": 5206,
+  "registry": {
+    "FP32": {
+      "input": "FP32",
+      "accumulator": "FP32",
+      "output": "FP32",
+      "selected": {
+        "64": {
+          "variant": "streaming",
+          "warps": 4,
+          "key_tile": 32
+        }
+      },
+      "kernels": {
+        "streaming": "streaming_dense<W>",
+        "tiled": "tiled_dense<W,BK,false>",
+        "vector": "tiled_dense<W,BK,true>"
+      }
+    }
+  }
+}

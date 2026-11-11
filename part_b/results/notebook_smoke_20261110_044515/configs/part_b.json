@@ -1,0 +1,70 @@
+{
+  "candidates": [
+    {
+      "variant": "streaming",
+      "warps": 4,
+      "key_tile": 32
+    },
+    {
+      "variant": "tiled",
+      "warps": 4,
+      "key_tile": 32
+    },
+    {
+      "variant": "vector",
+      "warps": 4,
+      "key_tile": 32
+    },
+    {
+      "variant": "tiled",
+      "warps": 8,
+      "key_tile": 32
+    },
+    {
+      "variant": "vector",
+      "warps": 4,
+      "key_tile": 64
+    }
+  ],
+  "selected": {
+    "64": {
+      "variant": "streaming",
+      "warps": 4,
+      "key_tile": 32
+    }
+  },
+  "scores": {
+    "64": [
+      {
+        "config": "streaming_w4_k32",
+        "geomean_ms": 0.008985563629403979
+      },
+      {
+        "config": "vector_w4_k32",
+        "geomean_ms": 0.009914837777103882
+      },
+      {
+        "config": "tiled_w4_k32",
+        "geomean_ms": 0.011067791007171018
+      },
+      {
+        "config": "tiled_w8_k32",
+        "geomean_ms": 0.011221738871363584
+      },
+      {
+        "config": "vector_w4_k64",
+        "geomean_ms": 0.012288000434637071
+      }
+    ]
+  },
+  "tuning_lengths": [
+    17,
+    33
+  ],
+  "reporting_lengths": [
+    33,
+    65
+  ],
+  "selection": "minimum geometric mean forward median, lexical config-name tie break",
+  "frozen_utc": "2026-11-09T20:46:11.453801+00:00"
+}

@@ -1,0 +1,507 @@
+{
+  "cases": [
+    {
+      "path": "raw/part_b/case_0000.json",
+      "experiment": "correctness",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0001.json",
+      "experiment": "correctness",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0002.json",
+      "experiment": "correctness",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0003.json",
+      "experiment": "correctness",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0004.json",
+      "experiment": "correctness",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0005.json",
+      "experiment": "correctness",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0006.json",
+      "experiment": "correctness",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0007.json",
+      "experiment": "correctness",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0008.json",
+      "experiment": "correctness",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0009.json",
+      "experiment": "correctness",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0010.json",
+      "experiment": "correctness",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0011.json",
+      "experiment": "correctness",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0012.json",
+      "experiment": "correctness",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0013.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0014.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0015.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0016.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0017.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0018.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0019.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0020.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0021.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0022.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0023.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0024.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0025.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0026.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0027.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0028.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0029.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0030.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0031.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0032.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0033.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0034.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0035.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0036.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0037.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0038.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0039.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0040.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0041.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0042.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0043.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0044.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0045.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0046.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0047.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0048.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0049.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0050.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0051.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0052.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0053.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0054.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0055.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0056.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0057.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0058.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0059.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0060.json",
+      "experiment": "correctness",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0061.json",
+      "experiment": "tuning",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0062.json",
+      "experiment": "tuning",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0063.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0064.json",
+      "experiment": "tuning",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0065.json",
+      "experiment": "tuning",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0066.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0067.json",
+      "experiment": "tuning",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0068.json",
+      "experiment": "tuning",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0069.json",
+      "experiment": "correctness",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0070.json",
+      "experiment": "tuning",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0071.json",
+      "experiment": "tuning",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0072.json",
+      "experiment": "correctness",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0073.json",
+      "experiment": "tuning",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0074.json",
+      "experiment": "tuning",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0075.json",
+      "experiment": "proposal",
+      "public_variant": "selected"
+    },
+    {
+      "path": "raw/part_b/case_0076.json",
+      "experiment": "proposal",
+      "public_variant": "selected"
+    },
+    {
+      "path": "raw/part_b/case_0077.json",
+      "experiment": "proposal",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0078.json",
+      "experiment": "proposal",
+      "public_variant": "streaming"
+    },
+    {
+      "path": "raw/part_b/case_0079.json",
+      "experiment": "proposal",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0080.json",
+      "experiment": "proposal",
+      "public_variant": "tiled"
+    },
+    {
+      "path": "raw/part_b/case_0081.json",
+      "experiment": "proposal",
+      "public_variant": "vector"
+    },
+    {
+      "path": "raw/part_b/case_0082.json",
+      "experiment": "proposal",
+      "public_variant": "vector"
+    }
+  ],
+  "profiles": [],
+  "sanitizers": [],
+  "evidence_hashes": {
+    "raw/part_b/case_0000.json": "b9747515b02caa1289cc4c3af0683fdfecb802ce62f0fe850220ae93de3b2861",
+    "raw/part_b/case_0001.json": "839c82ffc5adc103f37da84a70b4dcf2fd2e39a46f4b65db3e6f3676e0506608",
+    "raw/part_b/case_0002.json": "c41823faf9148f543d6eda3e3025bdc8001f5702a142dccb138412e33c62a533",
+    "raw/part_b/case_0003.json": "182ff849b85aa0d1c81a1182924803a0978f625715c907cb63a34fb88d25f7e7",
+    "raw/part_b/case_0004.json": "8f9841a1b23578d8cb5eac375286d6a926d12cfdcde74ae73ba224bd2a364e09",
+    "raw/part_b/case_0005.json": "6aa9ab25f7c458e84add55acda2a336bdeccd25178813beac3a96317eba78053",
+    "raw/part_b/case_0006.json": "07344c3acb13f5769ad02b4488fb234bd4c8fd2253b65bedefb457d4a97f89ed",
+    "raw/part_b/case_0007.json": "6ed918f8799a2c347bf9fd8617356a9511b4f56deae7ce1a2ff3a010c6cf4a05",
+    "raw/part_b/case_0008.json": "80f6f7f46340e0637ee70dc9fc3ef845c78dddbecd7f88e3613ee88e252decd4",
+    "raw/part_b/case_0009.json": "2a8b30e9d05f80377e853261bc65956a7759dd9712307ba9a8bc48edc563d12f",
+    "raw/part_b/case_0010.json": "f12a5f190ba57b2e7c87d28e8fd1d4907be6861903eaff1386ebf41acdd25a6a",
+    "raw/part_b/case_0011.json": "0c45c28fabd8c3554ad17cf41cde653d096a7ac662829f07a94d5e36c9d8760b",
+    "raw/part_b/case_0012.json": "cc523e959ec0aa7ce5ca6896ca737407ac3a642a8e2d178ed5bb331d084a3b4d",
+    "raw/part_b/case_0013.json": "91f0d2b460329d986a9e4c5cc8ba20922daa0a217547d730627a0d1be888d38b",
+    "raw/part_b/case_0014.json": "15f85b1a9464d869ca039cffbec78eeac6d046f30541b78515ed2e6fa142aad8",
+    "raw/part_b/case_0015.json": "0a3abfd90beceafac9e6a0c7f07f0690e2d56cf697c639cab3d38fd35f1f8d9a",
+    "raw/part_b/case_0016.json": "9a03ae78852f97b83d628629ada74faf3b0582bf20816ab036fef5b94a6cae4e",
+    "raw/part_b/case_0017.json": "2ddb3765aa343efe2982a818e90e7d394b1749cc420526ca878ab149810b669e",
+    "raw/part_b/case_0018.json": "46e4a1eeb711b3e2acce401d5687f2422ef5f2dce305a7f671d57c8b1966b469",
+    "raw/part_b/case_0019.json": "65efa3f86eacffea7bf844432f5e83821eaa3228d81b4fd90732083619aee81c",
+    "raw/part_b/case_0020.json": "247febed13261e1ce0da653bd5c669678ae5872d7cda13e653c31ea7736b17cb",
+    "raw/part_b/case_0021.json": "390a3c113eca31218c5287fb1861122c293dedd13afc09a52fc35f75b3169378",
+    "raw/part_b/case_0022.json": "163023bb79a49552cc68799ae7233aee46dd5ced06a2d624eeb750e20db28391",
+    "raw/part_b/case_0023.json": "f1dc01e274eae53d7ee957d5a528b10aa0c73468a75d513e5da079ef2e453cbc",
+    "raw/part_b/case_0024.json": "d25c7cdd20eb8822dae843ec72c991e5bf777980dfe7df3ce134157c46f15cbf",
+    "raw/part_b/case_0025.json": "47938eb57c40c9af7dd84e96981578bfaba662b74a01bc530310d0c6b4be66fd",
+    "raw/part_b/case_0026.json": "b61ce98de0d5467b77035d69c82188c650b5dafc2ddba74cec74016c6ca037c6",
+    "raw/part_b/case_0027.json": "09419d586bbe324fb7cdd01e0c94e326083020483d966bff9d41ace3bd22fbf2",
+    "raw/part_b/case_0028.json": "59efbeb6e5131b5b0aea75aef4babbffbe4de5fc4759da3afdfc3ff9aa00663d",
+    "raw/part_b/case_0029.json": "fc2a393b593799c2b72eb10bbe7664b4d6763d4d0651d8c0beea2142176d203c",
+    "raw/part_b/case_0030.json": "1df06ea1d9d7f82b063ffc8a457589fe1355a2259caf7cb1da66e09244dfc617",
+    "raw/part_b/case_0031.json": "5c46a288ccfa906735fe15684b3d83e3f24bce501467f07c76b4d0f0264bb773",
+    "raw/part_b/case_0032.json": "d9280ed6158f9d5ad60e06c44a12a976a00fa389a43d729552a33dc746b4aea7",
+    "raw/part_b/case_0033.json": "981fea50b1511bef91a676f4965ad7de6498f87b58aeb49f8ee3ad4614d8938b",
+    "raw/part_b/case_0034.json": "cc983b7beee025306dedf80ff62db1205a23e555698e43ec15b3ea1d7d5fd7e2",
+    "raw/part_b/case_0035.json": "91914b1fd6dce9dbadcad76d18d3852baaa135a442c20bad259de99269e00063",
+    "raw/part_b/case_0036.json": "0b603074b5d5b517d20083ec7034681f9f77d54f61667f8c8b5f29c5e3f815c9",
+    "raw/part_b/case_0037.json": "70ce17b5243dc0260b039bf1effdc4fd550ba56d87207d181d6121eaa4539809",
+    "raw/part_b/case_0038.json": "20fd1b1215a9229f882aea30bf756256f36dd35d0c7ecc2e4fb3a3f207ff807e",
+    "raw/part_b/case_0039.json": "d8c5d53257cd8530ea0fb255854ef566cdea0113e7ffc4b2b10f5f4f6085d3f2",
+    "raw/part_b/case_0040.json": "86c1604198a8d03ecdcf0f58206b0c8fc281695bedbe547ae5d812de17255484",
+    "raw/part_b/case_0041.json": "83014e0eb7fb0928100373f2be57d2251d34f4e6a8f52dbdf796fe9f6944e98d",
+    "raw/part_b/case_0042.json": "b578a1c86ee79eadd825dce5b215ce89b3cdb080a8288aa5fd3a05fdb7f0b861",
+    "raw/part_b/case_0043.json": "f262f247bf6311d528baf84974508fe79a82a19e009fd94c7f1f4fb0d188a4af",
+    "raw/part_b/case_0044.json": "57f3ecc7ab92280592ef5ef6bcc936497605441d0e23977a3f1030d6e208e3fb",
+    "raw/part_b/case_0045.json": "ec8f3ba960b164a79200dc6b618da9637bd3334321228359e49ff66d26451867",
+    "raw/part_b/case_0046.json": "881667503efdda6f0919ac2f04dab187219b8d8eb4297a23043d0af0a60c5f45",
+    "raw/part_b/case_0047.json": "6ca8548bff8695c8cd664f1002b59cf23d459adf34510bc92e66061cb842ebf6",
+    "raw/part_b/case_0048.json": "7e8063f90b028c09e2f6bf337c6d52a6a9608af31aab620fb77e2aaf4d98cc29",
+    "raw/part_b/case_0049.json": "84e240ff656d05a573026516ad0e2aae4636e064aff326124a47bae89910d8bc",
+    "raw/part_b/case_0050.json": "fafc5da198667f84d7091690225fbbb46fd22ceb662d12e739934dd74a073d21",
+    "raw/part_b/case_0051.json": "14c0e09d03eb1b52ee21dfad23e3cb59c787d0f9981a00853bdac9b27de73bc2",
+    "raw/part_b/case_0052.json": "efefd55ad3046c14482ad28da9d29e27087a181f230d08074dfc491d1b7c4035",
+    "raw/part_b/case_0053.json": "ad3bee7e62280f6d0a7fe05b67d30a113311605aba94b89d9ae74f94e5a59319",
+    "raw/part_b/case_0054.json": "ba90bb5f8f892644ad6d5014a0da2061bdd834f4f074a282ab0b2650f02532fe",
+    "raw/part_b/case_0055.json": "ff8eaa504d794bc30ae64895188bfea4bfab5a073ce5260aea33d46d6cc61384",
+    "raw/part_b/case_0056.json": "7e24257be89c0cb34de45b5deb57102c19767be4b4bf8359e60b96e11669ed33",
+    "raw/part_b/case_0057.json": "52b3c6047d777314f11cce8a3a3401223a75b493a11916a5f50f6ddf99a09974",
+    "raw/part_b/case_0058.json": "bdb514014a4d2488b7d590fb4cb4831240397b9adfb96d47350cb6cb35fc812e",
+    "raw/part_b/case_0059.json": "f28d520cb88678e80d0dc91e9b90c9b1f7955c28bc40fadf9131d2e5851d659a",
+    "raw/part_b/case_0060.json": "4da719cbba0e770f152785470a6e50ca2749c2ba166e640c84be26b034179152",
+    "raw/part_b/case_0061.json": "ff331446e823ae3d2f5add7fa9f17efb8df0c3685c2cccc791691959743f15ce",
+    "raw/part_b/case_0062.json": "c422b7a01468a4a120db80488e9747cd81bee65101809e7fd2146e4a7b72425f",
+    "raw/part_b/case_0063.json": "ac3556bc7c2f53ea6ea1e168d0d4736ce4aaa5a70a5677cd06e833fb9bab8117",
+    "raw/part_b/case_0064.json": "93cfe26dc2491904aa3c8a59334ff0463bbf2a2536222c98da8a496777516b25",
+    "raw/part_b/case_0065.json": "610ffe65a0dda20a6393a910b3e38b53e939dc214f8043638576489d9b5fd835",
+    "raw/part_b/case_0066.json": "d52f3cdcb51cabc795eef72e22a9cbe50182d9573ccf5ef14407733a2ede0a34",
+    "raw/part_b/case_0067.json": "b3f21d19d2485d0e258465b64436866cfaff86901dcb04e2b273f28f03651d79",
+    "raw/part_b/case_0068.json": "dc73c1b56d9ad067f27e9713faa3ccc93d06d9d54eaa3e73b4e715435c6567fe",
+    "raw/part_b/case_0069.json": "551cd87c2e1b972b830a9fa7a5f99213f5b2bf9e6fed22bb8a655a28596241ce",
+    "raw/part_b/case_0070.json": "00466d5888ed831311cc375a07b1bc9f878e742748473383a07c909ae238d967",
+    "raw/part_b/case_0071.json": "90127d2f69fdf239eb9da1cb29813babb09c36ce672d2f991842c9654e6f6e4e",
+    "raw/part_b/case_0072.json": "70d5fdc554cf3ca6ca306c0edd3c4f38606016c8392b2c73d2e5a042c5319c03",
+    "raw/part_b/case_0073.json": "fff8dc820b7c99d7cc62586c8c16e506bab982740e89d269e90330e71a0ff0f0",
+    "raw/part_b/case_0074.json": "0e9ca763f2c6f6b6091a67aaae52b750a42726f49b5fc98b7f7310e9359b591b",
+    "configs/part_b.json": "99b34644bd9f4bd034bc36880ea90ad712e197da5181b9cf8c394ef732c99879",
+    "raw/part_b/case_0075.json": "fefa1efc008956fe01d899d778956ac680f032cc8b6383964e5aa3d38ba24ab6",
+    "raw/part_b/case_0076.json": "32fd1720dd00c707d83d5596c23b355a5bfa05ee690770e2a3b386fede1fd0ca",
+    "raw/part_b/case_0077.json": "00d67da86ecf3daeb280528481a50eeec5e59990203bd43d489ed4ea36dba7e0",
+    "raw/part_b/case_0078.json": "6cde8005b8b6e54df288a51623d11516c66470deeb5a1259b2994a8e3395d7ef",
+    "raw/part_b/case_0079.json": "4727d13601600a3bee39d241b4d7e9b4d5cea73c49c8c9a98c3318465c9fd985",
+    "raw/part_b/case_0080.json": "98c10546be42f94d48fbdc92049935aaf7055c5200e115ee7621eba7f4a3dd52",
+    "raw/part_b/case_0081.json": "e6d8d590090b36d07f88e38cfbc555c22aa0d3de796cb71da872657cf63680c0",
+    "raw/part_b/case_0082.json": "df9da4376d0e26db9e2b619b48c67a56059903679ccc4af63ae6c859b7dfbd64"
+  }
+}
