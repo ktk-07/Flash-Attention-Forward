@@ -3,15 +3,19 @@
 **NUS CEG5206 — Algorithms & Performance Optimization for Computing**  
 AY2026/2027 Semester 1 · Group 1
 
+**Repository:** [ktk-07/Flash-Attention-Forward](https://github.com/ktk-07/Flash-Attention-Forward)
+
 CUDA C++ implementations of materialised attention (Part A), dense fused FlashAttention (Part B) and causal fused FlashAttention (Part C). The project studies tiling, online softmax, fusion, causal tile skipping, memory behaviour and mixed-precision Tensor Core execution.
 
 **Documentation:** this README describes the repository, shared interfaces, run commands, plots and evidence status. [README.txt](README.txt) provides the submission reproduction checklist. The full-run handoff and packaging commands are in [README.txt](README.txt), supported by [prepare_submission.py](scripts/prepare_submission.py). Implementation details are in the [Part A](part_a/README.md), [Part B](part_b/README.md) and [Part C](part_c/README.md) READMEs.
 
-**Current status:** the full-grid A/B/C run in [results/final_submission](results/final_submission/) completed on the RTX 3070 Ti Laptop GPU and passed the saved-result audit and CPU-only regeneration: 1,657 passing correctness records, 15,000 timing samples and 138 profiler captures (A108/B6/C24). See [verification findings](results/final_submission/VERIFICATION.md). The bundle contains 41 PNG/PDF figure pairs. Performance includes slowdowns against optimized Part A; fusion alone is not a guaranteed speedup. Final report/video and the separate missing historical B smoke recording remain outstanding.
+**Current status:** the full-grid A/B/C run in [results/final_submission](results/final_submission/) completed on the RTX 3070 Ti Laptop GPU and passed the saved-result audit and CPU-only regeneration: 1,657 passing correctness records, 15,000 timing samples and 138 profiler captures (A108/B6/C24). See [verification findings](results/final_submission/VERIFICATION.md). The bundle contains 41 PNG/PDF figure pairs. The historical Part B smoke recording has been restored; its pinned replay tests and the CPU source audit pass. Performance includes slowdowns against optimized Part A; fusion alone is not a guaranteed speedup.
+
+**Presentation and demo:** the team reports a video duration of **14 minutes 58 seconds**, within the required 10–15 minutes. The live demonstration is [FlashAttention_Full_Run_Demo.ipynb](FlashAttention_Full_Run_Demo.ipynb); see [demo instructions](#live-cuda-demonstration) below. The final report must contain the accessible video URL and submitted commit hash or release tag.
 
 The scope follows the approved FlashAttention proposal, Project Briefing and Team Project Rubrics. **Briefing deadline:** Friday, 13 November 2026, 11:59 PM. Submission requires a report PDF, an accessible 10–15-minute video link, the repository link and a final commit hash or release tag.
 
-**Navigation:** [Repository layout](#repository-layout) · [Setup](#2-open-the-project-and-install-analysis-dependencies) · [Inputs](#3-inputs-and-computation-contract) · [Tests](#4-build-and-run-the-available-tests) · [Run A/B/C](#5-run-the-project) · [Integration and outputs](#6-shared-integration-and-results) · [Measurement](#7-measurement-conventions) · [Saved evidence](#8-read-the-results) · [Offline analysis](#9-recreate-figures-without-rerunning-cuda) · [Submission](#10-submission-and-outstanding-scope)
+**Navigation:** [Demo](#live-cuda-demonstration) · [Repository layout](#repository-layout) · [Setup](#2-open-the-project-and-install-analysis-dependencies) · [Inputs](#3-inputs-and-computation-contract) · [Tests](#4-build-and-run-the-available-tests) · [Run A/B/C](#5-run-the-project) · [Integration and outputs](#6-shared-integration-and-results) · [Measurement](#7-measurement-conventions) · [Saved evidence](#8-read-the-results) · [Offline analysis](#9-recreate-figures-without-rerunning-cuda) · [Submission](#10-submission-and-outstanding-scope)
 
 ## Reproduce the full A/B/C experiment
 
@@ -26,7 +30,32 @@ This builds and evaluates all three parts on GPU 0, including correctness checks
 
 Aggregated CSVs are written to `results/new_full_run/`, complete individual bundles to `parts/part_a/`, `parts/part_b/` and `parts/part_c/` beneath that directory, and figures to `plots/part_a/`, `plots/part_b/`, `plots/part_c/` and `plots/combined/`. See [Section 5](#5-run-the-project) for the smoke check and individual runs, and [Section 6](#6-shared-integration-and-results) for the complete output layout.
 
+## Live CUDA demonstration
+
+Open [FlashAttention_Full_Run_Demo.ipynb](FlashAttention_Full_Run_Demo.ipynb) to reproduce the short demonstration. It builds repository CUDA kernels, generates fresh inputs, checks outputs against the shared CPU FP64 oracle and records five warmups plus 20 CUDA-event samples per implementation. It demonstrates:
+
+- Causal A-PTX versus C-PTX FA2 on identical FP16-rounded inputs, including a small full-output correctness example.
+- Sequence-length changes from N512 to N1024 at B4/H8/d64, with latency and explicit allocated tensor capacity shown separately.
+- Dense FP32 A versus B, including memory savings even when B is slower.
+- Validation of the accepted historical full-run bundle as a separate saved-data check.
+
+Use an NVIDIA SM80+ GPU, CUDA Toolkit/nvcc, CMake **3.20+**, a C++17 host compiler and Python. On Windows, install the Visual Studio 2022 C++ build tools and Windows SDK; the helper can initialize the x64 compiler environment. The live recording used an RTX 4070 Ti; the report's full experiment used an RTX 3070 Ti Laptop GPU. The notebook detects the executing device. Other supported GPUs produce separate measurements.
+
+From the repository root, activate your Python environment and run:
+
+```bash
+python -m pip install -r part_c/requirements-analysis.txt
+python -m pip install jupyterlab
+python -m jupyterlab FlashAttention_Full_Run_Demo.ipynb
+```
+
+Select that environment's Python kernel and run the cells in order. Launch JupyterLab **from the repository root**, including when the checkout is named `Flash-Attention-Forward`; otherwise set `FLASH_ATTENTION_REPO` to its absolute path. The first CUDA build may take several minutes; run it before recording a presentation. The notebook uses fixed demo configurations rather than the final experiment's independently frozen winners. Edit `SEED`, `N` or `N_LARGER` in the workload cell for a fresh experiment; keep `16 <= N < N_LARGER <= 2048`.
+
+Builds are cached under `flash_attention_live_demo/build/<source-hash>/`. Fresh result JSON files, timing samples and `provenance.json` are stored under `flash_attention_live_demo/runs/<UTC_timestamp>_<suffix>/`. These live outputs do not replace or merge into `results/final_submission/`. The notebook also embeds the three demo-driver sources and materialises them under `flash_attention_live_demo/source/`. See [the demo README](flash_attention_live_demo/README.md) for platform notes and output interpretation.
+
 ## Team responsibilities
+
+Lyu Sihan, Zhang Yichun and Kyaw Tun Khine contributed equally overall. Their primary implementation areas are listed below.
 
 | Part | Member | Primary responsibility | Cross-review |
 |---|---|---|---|
@@ -43,6 +72,11 @@ Each member contributes testing, tuning, profiling and analysis. Record actual c
 ```text
 README.md                                   # overview, shared conventions and result/figure index
 README.txt                                  # submission reproduction checklist
+FlashAttention_Full_Run_Demo.ipynb           # short live CUDA demo; fresh inputs/checks/timings
+flash_attention_live_demo/
+  README.md                                 # demo setup, run sequence and output locations
+  source/                                   # CMakeLists.txt, demo_runner.cu and live_demo.py
+  build/, runs/                             # generated demo builds and measurement records
 run.sh                                      # sequential A/B/C evaluation and aggregation
 run_all.sh                                  # compatibility alias for run.sh
 scripts/
@@ -133,7 +167,7 @@ Exact compiler, driver and GPU records are stored with each run. Hardware counte
 Run from the repository root:
 
 ```bash
-cd /path/to/Flash-Attention-CUDA
+cd /path/to/Flash-Attention-Forward
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install -r part_c/requirements-analysis.txt
@@ -522,7 +556,9 @@ The CPU-only [submission helper](scripts/prepare_submission.py) provides:
 | `pack ...` | Include maintained source, complete selected results and explicitly supplied final report, version and URLs; optionally split raw profiler binaries |
 | `verify-archive SOURCE.zip --profiles PROFILER.zip` | Verify transferred archive members and SHA-256 checksums |
 
-The missing historical Part B smoke recording remains Yichun's task. Source-audit replay tests report that unresolved dependency; final packaging refuses to hide it. The fresh integrated runner does not depend on that recording. `--allow-smoke` checking and `--validation-only` packaging are explicitly labelled preparation tests, not final report evidence.
+Both pinned historical Part B smoke and full recordings are retained. The 13 November 2026 CPU audit passed 36 Python tests, the pinned full-recording check and the root dry plan; the shared CPU reference also built and passed its agreement tests. `--allow-smoke` checking and `--validation-only` packaging are explicitly labelled preparation tests, not final report evidence.
+
+The Git repository includes the root live-demo notebook and `flash_attention_live_demo/source/`. The current archive helper selects the core A/B/C source/evidence and does not automatically include that additional notebook/demo directory. If distributing a source ZIP for the video demonstration, include those files and `flash_attention_live_demo/README.md` alongside the core archive, preserving their relative paths. Generated demo builds and runs are not required to execute a fresh demonstration.
 
 Archive outputs and audit copies belong under ignored `extra/` or a separate delivery location. The private `extra/main.tex` is excluded; the final PDF must be supplied explicitly. Report/video contents, actual contributions, AI disclosure, public link access and the reviewed commit require human confirmation. Nothing is uploaded or committed by the helper.
 
@@ -530,5 +566,5 @@ Archive outputs and audit copies belong under ignored `extra/` or a separate del
 
 Retain raw benchmark CSVs, selected configurations, metadata, plotting scripts, readable figures and reproduction instructions. Include source and source/binary hashes. The accepted final-run Nsight reports are included directly in Git; optional split archives remain available for other delivery formats. Do not submit compiled build directories as results.
 
-The full-grid results are now retained and verified. The remaining shared work includes interpreting materialised-versus-fused and dense-versus-causal results, the report, video, references, member contributions and restoring the separate historical B smoke recording. The final comparison must include materialised versus fused latency/storage, dense versus causal work/traffic, bounded tuning and controlled optimisation comparisons. No fixed speedup target is required by the rubric; well-supported slowdowns and limitations are valid results.
+The full-grid results and restored historical recordings are retained and verified. The recorded presentation is 14:58 according to the team. Before delivery, ensure the final PDF contains the renamed repository URL, accessible video URL and reviewed final revision, and confirm the links work without a team login. The report should distinguish materialised/fused latency and capacity, dense/causal workloads, and matched versus independently tuned optimisation comparisons. No fixed speedup target is required by the rubric; well-supported slowdowns and limitations are valid results.
 

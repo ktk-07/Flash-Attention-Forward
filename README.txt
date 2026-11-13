@@ -3,7 +3,11 @@ Reproduction, full-run handoff and submission packaging
 
 README.md describes the project, repository layout, interfaces and plots.
 This file gives the operator's command sequence. Run from the repository root.
-No project runner or packaging helper executes Git or publishes anything.
+Repository: https://github.com/ktk-07/Flash-Attention-Forward
+The evaluation runners and packaging helper do not change Git state or publish
+anything. The live demo optionally reads the Git revision/status for provenance.
+The presentation duration is 14 minutes 58 seconds, as reported by the team.
+For the live video demonstration, see Step 9; for the full experiment, Steps 2-5.
 
 1. SOURCE VERSION AND CURRENT STATUS
 
@@ -19,11 +23,11 @@ exact source and records the complete ID for packaging. The helper hashes source
 files but does not consult Git or claim to verify that an ID matches the checkout.
 Avoid changing kernels, dependencies, seeds or configuration policy during a run.
 
-Known separate issue owned by Yichun: the historical B smoke replay bundle
-part_b/results/notebook_smoke_20261110_044515/ is absent. This breaks three replay
-unit tests and the exact historical smoke replay, but not the fresh root runner.
-The supplied historical FULL bundle passes its pinned checks. Do not substitute
-a new measurement for the missing recording or disable its integrity checks.
+The historical B smoke replay bundle
+part_b/results/notebook_smoke_20261110_044515/ has been restored. Both pinned
+smoke and full reference checks pass. The 13 November 2026 source audit passed
+36 Python tests, the pinned B-full check and the root dry plan; the shared
+CPU FP64 reference also built and passed its agreement tests.
 
 2. ENVIRONMENT AND SOURCE AUDIT
 
@@ -32,7 +36,7 @@ Python 3.12, Compute Sanitizer and Nsight Compute. Archive the actual machine/to
 versions with the run. Part B's separate Windows notebook instructions are in
 part_b/README.md; the root orchestration uses Bash.
 
-cd /path/to/Flash-Attention-CUDA
+cd /path/to/Flash-Attention-Forward
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install -r part_c/requirements-analysis.txt
@@ -56,9 +60,8 @@ an old extra/ subdirectory; current private drafts remain excluded. It runs the 
 integration, C export, B adapter/replay tests, pinned B-full checks and root dry
 run. Results/logs/source hashes stay under the requested ignored extra/ folder.
 This is a filesystem source-snapshot check, not a Git clean-checkout guarantee.
-The missing B smoke recording is reported as a failure; Yichun must resolve it
-before the final source package can be declared complete. Review other failures
-independently; do not suppress them as that known issue.
+The restored B smoke recording is included in these pinned checks. A failed
+source audit must be investigated rather than bypassed.
 
 3. OPERATOR PRECHECK ON THE FINAL GPU
 
@@ -162,8 +165,9 @@ bash part_b/reproduce.sh --grid full --output results/b_crosscheck_full
 
 It reuses recorded choices rather than retuning. Its audit remains diagnostic
 because replay omits sanitizer/profiler acceptance; crosscheck.json states
-numerical replay success. See part_b/CROSS_CHECK.md. The absent historical smoke
-recording is Yichun's separate restoration task.
+numerical replay success. See part_b/CROSS_CHECK.md. Verify the retained smoke
+recording independently with:
+python3 part_b/scripts/reproduce_notebook.py --grid smoke --check-only
 
 7. WHERE RESULTS AND FIGURES ARE STORED
 
@@ -191,6 +195,8 @@ accessible GitHub repository link and final commit hash or release tag. The
 report includes problem, implementation, correctness, experiments, results,
 limitations, references, actual member contributions and AI-use disclosure.
 There is no fixed page limit; keep the report concise and precise.
+The team's reported video duration is 14:58, within the required interval.
+The video URL must still be supplied in the final PDF and accessible to markers.
 
 Human review before packaging:
 - Replace all report figure/result placeholders with the reviewed final data.
@@ -208,11 +214,10 @@ Human review before packaging:
 The private extra/main.tex is NOT packaged or edited. Supply the reviewed final
 PDF explicitly; do not commit private drafts, scratch studies or build products.
 
-Replace REVIEWED_FULL_COMMIT_ID, PDF_PATH and the two example URLs below with
-actual reviewed values. Run only after Yichun resolves the missing replay bundle
-and the final experiment/report are available:
+Replace REVIEWED_FULL_COMMIT_ID, PDF_PATH and the example video URL below with
+actual reviewed values. Supply the final reviewed report and source revision:
 
-python3 scripts/prepare_submission.py pack --results results/final_submission --source-version REVIEWED_FULL_COMMIT_ID --report PDF_PATH --video-url https://example.org/team-video --repository-url https://github.com/TEAM/REPOSITORY --output extra/submission_package/source_results_report.zip --profiles-output extra/submission_package/profiler_reports.zip
+python3 scripts/prepare_submission.py pack --results results/final_submission --source-version REVIEWED_FULL_COMMIT_ID --report PDF_PATH --video-url https://example.org/team-video --repository-url https://github.com/ktk-07/Flash-Attention-Forward --output extra/submission_package/source_results_report.zip --profiles-output extra/submission_package/profiler_reports.zip
 
 The source archive contains maintained source, reproduction instructions,
 historical text/CSV fixtures, the selected COMPLETE result bundle and report.pdf.
@@ -220,6 +225,13 @@ Only raw .ncu-rep/.ncu-repz files from the selected run go to the optional compa
 archive. No selected-run evidence is silently dropped. Both archives use the same
 Flash-Attention-CUDA/ prefix: extract BOTH into the same directory before offline
 regeneration. Omitting --profiles-output makes one self-contained ZIP instead.
+The archive prefix remains Flash-Attention-CUDA/ for compatibility; it does not
+change the repository's current name, Flash-Attention-Forward.
+
+The current helper does not automatically include FlashAttention_Full_Run_Demo.ipynb
+or flash_attention_live_demo/. They are present in the Git repository. If handing
+over a source ZIP for the live demo, include that notebook, the demo README and
+flash_attention_live_demo/source/ alongside the core source, preserving paths.
 
 submission_manifest.json records supplied version/URLs, per-file hashes, capture
 scope and manual review items. SHA256SUMS and archive .sha256 sidecars accompany
@@ -237,3 +249,46 @@ repository/version and reproduce setup/smoke/offline analysis. The filesystem
 source audit assists this review; it does not replace that independent checkout.
 Submit the PDF on Canvas and confirm every linked artifact is accessible. No
 helper uploads anything, executes Git or changes repository history.
+
+9. LIVE CUDA DEMONSTRATION USED IN THE VIDEO
+
+Open FlashAttention_Full_Run_Demo.ipynb from the repository root. The notebook
+uses fresh generated inputs and repository CUDA kernels; saved outputs are
+historical displays until the cells are rerun. The live recording used an
+RTX 4070 Ti. The accepted full-grid results used an RTX 3070 Ti Laptop GPU.
+Keep these experiments separate: the demo uses fixed configurations, not the
+full experiment's independently selected configurations.
+
+Requirements: NVIDIA SM80+ GPU, CUDA Toolkit/nvcc, CMake >=3.20, a C++17 host
+compiler, Python, NumPy, Matplotlib and JupyterLab. Windows additionally needs
+the Visual Studio 2022 C++ build tools and Windows SDK. The helper can initialise
+the x64 host compiler environment. The short live demo does not require Nsight
+Compute or Compute Sanitizer; the complete experiment still requires both.
+
+From the repository root, activate the Python environment and run:
+python -m pip install -r part_c/requirements-analysis.txt
+python -m pip install jupyterlab
+python -m jupyterlab FlashAttention_Full_Run_Demo.ipynb
+
+Select that environment's Python kernel and run cells in order. Launch from
+the repository root, including when it is named Flash-Attention-Forward. If
+launching elsewhere, set FLASH_ATTENTION_REPO to the absolute checkout path.
+The first build may take several minutes; complete it before recording.
+
+The sequence is: detect/build for the live GPU; run a small causal FP64 check;
+compare causal A-PTX/C-PTX at N512 and N1024; compare dense FP32 A/B; then validate
+the separate accepted full-run evidence. Latency and explicit allocated tensor
+capacity are displayed independently. Five warmups and 20 unprofiled CUDA-event
+samples are used per implementation. Small validation checks full outputs;
+larger cases use sampled reference rows and all-output finiteness checks.
+
+Change SEED, N and N_LARGER in the workload cell for another experiment, keeping
+16 <= N < N_LARGER <= 2048. By default B4/H8/d64 is used for timing comparisons.
+Do not copy demo timings into the final_submission tables.
+
+Demo builds: flash_attention_live_demo/build/<source-hash>/
+New measurements: flash_attention_live_demo/runs/<UTC_timestamp>_<suffix>/
+Each run retains provenance.json and per-case JSON with numerical checks,
+input fingerprints, fixed configurations and raw timing samples. The notebook
+embeds and materialises its driver under flash_attention_live_demo/source/.
+See flash_attention_live_demo/README.md for platform notes and interpretation.

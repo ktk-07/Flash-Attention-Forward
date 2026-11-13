@@ -6,7 +6,7 @@ the code executed in Yichun's notebook. It is not the separate b0-b3 code that
 previously appeared in the checkout. The recorded user runs are preserved under
 results/; do not merge them into a new common-machine experiment.
 
-The current common-machine A/B/C results are separate from this historical replay and are retained in [../results/final_submission/](../results/final_submission/). The historical full recording is available; the pinned smoke recording `results/notebook_smoke_20261110_044515/` is currently absent. Smoke replay and its dependent tests require restoration of that exact recording. This does not affect the completed common-machine run or historical full replay.
+The current common-machine A/B/C results are separate from this historical replay and are retained in [../results/final_submission/](../results/final_submission/). Both historical full and smoke recordings are available. The pinned smoke recording `results/notebook_smoke_20261110_044515/` has been restored, and its replay/input/source checks pass alongside the full-recording checks.
 
 ## First verify the delivered source and data (no GPU needed)
 
